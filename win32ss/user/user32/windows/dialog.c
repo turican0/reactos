@@ -162,6 +162,44 @@ DIALOGINFO *DIALOG_get_info( HWND hWnd, BOOL create )
     return dlgInfo;
 }
 
+void printDialogControl(DLG_CONTROL_INFO *info)
+{
+	ERR("-Dialog Control Information:\n");
+    ERR("-Style: 0x%08X\n", info->style);
+	ERR("-Extended Style: 0x%08X\n", info->exStyle);
+    ERR("-HelpId: %d\n", info->helpId);
+	ERR("-Position: (%d, %d)\n", info->x, info->y);
+    ERR("-Size: (%d, %d)\n", info->cx, info->cy);
+	ERR("-Id: %d\n", info->id);
+	ERR("-className: %s\n", debugstr_w(info->className));
+	ERR("-windowName: %s\n", debugstr_w(info->windowName));
+	ERR("-windowNameFree: %s\n", info->windowNameFree?"yes":"no");
+	/*ERR("-caption: %s\n", debugstr_w(info->caption));
+	ERR("-Point size: %d\n", info->pointSize);
+	ERR("-Weight: %d\n", info->weight);
+	ERR("-Italic: %d\n", info->italic?"yes":"no");
+	ERR("-FaceName: %s\n", debugstr_w(info->faceName));
+	ERR("-DialogEx: %d\n", info->dialogEx?"yes":"no");*/
+    ERR("----------------------------");
+/*
+typedef struct
+{
+    DWORD      style;
+    DWORD      exStyle;
+    DWORD      helpId;
+    short      x;
+    short      y;
+    short      cx;
+    short      cy;
+    UINT       id;
+    LPCWSTR    className;
+    LPCWSTR    windowName;
+    BOOL       windowNameFree; // ReactOS
+    LPCVOID    data;
+} DLG_CONTROL_INFO;
+*/
+};
+
 /***********************************************************************
  *           DIALOG_GetControl32
  *
@@ -172,6 +210,8 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
                                         BOOL dialogEx )
 {
 	ERR("DIALOG_GetControl32\n");
+	printDialogControl(info);
+	
     if (dialogEx)
     {
         info->helpId  = GET_DWORD(p); p += 2;
@@ -813,7 +853,7 @@ void GetDialogTemplateInfoA(HINSTANCE hInstance, LPCSTR lpTemplateName)
 */
     ERR("----------------------------");
 	
-	INT items = template.nbItems;
+	/*INT items = template.nbItems;
 
     DLG_CONTROL_INFO info;
     
@@ -821,7 +861,7 @@ void GetDialogTemplateInfoA(HINSTANCE hInstance, LPCSTR lpTemplateName)
     {
         LPCSTR template2 = (LPCSTR)DIALOG_GetControl32( (const WORD *)template, &info, template.dialogEx );												
 		ERR("----------------------------%s",template2);
-	}
+	}*/
 	
 }
 
@@ -2027,6 +2067,54 @@ DialogBoxParamA(
     return -1;
 }
 
+void PrintDialogTemplate(HINSTANCE hInstance, LPCWSTR lpTemplateName)
+{
+    HRSRC hRes = FindResource(hInstance, lpTemplateName, RT_DIALOG);
+    if (hRes == NULL)
+    {
+        ERR("Failed to find resource!\n");
+        return;
+    }
+
+    HGLOBAL hResData = LoadResource(hInstance, hRes);
+    if (hResData == NULL)
+    {
+        ERR("Failed to load resource!\n");
+        return;
+    }
+
+    DWORD dwSize = SizeofResource(hInstance, hRes);
+    if (dwSize == 0)
+    {
+        ERR("Failed to get resource size!\n");
+        return;
+    }
+
+    LPVOID pResData = LockResource(hResData);
+    if (pResData == NULL)
+    {
+        ERR("Failed to lock resource!\n");
+        return;
+    }
+
+    BYTE* pData = (BYTE*)pResData;
+
+    ERR("Dialog Template Data (Hex):\n");
+    for (DWORD i = 0; i < dwSize; ++i)
+    {
+        ERR("%02X ", pData[i]);
+        if ((i + 1) % 16 == 0)
+        {
+            ERR("\n");
+        }
+    }
+
+    if (dwSize % 16 != 0)
+    {
+        ERR("\n");
+    }
+}
+
 
 /*
  * @implemented
@@ -2041,6 +2129,7 @@ DialogBoxParamW(
   LPARAM dwInitParam)
 {
 	ERR("DialogBoxParamW\n");
+	PrintDialogTemplate(hInstance, lpTemplateName);
 	
     HWND hwnd;
     HRSRC hrsrc;
