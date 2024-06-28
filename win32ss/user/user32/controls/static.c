@@ -684,7 +684,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 
     /* SS_SIMPLE controls: WM_CTLCOLORSTATIC is sent, but the returned
                            brush is not used */
-    hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
+    //hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
 
     if ((style & SS_TYPEMASK) != SS_SIMPLE)
     {
@@ -741,7 +741,7 @@ static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style )
 
     /* FIXME: send WM_CTLCOLORSTATIC */
 #ifdef __REACTOS__
-    hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc); // Always sent....
+    //hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc); // Always sent....
 #endif
     switch (style & SS_TYPEMASK)
     {

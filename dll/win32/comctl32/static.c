@@ -604,7 +604,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 
     /* SS_SIMPLE controls: WM_CTLCOLORSTATIC is sent, but the returned
                            brush is not used */
-    hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
+    //hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
 
     if ((style & SS_TYPEMASK) != SS_SIMPLE)
     {

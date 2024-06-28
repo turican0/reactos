@@ -1324,7 +1324,7 @@ IntDrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp, WPARAM wp,
     }
 
     /* For DSS_NORMAL we just jam in the image and return */
-    if((flags & 0x79f0) == DSS_NORMAL)
+    if((flags & 0x7ff0) == DSS_NORMAL)
     {
         return PAINTING_DrawStateJam(hdc, opcode, func, lp, len, &rc, dtflags, unicode);
     }
