@@ -283,6 +283,7 @@ static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
 
 static HBRUSH STATIC_SendWmCtlColorStatic(HWND hwnd, HDC hdc)
 {
+	ERR("STATIC_SendWmCtlColorStatic\n");
 #ifdef __REACTOS__
     return GetControlBrush( hwnd, hdc, WM_CTLCOLORSTATIC);
 #else
@@ -622,6 +623,8 @@ static BOOL CALLBACK STATIC_DrawTextCallback(HDC hdc, LPARAM lp, WPARAM wp, int 
 
 static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 {
+	ERR("STATIC_PaintTextfn\n");
+	
     RECT rc;
     HBRUSH hBrush;
     HFONT hFont, hOldFont = NULL;
@@ -734,6 +737,8 @@ no_TextOut:
 
 static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style )
 {
+	ERR("STATIC_PaintRectfn\n");
+	
     RECT rc;
     HBRUSH hBrush;
 
@@ -869,6 +874,8 @@ static void STATIC_PaintEnhMetafn(HWND hwnd, HDC hdc, DWORD style )
 
 static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style )
 {
+	ERR("STATIC_PaintEtchedfn\n");
+	
     RECT rc;
 
     /* FIXME: sometimes (not always) sends WM_CTLCOLORSTATIC */
