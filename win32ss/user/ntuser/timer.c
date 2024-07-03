@@ -189,14 +189,14 @@ IntSetTimer( PWND Window,
   /* Windows NT/2k/XP behaviour */
   if (Elapse > USER_TIMER_MAXIMUM)
   {
-     TRACE("Adjusting uElapse\n");
+     ERR("Adjusting uElapse\n");
      Elapse = 1;
   }
 #else
   /* Windows XP SP2 and Windows Server 2003 behaviour */
   if (Elapse > USER_TIMER_MAXIMUM)
   {
-     TRACE("Adjusting uElapse\n");
+     ERR("Adjusting uElapse\n");
      Elapse = USER_TIMER_MAXIMUM;
   }
 #endif
@@ -204,7 +204,7 @@ IntSetTimer( PWND Window,
   /* Windows 2k/XP and Windows Server 2003 SP1 behaviour */
   if (Elapse < USER_TIMER_MINIMUM)
   {
-     TRACE("Adjusting uElapse\n");
+     ERR("Adjusting uElapse\n");
      Elapse = USER_TIMER_MINIMUM; // 1024hz .9765625 ms, set to 10.0 ms (+/-)1 ms
   }
 
@@ -634,6 +634,8 @@ NtUserSetTimer
    TIMERPROC lpTimerFunc
 )
 {
+    	DbgPrint ("NtUserSetTimer: %x | %d | %p\n", nIDEvent, uElapse, lpTimerFunc);
+	
    PWND Window = NULL;
    UINT_PTR ret;
 
@@ -645,6 +647,8 @@ NtUserSetTimer
 
    UserLeave();
    TRACE("Leave NtUserSetTimer, ret=%u\n", ret);
+   
+   	DbgPrint ("NtUserSetTimer, ret=%x\n\n", ret);
 
    return ret;
 }
@@ -658,6 +662,8 @@ NtUserKillTimer
    UINT_PTR uIDEvent
 )
 {
+	DbgPrint ("NtUserKillTimer: %x\n", uIDEvent);
+	
    PWND Window = NULL;
    BOOL ret;
 
@@ -670,6 +676,7 @@ NtUserKillTimer
    UserLeave();
 
    TRACE("Leave NtUserKillTimer, ret=%i\n", ret);
+   	DbgPrint ("NtUserKillTimer, ret=%i\n\n", ret);
    return ret;
 }
 

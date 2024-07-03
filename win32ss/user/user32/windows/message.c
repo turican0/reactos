@@ -1900,6 +1900,17 @@ WINAPI
 DECLSPEC_HOTPATCH
 DispatchMessageA(CONST MSG *lpmsg)
 {
+	/*
+	HWND hwnd;
+	UINT message;
+	WPARAM wParam;
+	LPARAM lParam;
+	DWORD time;
+	POINT pt;
+
+	*/
+	if(lpmsg->message==0x113u)
+		DbgPrint ("DispatchMessageA: %x %x %x %u\n", lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam, lpmsg->time);
     LRESULT Ret = 0;
     MSG UnicodeMsg;
     PWND Wnd;
@@ -1989,6 +2000,8 @@ WINAPI
 DECLSPEC_HOTPATCH
 DispatchMessageW(CONST MSG *lpmsg)
 {
+	if(lpmsg->message==0x113u)
+		DbgPrint ("DispatchMessageA: %x %x %x %u\n", lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam, lpmsg->time);
     LRESULT Ret = 0;
     PWND Wnd;
     BOOL Hit = FALSE;
