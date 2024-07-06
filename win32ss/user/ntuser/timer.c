@@ -44,6 +44,13 @@ ERESOURCE TimerLock;
   KeLeaveCriticalRegion(); \
 }
 
+char buffer1[256]="";
+char buffer2[256]="";
+char buffer3[256]="";
+char buffer4[256]="";
+char buffer5[256]="";
+char buffer6[256]="";
+
 
 /* FUNCTIONS *****************************************************************/
 static
@@ -218,8 +225,8 @@ IntSetTimer( PWND Window,
   if ((!pTmr) && (Window == NULL) && (!(Type & TMRF_SYSTEM)))
   {
       IntLockWindowlessTimerBitmap();
-
       IDEvent = RtlFindClearBitsAndSet(&WindowLessTimersBitMap, 1, HintIndex);
+	  HintIndex++;//<----------------------------
 
       if (IDEvent == (UINT_PTR) -1)
       {
@@ -229,8 +236,7 @@ IntSetTimer( PWND Window,
          ASSERT(FALSE);
          return 0;
       }
-
-      IDEvent = NUM_WINDOW_LESS_TIMERS - IDEvent;
+	  IDEvent = NUM_WINDOW_LESS_TIMERS - IDEvent;
       Ret = IDEvent;
 
       IntUnlockWindowlessTimerBitmap();
@@ -268,7 +274,7 @@ IntSetTimer( PWND Window,
   // Start the timer thread!
   if (TimersListHead.Flink == TimersListHead.Blink) // There is only one timer
      KeSetTimer(MasterTimer, DueTime, NULL);
-
+	sprintf (buffer5,"Timer5: %x\n", Ret);
   return Ret;
 }
 
@@ -649,6 +655,12 @@ NtUserSetTimer
    TRACE("Leave NtUserSetTimer, ret=%u\n", ret);
    
    	DbgPrint ("NtUserSetTimer, ret=%x\n\n", ret);
+	DbgPrint ("%s", buffer1);
+	DbgPrint ("%s", buffer2);
+	DbgPrint ("%s", buffer3);
+	DbgPrint ("%s", buffer4);
+	DbgPrint ("%s", buffer5);
+	DbgPrint ("%s", buffer6);
 
    return ret;
 }

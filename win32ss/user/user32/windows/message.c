@@ -2001,7 +2001,7 @@ DECLSPEC_HOTPATCH
 DispatchMessageW(CONST MSG *lpmsg)
 {
 	if(lpmsg->message==0x113u)
-		DbgPrint ("DispatchMessageA: %x %x %x %u\n", lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam, lpmsg->time);
+		DbgPrint ("DispatchMessageW: %x %x %x %u\n", lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam, lpmsg->time);
     LRESULT Ret = 0;
     PWND Wnd;
     BOOL Hit = FALSE;
