@@ -678,8 +678,8 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
 	
 	/* fix for nonstandard SetBkMode Mirori Installer 0.5.11 */
-    if(GetBkMode(hdc)==0x557D0001)
-        PatBlt (hdc, rc.left, rc.top , rc.right-rc.left, rc.bottom-rc.top, WHITENESS);
+    //if(GetBkMode(hdc)==0x557D0001)
+    //    PatBlt (hdc, rc.left, rc.top , rc.right-rc.left, rc.bottom-rc.top, WHITENESS);
 
     if ((style & SS_TYPEMASK) != SS_SIMPLE)
     {

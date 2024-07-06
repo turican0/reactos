@@ -1056,6 +1056,16 @@ FrameRect(HDC hDC, CONST RECT *lprc, HBRUSH hbr)
 INT WINAPI
 FillRect(HDC hDC, CONST RECT *lprc, HBRUSH hbr)
 {
+	ERR("FillRect-win32ss-ntuser:\n");
+    ERR("hDC: %p\n", hDC);
+    if (lprc != NULL) {
+        ERR("lprc: { left: %ld, top: %ld, right: %ld, bottom: %ld }\n",
+               lprc->left, lprc->top, lprc->right, lprc->bottom);
+    } else {
+        ERR("lprc: NULL\n");
+    }
+    ERR("hbr: %p\n\n", hbr);
+	
     BOOL Ret;
     HBRUSH prevhbr = NULL;
 

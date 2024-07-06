@@ -1578,6 +1578,17 @@ FlashWindow(HWND hWnd, BOOL bInvert)
 INT WINAPI
 FillRect(HDC hDC, CONST RECT *lprc, HBRUSH hbr)
 {
+	/*if(hbr==(HBRUSH)0x00020000)*/hbr=(HBRUSH)0xabababab;
+	ERR("FillRect-win32ss-user32:\n");
+    ERR("hDC: %p\n", hDC);
+    if (lprc != NULL) {
+        ERR("lprc: { left: %ld, top: %ld, right: %ld, bottom: %ld }\n",
+               lprc->left, lprc->top, lprc->right, lprc->bottom);
+    } else {
+        ERR("lprc: NULL\n");
+    }
+    ERR("hbr: %p\n\n", hbr);
+	
     BOOL Ret;
     HBRUSH prevhbr = NULL;
 
