@@ -729,6 +729,7 @@ typedef struct {
 
 BOOL usp10_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
 {
+	ERR("usp10_array_reserve\n");
     SIZE_T max_capacity, new_capacity;
     void *new_elements;
 
@@ -760,6 +761,7 @@ BOOL usp10_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T
 /* TODO Fix font properties on Arabic locale */
 static inline BOOL set_cache_font_properties(const HDC hdc, ScriptCache *sc)
 {
+	ERR("set_cache_font_properties\n");
     sc->sfp.cBytes = sizeof(sc->sfp);
 
     if (!sc->sfnt)
@@ -824,6 +826,8 @@ static inline BYTE get_cache_pitch_family(SCRIPT_CACHE *psc)
 
 static inline WORD get_cache_glyph(SCRIPT_CACHE *psc, DWORD c)
 {
+	ERR("get_cache_glyph\n");
+	
     CacheGlyphPage *page = ((ScriptCache *)*psc)->page[c / 0x10000];
     WORD *block;
 
@@ -835,6 +839,8 @@ static inline WORD get_cache_glyph(SCRIPT_CACHE *psc, DWORD c)
 
 static inline WORD set_cache_glyph(SCRIPT_CACHE *psc, WCHAR c, WORD glyph)
 {
+	ERR("set_cache_glyph\n");
+	
     CacheGlyphPage **page = &((ScriptCache *)*psc)->page[c / 0x10000];
     WORD **block;
     if (!*page && !(*page = heap_alloc_zero(sizeof(CacheGlyphPage)))) return 0;
@@ -846,6 +852,8 @@ static inline WORD set_cache_glyph(SCRIPT_CACHE *psc, WCHAR c, WORD glyph)
 
 static inline BOOL get_cache_glyph_widths(SCRIPT_CACHE *psc, WORD glyph, ABC *abc)
 {
+	ERR("get_cache_glyph_widths\n");
+	
     static const ABC nil;
     ABC *block = ((ScriptCache *)*psc)->widths[glyph >> GLYPH_BLOCK_SHIFT];
 
@@ -856,6 +864,8 @@ static inline BOOL get_cache_glyph_widths(SCRIPT_CACHE *psc, WORD glyph, ABC *ab
 
 static inline BOOL set_cache_glyph_widths(SCRIPT_CACHE *psc, WORD glyph, ABC *abc)
 {
+	ERR("set_cache_glyph_widths\n");
+	
     ABC **block = &((ScriptCache *)*psc)->widths[glyph >> GLYPH_BLOCK_SHIFT];
 
     if (!*block && !(*block = heap_alloc_zero(sizeof(ABC) * GLYPH_BLOCK_SIZE))) return FALSE;
@@ -865,6 +875,8 @@ static inline BOOL set_cache_glyph_widths(SCRIPT_CACHE *psc, WORD glyph, ABC *ab
 
 static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
 {
+	ERR("init_script_cache\n");
+	
     ScriptCache *sc;
     unsigned size;
     LOGFONTW lf;
@@ -945,6 +957,8 @@ static WCHAR mirror_char( WCHAR ch )
 
 static DWORD decode_surrogate_pair(const WCHAR *str, unsigned int index, unsigned int end)
 {
+	ERR("decode_surrogate_pair\n");
+	
     if (index < end-1 && IS_SURROGATE_PAIR(str[index],str[index+1]))
     {
         DWORD ch = 0x10000 + ((str[index] - 0xd800) << 10) + (str[index+1] - 0xdc00);
@@ -969,6 +983,8 @@ static int __cdecl usp10_compare_script_range(const void *key, const void *value
 static enum usp10_script get_char_script(const WCHAR *str, unsigned int index,
         unsigned int end, unsigned int *consumed)
 {
+	ERR("get_char_script\n");
+	
     static const WCHAR latin_punc[] = {'#','$','&','\'',',',';','<','>','?','@','\\','^','_','`','{','|','}','~', 0x00a0, 0};
     struct usp10_script_range *range;
     WORD type = 0, type2 = 0;
@@ -1079,6 +1095,8 @@ int USP10_FindGlyphInLogClust(const WORD* pwLogClust, int cChars, WORD target)
  */
 HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
 {
+	ERR("ScriptFreeCache\n");
+	
     TRACE("%p\n", psc);
 
     if (psc && *psc)
@@ -1153,6 +1171,8 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
  */
 HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***props, int *num)
 {
+	ERR("ScriptGetProperties\n");
+	
     TRACE("(%p,%p)\n", props, num);
 
     if (!props && !num) return E_INVALIDARG;
@@ -1175,6 +1195,8 @@ HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***props, int *num)
  */
 HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp)
 {
+	ERR("ScriptGetFontProperties\n");
+	
     HRESULT hr;
 
     TRACE("%p,%p,%p\n", hdc, psc, sfp);
@@ -1208,6 +1230,8 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
  */
 HRESULT WINAPI ScriptRecordDigitSubstitution(LCID locale, SCRIPT_DIGITSUBSTITUTE *sds)
 {
+	ERR("ScriptRecordDigitSubstitution\n");
+	
     DWORD plgid, sub;
 
     TRACE("0x%x, %p\n", locale, sds);

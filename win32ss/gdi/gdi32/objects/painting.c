@@ -22,11 +22,11 @@ LineTo(
     _In_ INT y )
 {
 	DbgPrint("LineTo: %x %d %d\n",hdc,x,y);
-	x = 0;
-	y = 0;
+	//x = 0;
+	//y = 0;
 	
-	HPEN hPen = CreatePen(PS_SOLID, 1, RGB(lcg_next() % 255, lcg_next() % 255, lcg_next() % 255));
-    SelectObject(hdc, hPen);
+	//HPEN hPen = CreatePen(PS_SOLID, 1, RGB(lcg_next() % 255, lcg_next() % 255, lcg_next() % 255));
+    //SelectObject(hdc, hPen);
 
     HANDLE_METADC(BOOL, LineTo, FALSE, hdc, x, y);	
 
@@ -34,13 +34,13 @@ LineTo(
 
     BOOL result = NtGdiLineTo(hdc, x, y);
 	
-	for (int i = 0; i<200; i+=10)
+	/*for (int i = 0; i<200; i+=10)
 	{
 		NtGdiLineTo(hdc, 0, i);
 		NtGdiLineTo(hdc, 500, i);
-	}
+	}*/
 	
-	DeleteObject(hPen);
+	//DeleteObject(hPen);
 	return result;
 }
 
