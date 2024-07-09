@@ -1,5 +1,15 @@
 #include <precomp.h>
 
+unsigned int current_rand;
+
+unsigned int lcg_next() {
+    const unsigned int a = 1664525;
+    const unsigned int c = 1013904223;
+    const unsigned int m = 0xFFFFFFFF; // 2^32
+
+    current_rand = (a * current_rand + c) % m;
+    return current_rand;
+}
 
 /*
  * @implemented
@@ -11,11 +21,27 @@ LineTo(
     _In_ INT x,
     _In_ INT y )
 {
-    HANDLE_METADC(BOOL, LineTo, FALSE, hdc, x, y);
+	DbgPrint("LineTo: %x %d %d\n",hdc,x,y);
+	x = 0;
+	y = 0;
+	
+	HPEN hPen = CreatePen(PS_SOLID, 1, RGB(lcg_next() % 255, lcg_next() % 255, lcg_next() % 255));
+    SelectObject(hdc, hPen);
+
+    HANDLE_METADC(BOOL, LineTo, FALSE, hdc, x, y);	
 
     if ( GdiConvertAndCheckDC(hdc) == NULL ) return FALSE;
 
-    return NtGdiLineTo(hdc, x, y);
+    BOOL result = NtGdiLineTo(hdc, x, y);
+	
+	for (int i = 0; i<200; i+=10)
+	{
+		NtGdiLineTo(hdc, 0, i);
+		NtGdiLineTo(hdc, 500, i);
+	}
+	
+	DeleteObject(hPen);
+	return result;
 }
 
 
@@ -27,6 +53,7 @@ MoveToEx(
     _In_ INT y,
     _Out_opt_ LPPOINT ppt)
 {
+	DbgPrint("MoveToEx: %d %d\n",x,y);
     PDC_ATTR pdcattr;
 
     HANDLE_METADC(BOOL, MoveTo, FALSE, hdc, x, y);

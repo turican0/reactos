@@ -1440,6 +1440,8 @@ IntFlashWindowEx(PWND pWnd, PFLASHWINFO pfwi)
 HDC FASTCALL
 IntBeginPaint(PWND Window, PPAINTSTRUCT Ps)
 {
+	DbgPrint("IntBeginPaint: %x %x\n",Window,Ps);
+	
    RECT Rect;
    INT type;
    BOOL Erase = FALSE;
@@ -1537,6 +1539,7 @@ IntBeginPaint(PWND Window, PPAINTSTRUCT Ps)
 BOOL FASTCALL
 IntEndPaint(PWND Wnd, PPAINTSTRUCT Ps)
 {
+	DbgPrint("IntEndPaint: %x %x\n",Wnd,Ps);
    HDC hdc = NULL;
 
    hdc = Ps->hdc;
