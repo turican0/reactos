@@ -21,7 +21,7 @@ LineTo(
     _In_ INT x,
     _In_ INT y )
 {
-	DbgPrint("LineTo: %x %d %d\n",hdc,x,y);
+	//DbgPrint("LineTo: %x %d %d\n",hdc,x,y);
 	//x = 0;
 	//y = 0;
 	
@@ -53,7 +53,7 @@ MoveToEx(
     _In_ INT y,
     _Out_opt_ LPPOINT ppt)
 {
-	DbgPrint("MoveToEx: %d %d\n",x,y);
+	//DbgPrint("MoveToEx: %d %d\n",x,y);
     PDC_ATTR pdcattr;
 
     HANDLE_METADC(BOOL, MoveTo, FALSE, hdc, x, y);
