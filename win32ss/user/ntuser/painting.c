@@ -933,7 +933,7 @@ co_UserRedrawWindow(
       if (UpdateRgn)
       {
 		  ERR("UpdateRect1!\n");
-          /*TmpRgn = IntSysCreateRectpRgn(0, 0, 0, 0);
+          TmpRgn = IntSysCreateRectpRgn(0, 0, 0, 0);
 
           if (UpdateRgn > PRGN_WINDOW)
           {
@@ -954,9 +954,35 @@ co_UserRedrawWindow(
 		  ERR("Window->rcWindow: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
 		  ERR("Window->rcClient: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
 		  if (UpdateRect != NULL)
-			ERR("UpdateRect: %d %d %d %d\n",UpdateRect->left,UpdateRect->right,UpdateRect->top,UpdateRect->bottom);*/
+			ERR("UpdateRect: %d %d %d %d\n",UpdateRect->left,UpdateRect->right,UpdateRect->top,UpdateRect->bottom);
+		
+			/*if ((Flags & (RDW_INVALIDATE | RDW_FRAME)) == (RDW_INVALIDATE | RDW_FRAME) ||
+                (Flags & (RDW_VALIDATE | RDW_NOFRAME)) == (RDW_VALIDATE | RDW_NOFRAME))
+            {
+               if (!RECTL_bIsEmptyRect(&Window->rcWindow))
+                   TmpRgn = IntSysCreateRectpRgnIndirect(&Window->rcWindow);
+            }
+            else
+            {
+               if (!RECTL_bIsEmptyRect(&Window->rcClient))
+                   TmpRgn = IntSysCreateRectpRgnIndirect(&Window->rcClient);
+            }*/
+			//TmpRgn = NULL;
+			ERR("TmpRgn: %d %d %d %d\n",TmpRgn->rdh.rcBound.left,TmpRgn->rdh.rcBound.right,TmpRgn->rdh.rcBound.top,TmpRgn->rdh.rcBound.bottom);
+			if ((Flags & (RDW_INVALIDATE | RDW_FRAME)) == (RDW_INVALIDATE | RDW_FRAME) ||
+                (Flags & (RDW_VALIDATE | RDW_NOFRAME)) == (RDW_VALIDATE | RDW_NOFRAME))
+            {
+               if (!RECTL_bIsEmptyRect(&Window->rcWindow))
+                   TmpRgn = IntSysCreateRectpRgnIndirect(&Window->rcWindow);
+            }
+            else
+            {
+               if (!RECTL_bIsEmptyRect(&Window->rcClient))
+                   TmpRgn = IntSysCreateRectpRgnIndirect(&Window->rcClient);
+            }
+			ERR("TmpRgn: %d %d %d %d\n",TmpRgn->rdh.rcBound.left,TmpRgn->rdh.rcBound.right,TmpRgn->rdh.rcBound.top,TmpRgn->rdh.rcBound.bottom);
       }
-      //else
+      else
       {
          if (UpdateRect != NULL)
          {
