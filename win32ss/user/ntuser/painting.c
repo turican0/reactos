@@ -927,26 +927,45 @@ co_UserRedrawWindow(
 
    if (Flags & (RDW_INVALIDATE | RDW_VALIDATE)) // Both are OKAY!
    {
+	   ERR("UpdateRect %d!\n", UpdateRect);
       /* We can't hold lock on GDI objects while doing roundtrips to user mode,
        * so use a copy instead */
-      /*if (UpdateRgn)
+      if (UpdateRgn)
       {
-          TmpRgn = IntSysCreateRectpRgn(0, 0, 0, 0);
+		  ERR("UpdateRect1!\n");
+          /*TmpRgn = IntSysCreateRectpRgn(0, 0, 0, 0);
 
           if (UpdateRgn > PRGN_WINDOW)
           {
+  
+			  
+			  ERR("UpdateRgn!\n");
              IntGdiCombineRgn(TmpRgn, UpdateRgn, NULL, RGN_COPY);
           }
 
           if (Window != UserGetDesktopWindow())
           {
-             REGION_bOffsetRgn(TmpRgn, Window->rcClient.left, Window->rcClient.top);
+			  ERR("Window!\n");             
+			 if (UpdateRect != NULL)
+				 REGION_bOffsetRgn(TmpRgn, Window->rcClient.left + UpdateRect->left, Window->rcClient.top  + UpdateRect->top);
+				 else
+			REGION_bOffsetRgn(TmpRgn, Window->rcClient.left, Window->rcClient.top);
           }
+		  ERR("Window->rcWindow: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
+		  ERR("Window->rcClient: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
+		  if (UpdateRect != NULL)
+			ERR("UpdateRect: %d %d %d %d\n",UpdateRect->left,UpdateRect->right,UpdateRect->top,UpdateRect->bottom);*/
       }
-      else*/
+      //else
       {
          if (UpdateRect != NULL)
          {
+			 ERR("Window->rcWindow: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
+		  ERR("Window->rcClient: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
+		  if (UpdateRect != NULL)
+			ERR("UpdateRect: %d %d %d %d\n",UpdateRect->left,UpdateRect->right,UpdateRect->top,UpdateRect->bottom);
+		
+			 ERR("UpdateRect2!\n");
             if (Window == UserGetDesktopWindow())
             {
                TmpRgn = IntSysCreateRectpRgnIndirect(UpdateRect);
@@ -961,6 +980,7 @@ co_UserRedrawWindow(
          }
          else
          {
+			 ERR("UpdateRect3!\n");
             if ((Flags & (RDW_INVALIDATE | RDW_FRAME)) == (RDW_INVALIDATE | RDW_FRAME) ||
                 (Flags & (RDW_VALIDATE | RDW_NOFRAME)) == (RDW_VALIDATE | RDW_NOFRAME))
             {
