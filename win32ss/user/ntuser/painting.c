@@ -920,6 +920,10 @@ co_UserRedrawWindow(
     * Transform the parameters UpdateRgn and UpdateRect into
     * a region hRgn specified in screen coordinates.
     */
+	
+	ERR("co_UserRedrawWindow - Flags %d\n",Flags);
+	ERR("Flags & (RDW_INVALIDATE | RDW_VALIDATE) %d\n",(Flags & (RDW_INVALIDATE | RDW_VALIDATE)));
+	ERR("UpdateRgn %d\n",UpdateRgn);
 
    if (Flags & (RDW_INVALIDATE | RDW_VALIDATE)) // Both are OKAY!
    {
@@ -927,6 +931,7 @@ co_UserRedrawWindow(
        * so use a copy instead */
       if (UpdateRgn)
       {
+		  ERR("UpdateRect1!\n");
           TmpRgn = IntSysCreateRectpRgn(0, 0, 0, 0);
 
           if (UpdateRgn > PRGN_WINDOW)
@@ -938,11 +943,16 @@ co_UserRedrawWindow(
           {
              REGION_bOffsetRgn(TmpRgn, Window->rcClient.left, Window->rcClient.top);
           }
+		  ERR("Window->rcWindow: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
+		  ERR("Window->rcClient: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
+		  if (UpdateRect != NULL)
+			ERR("UpdateRect: %d %d %d %d\n",UpdateRect->left,UpdateRect->right,UpdateRect->top,UpdateRect->bottom);		  
       }
       else
       {
          if (UpdateRect != NULL)
          {
+			 ERR("UpdateRect2!\n");
             if (Window == UserGetDesktopWindow())
             {
                TmpRgn = IntSysCreateRectpRgnIndirect(UpdateRect);
@@ -957,6 +967,7 @@ co_UserRedrawWindow(
          }
          else
          {
+			 ERR("UpdateRect3!\n");
             if ((Flags & (RDW_INVALIDATE | RDW_FRAME)) == (RDW_INVALIDATE | RDW_FRAME) ||
                 (Flags & (RDW_VALIDATE | RDW_NOFRAME)) == (RDW_VALIDATE | RDW_NOFRAME))
             {
@@ -972,6 +983,7 @@ co_UserRedrawWindow(
       }
    }
 
+	ERR("TmpRgn %d\n",TmpRgn);
    /* Fixes test RDW_INTERNALPAINT behavior */
    if (TmpRgn == NULL)
    {
@@ -983,6 +995,7 @@ co_UserRedrawWindow(
     * Adjust the window update region depending on hRgn and flags.
     */
 
+	ERR("(Flags & (RDW_INVALIDATE | RDW_VALIDATE | RDW_INTERNALPAINT | RDW_NOINTERNALPAINT) && TmpRgn != NULL) %d\n",(Flags & (RDW_INVALIDATE | RDW_VALIDATE | RDW_INTERNALPAINT | RDW_NOINTERNALPAINT) &&TmpRgn != NULL));
    if (Flags & (RDW_INVALIDATE | RDW_VALIDATE | RDW_INTERNALPAINT | RDW_NOINTERNALPAINT) &&
        TmpRgn != NULL)
    {
@@ -993,6 +1006,8 @@ co_UserRedrawWindow(
     * Step 4.
     * Repaint and erase windows if needed.
     */
+	
+	ERR("(Flags & RDW_UPDATENOW) %d\n",(Flags & RDW_UPDATENOW));
 
    if (Flags & RDW_UPDATENOW)
    {
@@ -1440,7 +1455,7 @@ IntFlashWindowEx(PWND pWnd, PFLASHWINFO pfwi)
 HDC FASTCALL
 IntBeginPaint(PWND Window, PPAINTSTRUCT Ps)
 {
-	DbgPrint("IntBeginPaint: %x %x\n",Window,Ps);
+	//DbgPrint("IntBeginPaint: %x %x\n",Window,Ps);
 	
    RECT Rect;
    INT type;
@@ -1539,7 +1554,7 @@ IntBeginPaint(PWND Window, PPAINTSTRUCT Ps)
 BOOL FASTCALL
 IntEndPaint(PWND Wnd, PPAINTSTRUCT Ps)
 {
-	DbgPrint("IntEndPaint: %x %x\n",Wnd,Ps);
+	//DbgPrint("IntEndPaint: %x %x\n",Wnd,Ps);
    HDC hdc = NULL;
 
    hdc = Ps->hdc;
