@@ -925,7 +925,7 @@ co_UserRedrawWindow(
    {
       /* We can't hold lock on GDI objects while doing roundtrips to user mode,
        * so use a copy instead */
-      if (UpdateRgn)
+      /*if (UpdateRgn)
       {
           TmpRgn = IntSysCreateRectpRgn(0, 0, 0, 0);
 
@@ -939,7 +939,7 @@ co_UserRedrawWindow(
              REGION_bOffsetRgn(TmpRgn, Window->rcClient.left, Window->rcClient.top);
           }
       }
-      else
+      else*/
       {
          if (UpdateRect != NULL)
          {
