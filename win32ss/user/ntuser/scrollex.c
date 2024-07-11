@@ -107,6 +107,7 @@ UserScrollDC(
    PREGION RgnUpdate,
    RECTL *prcUpdate)
 {
+	ERR("UserScrollDC\n");
    PDC pDC;
    RECTL rcScroll, rcClip, rcSrc, rcDst;
    INT Result;
@@ -116,26 +117,39 @@ UserScrollDC(
        ERR("GdiGetClipBox failed for HDC %p\n", hDC);
        return ERROR;
    }
+   
+   ERR("rcClip: %d %d %d %d\n",rcClip.left,rcClip.right,rcClip.top,rcClip.bottom);   
 
    rcScroll = rcClip;
    if (prcClip)
    {
+	   ERR("prcClip: %d %d %d %d\n",prcClip->left,prcClip->right,prcClip->top,prcClip->bottom);
       RECTL_bIntersectRect(&rcClip, &rcClip, prcClip);
+	  ERR("prcClip: %d %d %d %d\n",prcClip->left,prcClip->right,prcClip->top,prcClip->bottom);
    }
+   
+   ERR("rcClip: %d %d %d %d\n",rcClip.left,rcClip.right,rcClip.top,rcClip.bottom);   
 
    if (prcScroll)
    {
+	   ERR("prcScroll: %d %d %d %d\n",prcScroll->left,prcScroll->right,prcScroll->top,prcScroll->bottom);
       rcScroll = *prcScroll;
       RECTL_bIntersectRect(&rcSrc, &rcClip, prcScroll);
+	  ERR("prcScroll: %d %d %d %d\n",prcScroll->left,prcScroll->right,prcScroll->top,prcScroll->bottom);
    }
    else
    {
       rcSrc = rcClip;
    }
+   
+   ERR("rcClip: %d %d %d %d\n",rcClip.left,rcClip.right,rcClip.top,rcClip.bottom);   
 
    rcDst = rcSrc;
+   ERR("rcDst: %d %d %d %d\n",rcDst.left,rcDst.right,rcDst.top,rcDst.bottom);   
    RECTL_vOffsetRect(&rcDst, dx, dy);
+   ERR("rcDst: %d %d %d %d\n",rcDst.left,rcDst.right,rcDst.top,rcDst.bottom);   
    RECTL_bIntersectRect(&rcDst, &rcDst, &rcClip);
+   ERR("rcDst: %d %d %d %d\n",rcDst.left,rcDst.right,rcDst.top,rcDst.bottom);   
 
    if (!NtGdiBitBlt( hDC,
                      rcDst.left,
@@ -151,6 +165,8 @@ UserScrollDC(
    {
       return ERROR;
    }
+   
+   ERR("(RgnUpdate || hrgnUpdate || prcUpdate) %d\n",(RgnUpdate || hrgnUpdate || prcUpdate));   
 
    /* Calculate the region that was invalidated by moving or
       could not be copied, because it was not visible */
@@ -222,6 +238,13 @@ UserScrollDC(
 
    return Result;
 }
+
+/*
+void CopyRectangle(HDC hdc, int srcX, int srcY, int width, int height, int destX, int destY) {
+    if (hdc != NULL) {
+        BitBlt(hdc, destX, destY, width, height, hdc, srcX, srcY, SRCCOPY);
+    }
+}*/
 
 DWORD
 FASTCALL
@@ -303,7 +326,10 @@ ERR("prcClip: %d\n",prcClip);
        }
        IntGdiCombineRgn(RgnUpdate, RgnTemp, NULL, RGN_COPY);
        REGION_UnlockRgn(RgnTemp);
+	   ERR("RgnTemp1: %d %d %d %d\n",RgnTemp->rdh.rcBound.left,RgnTemp->rdh.rcBound.right,RgnTemp->rdh.rcBound.top,RgnTemp->rdh.rcBound.bottom);
    }
+   
+   ERR("RgnUpdate1: %d %d %d %d\n",RgnUpdate->rdh.rcBound.left,RgnUpdate->rdh.rcBound.right,RgnUpdate->rdh.rcBound.top,RgnUpdate->rdh.rcBound.bottom);
    
    ERR("flags: %d\n",flags);
    ERR("SW_SCROLLWNDDCE: %d\n",SW_SCROLLWNDDCE);
@@ -342,6 +368,16 @@ ERR("prcClip: %d\n",prcClip);
 
    rcCaret = rcScroll;
    hwndCaret = co_IntFixCaret(Window, &rcCaret, flags);
+   
+   ERR("rcScroll4: %d %d %d %d\n",rcScroll.left,rcScroll.right,rcScroll.top,rcScroll.bottom);
+   ERR("rcClip4: %d %d %d %d\n",rcClip.left,rcClip.right,rcClip.top,rcClip.bottom);
+		//here 1
+   ERR("dx dy: %d %d\n",dx,dy);
+   
+   if(prcUpdate!=NULL)
+	ERR("prcUpdate: %d %d %d %d\n",prcUpdate->left,prcUpdate->right,prcUpdate->top,prcUpdate->bottom);
+   
+   //CopyRectangle(hDC, 0, 0, 300, 300, 0+dx, 0+dy);
 
    Result = UserScrollDC( hDC,
                           dx,
@@ -353,6 +389,9 @@ ERR("prcClip: %d\n",prcClip);
                           prcUpdate);
 
    UserReleaseDC(Window, hDC, FALSE);
+   
+   
+   ERR("RgnUpdate4: %d %d %d %d\n",RgnUpdate->rdh.rcBound.left,RgnUpdate->rdh.rcBound.right,RgnUpdate->rdh.rcBound.top,RgnUpdate->rdh.rcBound.bottom);
    
    ERR("dx dy: %d\n",dx,dy);
 
@@ -380,17 +419,33 @@ ERR("prcClip: %d\n",prcClip);
              RgnWinupd = IntSysCreateRectpRgn(0, 0, 0, 0);
 			 ERR("RgnWinupd: %x\n",RgnWinupd);
              // FIXME: What to do if RgnWinupd == NULL??
+			 if (!RgnWinupd)
+			   {
+				   EngSetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				   Result = ERROR;
+				   goto Cleanup;
+			   }
              IntGdiCombineRgn( RgnWinupd, RgnTemp, 0, RGN_COPY);
+			 ERR("RgnTemp2: %d %d %d %d\n",RgnTemp->rdh.rcBound.left,RgnTemp->rdh.rcBound.right,RgnTemp->rdh.rcBound.top,RgnTemp->rdh.rcBound.bottom);
           }
 
           REGION_bOffsetRgn(RgnTemp, dx, dy);
-
+			
+			ERR("RgnTemp3: %d %d %d %d\n",RgnTemp->rdh.rcBound.left,RgnTemp->rdh.rcBound.right,RgnTemp->rdh.rcBound.top,RgnTemp->rdh.rcBound.bottom);
+			
           IntGdiCombineRgn(RgnTemp, RgnTemp, RgnClip, RGN_AND);
+
+		ERR("RgnTemp4: %d %d %d %d\n",RgnTemp->rdh.rcBound.left,RgnTemp->rdh.rcBound.right,RgnTemp->rdh.rcBound.top,RgnTemp->rdh.rcBound.bottom);
 
           if (hrgnUpdate)
               IntGdiCombineRgn( RgnWinupd, RgnWinupd, RgnTemp, RGN_OR );
+		  
+ERR("RgnTemp5: %d %d %d %d\n",RgnTemp->rdh.rcBound.left,RgnTemp->rdh.rcBound.right,RgnTemp->rdh.rcBound.top,RgnTemp->rdh.rcBound.bottom);
 
           co_UserRedrawWindow(Window, NULL, RgnTemp, rdw_flags );
+		  
+		  	//MoveToEx(hDC,RgnTemp->rdh.rcBound.right+Window->rcClient.left,RgnTemp->rdh.rcBound.bottom+Window->rcClient.top,NULL);
+			//LineTo(hDC,RgnTemp->rdh.rcBound.left+Window->rcClient.left,RgnTemp->rdh.rcBound.top+Window->rcClient.top);
 
           REGION_Delete(RgnClip);
       }
@@ -437,13 +492,35 @@ ERR("prcClip: %d\n",prcClip);
    }
 
 	ERR("flags & (SW_INVALIDATE | SW_ERASE) %d\n",(flags & (SW_INVALIDATE | SW_ERASE)));
+	ERR("RgnUpdate5: %d %d %d %d\n",RgnUpdate->rdh.rcBound.left,RgnUpdate->rdh.rcBound.right,RgnUpdate->rdh.rcBound.top,RgnUpdate->rdh.rcBound.bottom);
    if (flags & (SW_INVALIDATE | SW_ERASE))
    {
-      co_UserRedrawWindow( Window,
+	   /*
+	   RgnUpdate->rdh.rcBound.left = prcScroll->left;
+	   RgnUpdate->rdh.rcBound.right = prcScroll->right;
+	   RgnUpdate->rdh.rcBound.top = prcScroll->top;
+	   RgnUpdate->rdh.rcBound.bottom = prcScroll->bottom;
+	   */
+	   //prcScroll->left,prcScroll->right,prcScroll->top,prcScroll->bottom);
+	   //here
+	   
+	   
+	   
+	   
+	   
+	   
+	  PREGION RgnClip = IntSysCreateRectpRgnIndirect(&rcClip);
+      if (RgnClip)
+      {
+          co_UserRedrawWindow( Window,
                            NULL,
-                           RgnUpdate,
+                           RgnClip,
                            rdw_flags |                                    //    HACK    
                           ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : RDW_NOCHILDREN) );
+
+          REGION_Delete(RgnClip);
+	  }
+
    }
 
 	ERR("hwndCaret && (CaretWnd = UserGetWindowObject(hwndCaret)) %d\n",(hwndCaret && (CaretWnd = UserGetWindowObject(hwndCaret))));

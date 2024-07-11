@@ -80,7 +80,7 @@ IntGdiMoveToEx(DC      *dc,
                int     Y,
                LPPOINT Point)
 {
-	DbgPrint("IntGdiMoveToEx: %d %d\n",X,Y);
+	//DbgPrint("IntGdiMoveToEx: %d %d\n",X,Y);
     PDC_ATTR pdcattr = dc->pdcattr;
     if ( Point )
     {
@@ -148,7 +148,7 @@ IntGdiLineTo(DC  *dc,
              int XEnd,
              int YEnd)
 {
-	DbgPrint("IntGdiLineTo: %d %d\n",XEnd,YEnd);
+	//DbgPrint("IntGdiLineTo: %d %d\n",XEnd,YEnd);
     SURFACE *psurf;
     BOOL      Ret = TRUE;
     PBRUSH pbrLine;
@@ -498,7 +498,7 @@ NtGdiLineTo(HDC  hDC,
             int  XEnd,
             int  YEnd)
 {
-	DbgPrint("NtGdiLineTo: %d %d\n",XEnd,YEnd);
+	//DbgPrint("NtGdiLineTo: %d %d\n",XEnd,YEnd);
     DC *dc;
     BOOL Ret;
     RECT rcLockRect ;

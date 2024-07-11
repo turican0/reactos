@@ -933,6 +933,7 @@ co_UserRedrawWindow(
       if (UpdateRgn)
       {
 		  ERR("UpdateRect1!\n");
+		  ERR("UpdateRgnA: %d %d %d %d\n",UpdateRgn->rdh.rcBound.left,UpdateRgn->rdh.rcBound.right,UpdateRgn->rdh.rcBound.top,UpdateRgn->rdh.rcBound.bottom);
           TmpRgn = IntSysCreateRectpRgn(0, 0, 0, 0);
 
           if (UpdateRgn > PRGN_WINDOW)
@@ -942,13 +943,11 @@ co_UserRedrawWindow(
 			  ERR("UpdateRgn!\n");
              IntGdiCombineRgn(TmpRgn, UpdateRgn, NULL, RGN_COPY);
           }
-
+		  ERR("UpdateRgnB: %d %d %d %d\n",UpdateRgn->rdh.rcBound.left,UpdateRgn->rdh.rcBound.right,UpdateRgn->rdh.rcBound.top,UpdateRgn->rdh.rcBound.bottom);
+			ERR("TmpRgn: %d %d %d %d\n",TmpRgn->rdh.rcBound.left,TmpRgn->rdh.rcBound.right,TmpRgn->rdh.rcBound.top,TmpRgn->rdh.rcBound.bottom);
           if (Window != UserGetDesktopWindow())
           {
 			  ERR("Window!\n");             
-			 if (UpdateRect != NULL)
-				 REGION_bOffsetRgn(TmpRgn, Window->rcClient.left + UpdateRect->left, Window->rcClient.top  + UpdateRect->top);
-				 else
 			REGION_bOffsetRgn(TmpRgn, Window->rcClient.left, Window->rcClient.top);
           }
 		  ERR("Window->rcWindow: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
@@ -969,7 +968,7 @@ co_UserRedrawWindow(
             }*/
 			//TmpRgn = NULL;
 			ERR("TmpRgn: %d %d %d %d\n",TmpRgn->rdh.rcBound.left,TmpRgn->rdh.rcBound.right,TmpRgn->rdh.rcBound.top,TmpRgn->rdh.rcBound.bottom);
-			if ((Flags & (RDW_INVALIDATE | RDW_FRAME)) == (RDW_INVALIDATE | RDW_FRAME) ||
+			/*if ((Flags & (RDW_INVALIDATE | RDW_FRAME)) == (RDW_INVALIDATE | RDW_FRAME) ||
                 (Flags & (RDW_VALIDATE | RDW_NOFRAME)) == (RDW_VALIDATE | RDW_NOFRAME))
             {
                if (!RECTL_bIsEmptyRect(&Window->rcWindow))
@@ -980,7 +979,7 @@ co_UserRedrawWindow(
                if (!RECTL_bIsEmptyRect(&Window->rcClient))
                    TmpRgn = IntSysCreateRectpRgnIndirect(&Window->rcClient);
             }
-			ERR("TmpRgn: %d %d %d %d\n",TmpRgn->rdh.rcBound.left,TmpRgn->rdh.rcBound.right,TmpRgn->rdh.rcBound.top,TmpRgn->rdh.rcBound.bottom);
+			ERR("TmpRgn: %d %d %d %d\n",TmpRgn->rdh.rcBound.left,TmpRgn->rdh.rcBound.right,TmpRgn->rdh.rcBound.top,TmpRgn->rdh.rcBound.bottom);*/
       }
       else
       {
