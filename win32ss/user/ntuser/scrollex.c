@@ -8,6 +8,11 @@
 
 #include <win32k.h>
 
+#include <process.h>
+
+/* NtUserScrollWindowEx flag */
+#define SW_NODCCACHE  0x8000
+
 DBG_DEFAULT_CHANNEL(UserPainting);
 
 static
@@ -221,6 +226,163 @@ UserScrollDC(
       Result = NULLREGION;
 
    return Result;
+}
+
+/*************************************************************************
+ *           NtUserScrollWindowEx (win32u.@)
+ *
+ * Note: contrary to what the doc says, pixels that are scrolled from the
+ *      outside of clipRect to the inside are NOT painted.
+ */
+INT WINAPI WineNtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
+                                 const RECT *clip_rect, HRGN update_rgn,
+                                 RECT *update_rect, UINT flags )
+{
+    BOOL update = update_rect || update_rgn || flags & (SW_INVALIDATE | SW_ERASE);
+    BOOL own_rgn = TRUE, move_caret = FALSE;
+    HRGN temp_rgn, winupd_rgn = 0;
+    INT retval = NULLREGION;
+    HWND caret_hwnd = NULL;
+    POINT new_caret_pos;
+    RECT rc, cliprc;
+    int rdw_flags;
+    HDC hdc;
+	PWND Window = NULL;
+
+    /*TRACE( "%p, %d,%d update_rgn=%p update_rect = %p %s %04x\n",
+           hwnd, dx, dy, update_rgn, update_rect, wine_dbgstr_rect(rect), flags );
+    TRACE( "clip_rect = %s\n", wine_dbgstr_rect(clip_rect) );*/
+    if (flags & ~(SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE | SW_NODCCACHE))
+        FIXME( "some flags (%04x) are unhandled\n", flags );
+
+    rdw_flags = (flags & SW_ERASE) && (flags & SW_INVALIDATE) ?
+        RDW_INVALIDATE | RDW_ERASE  : RDW_INVALIDATE;
+		
+	Window = UserGetWindowObject(hwnd);
+
+    if (!IntIsWindowDrawable( Window )) return ERROR;
+    //hwnd = get_full_window_handle( hwnd );
+
+    IntGetClientRect( Window, &rc );
+    if (clip_rect) RECTL_bIntersectRect( &cliprc, &rc, clip_rect );
+    else cliprc = rc;
+
+    if (rect) RECTL_bIntersectRect( &rc, &rc, rect );
+    if (update_rgn) own_rgn = FALSE;
+    else if (update) update_rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+
+    new_caret_pos.x = new_caret_pos.y = 0;
+
+    if (/*!IsRectEmpty( &cliprc ) &&*/ (dx || dy))
+    {
+        //DWORD style = GetWindowLong( hwnd, GWL_STYLE );
+        DWORD dcxflags = 0;
+
+        caret_hwnd = co_IntFixCaret( Window, &rc, /*dx, dy,*/ flags/*, &move_caret, &new_caret_pos */);
+        if (caret_hwnd) NtUserHideCaret( caret_hwnd );
+
+        if (!(flags & SW_NODCCACHE)) dcxflags |= DCX_CACHE;
+        if (Window->style & WS_CLIPSIBLINGS) dcxflags |= DCX_CLIPSIBLINGS;
+        //if (GetClassLong( hwnd, GCL_STYLE/*, FALSE*/ ) & CS_PARENTDC) dcxflags |= DCX_PARENTCLIP;
+        if (!(flags & SW_SCROLLCHILDREN) && (Window->style & WS_CLIPCHILDREN))
+            dcxflags |= DCX_CLIPCHILDREN;
+        hdc = NtUserGetDCEx( hwnd, 0, dcxflags);
+        if (hdc)
+        {
+            NtUserScrollDC( hdc, dx, dy, &rc, &cliprc, update_rgn, update_rect );
+            UserReleaseDC( Window, hdc, FALSE );
+            if (!update) NtUserRedrawWindow( hwnd, NULL, update_rgn, rdw_flags );
+        }
+
+        /* If the windows has an update region, this must be scrolled as well.
+         * Keep a copy in winupd_rgn to be added to hrngUpdate at the end. */
+        temp_rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        retval = NtUserGetUpdateRgn( hwnd, temp_rgn, FALSE );
+        if (retval != NULLREGION)
+        {
+            HRGN clip_rgn = NtGdiCreateRectRgn( cliprc.left, cliprc.top,
+                                                cliprc.right, cliprc.bottom );
+            if (!own_rgn)
+            {
+                winupd_rgn = NtGdiCreateRectRgn( 0, 0, 0, 0);
+                NtGdiCombineRgn( winupd_rgn, temp_rgn, 0, RGN_COPY);
+            }
+            NtGdiOffsetRgn( temp_rgn, dx, dy );
+            NtGdiCombineRgn( temp_rgn, temp_rgn, clip_rgn, RGN_AND );
+            if (!own_rgn) NtGdiCombineRgn( winupd_rgn, winupd_rgn, temp_rgn, RGN_OR );
+            NtUserRedrawWindow( hwnd, NULL, temp_rgn, rdw_flags );
+
+           /*
+            * Catch the case where the scrolling amount exceeds the size of the
+            * original window. This generated a second update area that is the
+            * location where the original scrolled content would end up.
+            * This second region is not returned by the ScrollDC and sets
+            * ScrollWindowEx apart from just a ScrollDC.
+            *
+            * This has been verified with testing on windows.
+            */
+            if (abs( dx ) > abs( rc.right - rc.left ) || abs( dy ) > abs( rc.bottom - rc.top ))
+            {
+                NtGdiSetRectRgn( temp_rgn, rc.left + dx, rc.top + dy, rc.right+dx, rc.bottom + dy );
+                NtGdiCombineRgn( temp_rgn, temp_rgn, clip_rgn, RGN_AND );
+                NtGdiCombineRgn( update_rgn, update_rgn, temp_rgn, RGN_OR );
+
+                if (update_rect)
+                {
+                    RECT temp_rect;
+                    NtGdiGetRgnBox( temp_rgn, &temp_rect );
+                    RECTL_bUnionRect( update_rect, update_rect, &temp_rect );
+                }
+
+                if (!own_rgn) NtGdiCombineRgn( winupd_rgn, winupd_rgn, temp_rgn, RGN_OR );
+            }
+            NtGdiDeleteObjectApp( clip_rgn );
+        }
+        NtGdiDeleteObjectApp( temp_rgn );
+    }
+    else
+    {
+        /* nothing was scrolled */
+        if (!own_rgn) NtGdiSetRectRgn( update_rgn, 0, 0, 0, 0 );
+        //SetRectEmpty( update_rect );
+    }
+
+    if (flags & SW_SCROLLCHILDREN)
+    {
+        HWND *list = IntWinListChildren( Window );
+        if (list)
+        {
+            RECT r, dummy;
+            int i;
+
+            for (i = 0; list[i]; i++)
+            {
+                //GetWindowRects( list[i], COORDS_PARENT, &r, NULL, get_thread_dpi() );
+                //GetWindowRect(list[i], &r);
+				if (!rect || RECTL_bIntersectRect( &dummy, &r, rect ))
+                    NtUserSetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
+                                        SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |
+                                        SWP_NOREDRAW | SWP_DEFERERASE );
+            }
+            ExFreePoolWithTag(list, USERTAG_WINDOWLIST);
+        }
+    }
+
+    if (flags & (SW_INVALIDATE | SW_ERASE))
+        NtUserRedrawWindow( hwnd, NULL, update_rgn, rdw_flags |
+                            ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
+
+    if (winupd_rgn)
+    {
+        NtGdiCombineRgn( update_rgn, update_rgn, winupd_rgn, RGN_OR );
+        NtGdiDeleteObjectApp( winupd_rgn );
+    }
+
+    if (move_caret) SetCaretPos( new_caret_pos.x, new_caret_pos.y );
+    if (caret_hwnd) NtUserShowCaret( caret_hwnd );
+    if (own_rgn && update_rgn) NtGdiDeleteObjectApp( update_rgn );
+
+    return retval;
 }
 
 DWORD
@@ -583,6 +745,7 @@ NtUserScrollWindowEx(
    LPRECT prcUnsafeUpdate,
    UINT flags)
 {
+	return WineNtUserScrollWindowEx(hWnd, dx, dy, prcUnsafeScroll, prcUnsafeClip, hrgnUpdate, prcUnsafeUpdate, flags);
    DWORD Result = ERROR;
    NTSTATUS Status = STATUS_SUCCESS;
    PWND Window = NULL;
