@@ -910,6 +910,7 @@ NtUserCallHwndParamLock(
         case TWOPARAM_ROUTINE_VALIDATERGN:
         {
             PREGION Rgn = REGION_LockRgn((HRGN)Param);
+			ERR("co_UserRedrawWindow 21\n");
             Ret = (DWORD)co_UserRedrawWindow(Window, NULL, Rgn, RDW_VALIDATE);
             if (Rgn) REGION_UnlockRgn(Rgn);
             break;

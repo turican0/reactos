@@ -950,6 +950,11 @@ co_UserRedrawWindow(
 			  ERR("Window!\n");             
 			REGION_bOffsetRgn(TmpRgn, Window->rcClient.left, Window->rcClient.top);
           }
+		  REGION_SetRectRgn(TmpRgn,
+			Window->rcClient.left,
+			Window->rcClient.top,
+			Window->rcClient.right,
+			Window->rcClient.bottom);
 		  ERR("Window->rcWindow: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
 		  ERR("Window->rcClient: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
 		  if (UpdateRect != NULL)

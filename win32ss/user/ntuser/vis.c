@@ -165,12 +165,19 @@ co_VIS_WindowLayoutChanged(
                          Wnd->rcWindow.top - Parent->rcClient.top);
 
        UserRefObjectCo(Parent, &Ref);
+	   ERR("co_UserRedrawWindow 20\n");
        co_UserRedrawWindow(Parent, NULL, TempRgn,
                            RDW_FRAME | RDW_ERASE | RDW_INVALIDATE |
                            RDW_ALLCHILDREN);
        UserDerefObjectCo(Parent);
 
        REGION_Delete(TempRgn);
+	   
+	   /*PREGION RgnClip = IntSysCreateRectpRgnIndirect(&Parent->rcClient);
+       IntInvalidateWindows(Parent, RgnClip, RDW_FRAME | RDW_ERASE | RDW_INVALIDATE |
+                           RDW_ALLCHILDREN);
+       REGION_Delete(RgnClip);*/
+	   
    }
 }
 

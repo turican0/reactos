@@ -1626,6 +1626,7 @@ co_IntShowDesktop(PDESKTOP Desktop, ULONG Width, ULONG Height, BOOL bRedraw)
 
     co_WinPosSetWindowPos(pwnd, NULL, 0, 0, Width, Height, flags);
 
+ERR("co_UserRedrawWindow 11b\n");
     if (bRedraw)
         co_UserRedrawWindow( pwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN | RDW_INVALIDATE );
 

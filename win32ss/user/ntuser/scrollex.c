@@ -276,6 +276,8 @@ IntScrollWindowEx(
    }
 
 	ERR("\n\nIntScrollWindowEx\n");
+	ERR("Window->rcWindow1: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
+	ERR("Window->rcClient1: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
    if (!Window || !IntIsWindowDrawable(Window))
    {
       return ERROR;
@@ -353,6 +355,9 @@ ERR("prcClip: %d\n",prcClip);
    }
    
    ERR("dcxflags: %d\n",dcxflags);
+   
+   ERR("Window->rcWindow2: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
+ERR("Window->rcClient2: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
 
    hDC = UserGetDCEx(Window, 0, dcxflags);
    if (!hDC)
@@ -368,6 +373,9 @@ ERR("prcClip: %d\n",prcClip);
 
    rcCaret = rcScroll;
    hwndCaret = co_IntFixCaret(Window, &rcCaret, flags);
+   
+   ERR("Window->rcWindow3: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
+   ERR("Window->rcClient3: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
    
    ERR("rcScroll4: %d %d %d %d\n",rcScroll.left,rcScroll.right,rcScroll.top,rcScroll.bottom);
    ERR("rcClip4: %d %d %d %d\n",rcClip.left,rcClip.right,rcClip.top,rcClip.bottom);
@@ -509,19 +517,18 @@ ERR("RgnTemp5: %d %d %d %d\n",RgnTemp->rdh.rcBound.left,RgnTemp->rdh.rcBound.rig
 	   
 	   
 	   
-	  PREGION RgnClip = IntSysCreateRectpRgnIndirect(&rcClip);
-      if (RgnClip)
-      {
 		  ERR("co_UserRedrawWindow 2\n");
+		  ERR("Window->rcWindow4: %d %d %d %d\n",Window->rcWindow.left,Window->rcWindow.right,Window->rcWindow.top,Window->rcWindow.bottom);
+		  ERR("Window->rcClient4: %d %d %d %d\n",Window->rcClient.left,Window->rcClient.right,Window->rcClient.top,Window->rcClient.bottom);
           co_UserRedrawWindow( Window,
                            NULL,
-                           RgnClip,
+                           RgnUpdate,
                            rdw_flags |                                    //    HACK    
                           ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : RDW_NOCHILDREN) );
 
-          REGION_Delete(RgnClip);
-	  }
-
+		/*PREGION RgnClip = IntSysCreateRectpRgnIndirect(&rcClip);
+      IntInvalidateWindows(Window, RgnClip, rdw_flags);
+      REGION_Delete(RgnClip);*/
    }
 
 	ERR("hwndCaret && (CaretWnd = UserGetWindowObject(hwndCaret)) %d\n",(hwndCaret && (CaretWnd = UserGetWindowObject(hwndCaret))));
