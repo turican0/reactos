@@ -2123,7 +2123,7 @@ NtUserRedrawWindow(
    }
 
    UserRefObjectCo(Wnd, &Ref);
-
+	ERR("co_UserRedrawWindow 8\n");
    Ret = co_UserRedrawWindow( Wnd,
                               lprcUpdate ? &SafeUpdateRect : NULL,
                               RgnUpdate,

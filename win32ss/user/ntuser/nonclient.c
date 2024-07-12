@@ -372,6 +372,7 @@ DefWndDoSizeMove(PWND pwnd, WORD wParam)
    }
 
    /* repaint the window before moving it around */
+   ERR("co_UserRedrawWindow 9\n");
    co_UserRedrawWindow( pwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN);
 
    IntNotifyWinEvent( EVENT_SYSTEM_MOVESIZESTART, pwnd, OBJID_WINDOW, CHILDID_SELF, 0);

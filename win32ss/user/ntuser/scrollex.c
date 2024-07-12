@@ -512,6 +512,7 @@ ERR("RgnTemp5: %d %d %d %d\n",RgnTemp->rdh.rcBound.left,RgnTemp->rdh.rcBound.rig
 	  PREGION RgnClip = IntSysCreateRectpRgnIndirect(&rcClip);
       if (RgnClip)
       {
+		  ERR("co_UserRedrawWindow 2\n");
           co_UserRedrawWindow( Window,
                            NULL,
                            RgnClip,

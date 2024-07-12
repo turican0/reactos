@@ -1482,6 +1482,7 @@ DesktopWindowProc(PWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT *lRe
             return TRUE;
         }
         case WM_SYSCOLORCHANGE:
+		ERR("co_UserRedrawWindow 11\n");
             co_UserRedrawWindow(Wnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN);
             return TRUE;
 

@@ -1227,6 +1227,7 @@ NtGdiUpdateColors(HDC hDC)
    }
 
    UserRefObjectCo(Wnd, &Ref);
+   //ERR("co_UserRedrawWindow 15\n");
    ret = co_UserRedrawWindow(Wnd, NULL, 0, RDW_INVALIDATE);
    UserDerefObjectCo(Wnd);
 

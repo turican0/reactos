@@ -1121,6 +1121,7 @@ IntDefWindowProc(
           * erase to redraw all subcontrols otherwise send the
           * WM_SYSCOLORCHANGE to child windows/controls is required
           */
+		  ERR("co_UserRedrawWindow 12\n");
          co_UserRedrawWindow( Wnd, NULL, NULL, RDW_ALLCHILDREN|RDW_INVALIDATE|RDW_ERASE);
          return (0);
       }
@@ -1174,6 +1175,7 @@ IntDefWindowProc(
                 if (pRgn) REGION_UnlockRgn(pRgn);
                 if (!wParam)
                     wParam = (RDW_ERASENOW | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
+				ERR("co_UserRedrawWindow 13\n");
                 co_UserRedrawWindow(Wnd, NULL, pRgn, wParam);
              }
              GreDeleteObject(hRgn);
@@ -1194,6 +1196,7 @@ IntDefWindowProc(
           {
              if (Wnd->style & WS_VISIBLE)
              {
+				 ERR("co_UserRedrawWindow 14\n");
                 co_UserRedrawWindow( Wnd, NULL, NULL, RDW_ALLCHILDREN | RDW_VALIDATE );
                 IntSetStyle( Wnd, 0, WS_VISIBLE );
              }

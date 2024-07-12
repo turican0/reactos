@@ -631,6 +631,7 @@ LRESULT co_UserFreeWindow(PWND Window,
        * Clear the update region to make sure no WM_PAINT messages will be
        * generated for this window while processing the WM_NCDESTROY.
        */
+	   ERR("co_UserRedrawWindow 5\n");
       co_UserRedrawWindow(Window, NULL, 0,
                           RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE |
                           RDW_NOINTERNALPAINT | RDW_NOCHILDREN);

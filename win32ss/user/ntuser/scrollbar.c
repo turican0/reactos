@@ -634,6 +634,7 @@ co_IntSetScrollInfo(PWND Window, INT nBar, LPCSCROLLINFO lpsi, BOOL bRedraw)
                UpdateRect.right -= Window->rcClient.left - Window->rcWindow.left;
                UpdateRect.top -= Window->rcClient.top - Window->rcWindow.top;
                UpdateRect.bottom -= Window->rcClient.top - Window->rcWindow.top;
+			   ERR("co_UserRedrawWindow 6\n");
                co_UserRedrawWindow(Window, &UpdateRect, 0, RDW_INVALIDATE | RDW_FRAME);
             }
             else
@@ -649,6 +650,7 @@ co_IntSetScrollInfo(PWND Window, INT nBar, LPCSCROLLINFO lpsi, BOOL bRedraw)
             UpdateRect.right -= Window->rcClient.left - Window->rcWindow.left;
             UpdateRect.top -= Window->rcClient.top - Window->rcWindow.top;
             UpdateRect.bottom -= Window->rcClient.top - Window->rcWindow.top;
+			ERR("co_UserRedrawWindow 7\n");
             if (bChangeParams || (OldPos != pSBData->pos))
                co_UserRedrawWindow(Window, &UpdateRect, 0, RDW_INVALIDATE | RDW_FRAME);
          }

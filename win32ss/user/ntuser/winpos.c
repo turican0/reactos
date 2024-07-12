@@ -1956,6 +1956,7 @@ co_WinPosSetWindowPos(
    if (WinPos.flags & SWP_HIDEWINDOW)
    {
       /* Clear the update region */
+	  ERR("co_UserRedrawWindow 3\n");
       co_UserRedrawWindow( Window,
                            NULL,
                            0,
@@ -2464,6 +2465,7 @@ co_WinPosMinMaximize(PWND Wnd, UINT ShowFlag, RECT* NewPos)
 
                old_style = IntSetStyle( Wnd, WS_MINIMIZE, WS_MAXIMIZE );
 
+				ERR("co_UserRedrawWindow 4\n");
                co_UserRedrawWindow(Wnd, NULL, 0, RDW_VALIDATE | RDW_NOERASE | RDW_NOINTERNALPAINT);
 
                if (!(Wnd->InternalPos.flags & WPF_SETMINPOSITION))

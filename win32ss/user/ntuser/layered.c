@@ -89,7 +89,7 @@ IntSetLayeredWindowAttributes(PWND pWnd,
       pLrdProp->Flags = dwFlags;
 
       pLrdProp->is_Layered = 1;
-  
+  ERR("co_UserRedrawWindow 10\n");
       if (!was_Layered)
          co_UserRedrawWindow(pWnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
    }
