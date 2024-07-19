@@ -1168,7 +1168,7 @@ void FlagsRedrawWindowTest()
 }
 
 START_TEST(RedrawWindow)
-{
-    GetMessageRedrawWindowTest();
+{    
     FlagsRedrawWindowTest();
+	GetMessageRedrawWindowTest();
 }
