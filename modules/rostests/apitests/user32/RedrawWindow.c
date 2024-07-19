@@ -3,18 +3,18 @@
  * LICENSE:     LGPL-2.1+ (https://spdx.org/licenses/LGPL-2.1+)
  * PURPOSE:     Test for RedrawWindow
  * COPYRIGHT:   Copyright 2018 Thomas Faber <thomas.faber@reactos.org>
+ *              Copyright 2024 Tomáš Veselý <turican0@gmail.com>
  */
 
 #include "precomp.h"
-//#include "../win32nt/win32nt.h"
-
-#include <windows.h>
-//#include <string>
-//#include <thread>
-//#include <chrono>
 
 static DWORD dwThreadId;
 static BOOL got_paint;
+
+BOOL resultWmEraseGnd = FALSE;
+BOOL resultWmNcPaint = FALSE;
+int paintIndex = 0;
+const wchar_t CHILD_CLASS_NAME[] = L"ChildWindowClass";
 
 static
 LRESULT
@@ -33,7 +33,7 @@ WndProc(
     }
     return DefWindowProcW(hWnd, message, wParam, lParam);
 }
-/*
+
 void GetMessageRedrawWindowTest()
 {
     HWND hWnd;
@@ -92,12 +92,8 @@ void GetMessageRedrawWindowTest()
     DestroyWindow(hWnd);
 }
 
-BOOL resultWmEraseGnd = FALSE;
-BOOL resultWmNcPaint = FALSE;
-int paintIndex = 0;
-const wchar_t CHILD_CLASS_NAME[] = L"ChildWindowClass";
-
-void DrawContent(HDC hdc, RECT* rect, COLORREF color) {
+void DrawContent(HDC hdc, RECT* rect, COLORREF color)
+{
     HBRUSH hBrush = CreateSolidBrush(color);
     FillRect(hdc, rect, hBrush);
     DeleteObject(hBrush);
@@ -107,7 +103,8 @@ void DrawContent(HDC hdc, RECT* rect, COLORREF color) {
     DrawTextW(hdc, L"Test RedrawWindow", -1, rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 }
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
     switch (uMsg)
     {
         case WM_DESTROY:
@@ -140,7 +137,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-LRESULT CALLBACK ChildWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK ChildWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
     switch (uMsg) {
     case WM_SYNCPAINT: {
         PAINTSTRUCT ps;
@@ -165,11 +163,10 @@ LRESULT CALLBACK ChildWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-typedef struct STRUCT_TestRedrawWindow {
+typedef struct STRUCT_TestRedrawWindow
+{
     const wchar_t* testName;
     DWORD flags;
-    //int winw;
-    //int winh;
     BOOL useRegion;
     RECT regRect;
     BOOL useRect;
@@ -185,7 +182,6 @@ typedef struct STRUCT_TestRedrawWindow {
     int testPixelPost2x;
     int testPixelPost2y;
     int testChild;
-
     COLORREF resultColorPre1;
     COLORREF resultColorPre2;
     COLORREF resultColorPost1;
@@ -198,7 +194,8 @@ typedef struct STRUCT_TestRedrawWindow {
     int resultPaintIndex;
 } STRUCT_TestRedrawWindow;
 
-typedef struct STRUCT_TestRedrawWindowCompare {
+typedef struct STRUCT_TestRedrawWindowCompare
+{
     COLORREF resultColorPre1;
     COLORREF resultColorPre2;
     COLORREF resultColorPost1;
@@ -209,9 +206,6 @@ typedef struct STRUCT_TestRedrawWindowCompare {
     BOOL resultWmNcPaint;
     int resultPaintIndex;
 } STRUCT_TestRedrawWindowCompare;
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-//void DrawContent(HDC hdc, RECT* rect, COLORREF color);
 
 void ServeSomeMessages(int messageTime, int messageCount)
 {
@@ -234,13 +228,9 @@ void ServeSomeMessages(int messageTime, int messageCount)
 }
 
 void TestRedrawWindow(STRUCT_TestRedrawWindow* ptestRW) {
-    //HDC hdc;
     DWORD style;
     int width;
     int height;
-    //HWND hwnd = NULL;
-    //RECT drect;
-    //WNDCLASS wcChild;
     HWND hChildWnd = NULL;
     HRGN RgnUpdate;
     RECT* prect;
@@ -316,8 +306,6 @@ void TestRedrawWindow(STRUCT_TestRedrawWindow* ptestRW) {
         ServeSomeMessages(10, 10);
     }
 
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
     hdc = GetDC(hwnd);
     ptestRW->resultColorPre1 = GetPixel(hdc, ptestRW->testPixelPre1x, ptestRW->testPixelPre1y);
     ptestRW->resultColorPre2 = GetPixel(hdc, ptestRW->testPixelPre2x, ptestRW->testPixelPre2y);
@@ -334,8 +322,6 @@ void TestRedrawWindow(STRUCT_TestRedrawWindow* ptestRW) {
     ptestRW->resultColorPost2 = GetPixel(hdc, ptestRW->testPixelPost2x, ptestRW->testPixelPost2y);
     ReleaseDC(hwnd, hdc);
 
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
     ptestRW->resultWmEraseGnd = resultWmEraseGnd;
     ptestRW->resultWmNcPaint = resultWmNcPaint;
     ptestRW->resultPaintIndex = paintIndex;
@@ -348,12 +334,9 @@ void TestRedrawWindow(STRUCT_TestRedrawWindow* ptestRW) {
         DestroyWindow(hwnd);
 }
 
-UINT TestRedrawWindow2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWindowCompare* ptestRWcompare) {
-    //wchar_t buffer[256];
+UINT TestRedrawWindow2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWindowCompare* ptestRWcompare)
+{
     UINT countErrors = 0;
-
-    //swprintf(buffer, 256, L"TEST - %s\n", ptestRW->testName);
-    //OutputDebugStringW(buffer);
 
     TestRedrawWindow(ptestRW);
 
@@ -361,95 +344,74 @@ UINT TestRedrawWindow2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWindow
     {
         if (ptestRWcompare->resultColorPre1 != ptestRW->resultColorPre1)
         {
-            //swprintf(buffer, 256, L"ERROR-resultColorPre1 %x %x\n", ptestRW->resultColorPre1, ptestRWcompare->resultColorPre1);
-            //OutputDebugStringW(buffer);
+            trace("aa");
+            trace("ERROR-resultColorPre1 %x %x\n", (int)ptestRW->resultColorPre1, (int)ptestRWcompare->resultColorPre1);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPre2 != ptestRW->resultColorPre2)
         {
-            //swprintf(buffer, 256, L"ERROR-resultColorPre2 %x %x\n", ptestRW->resultColorPre2, ptestRWcompare->resultColorPre2);
-            //OutputDebugStringW(buffer);
+            trace("ERROR-resultColorPre2 %x %x\n", (int)ptestRW->resultColorPre2, (int)ptestRWcompare->resultColorPre2);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost1 != ptestRW->resultColorPost1)
         {
-            //swprintf(buffer, 256, L"ERROR-resultColorPost1 %x %x\n", ptestRW->resultColorPost1, ptestRWcompare->resultColorPost1);
-            //OutputDebugStringW(buffer);
+            trace("ERROR-resultColorPost1 %x %x\n", (int)ptestRW->resultColorPost1, (int)ptestRWcompare->resultColorPost1);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost2 != ptestRW->resultColorPost2)
         {
-            //swprintf(buffer, 256, L"ERROR-resultColorPost2 %x %x\n", ptestRW->resultColorPost2, ptestRWcompare->resultColorPost2);
-            //OutputDebugStringW(buffer);
+            trace("ERROR-resultColorPost2 %x %x\n", (int)ptestRW->resultColorPost2, (int)ptestRWcompare->resultColorPost2);
             countErrors++;
         }
         if (ptestRWcompare->resultNeedsUpdate != ptestRW->resultNeedsUpdate)
         {
-            //swprintf(buffer, 256, L"ERROR-resultNeedsUpdate %d %d\n", ptestRW->resultNeedsUpdate, ptestRWcompare->resultNeedsUpdate);
-            //OutputDebugStringW(buffer);
+            trace("ERROR-resultNeedsUpdate %d %d\n", ptestRW->resultNeedsUpdate, ptestRWcompare->resultNeedsUpdate);
             countErrors++;
         }
         if (ptestRW->resultNeedsUpdate)
         {
             if (ptestRWcompare->resultUpdateRect.left != ptestRW->resultUpdateRect.left)
             {
-                //swprintf(buffer, 256, L"ERROR-resultUpdateRect.left %d %d\n", ptestRW->resultUpdateRect.left, ptestRWcompare->resultUpdateRect.left);
-                //OutputDebugStringW(buffer);
+                trace("ERROR-resultUpdateRect.left %d %d\n", (int)ptestRW->resultUpdateRect.left, (int)ptestRWcompare->resultUpdateRect.left);
                 countErrors++;
             }
             if (ptestRWcompare->resultUpdateRect.top != ptestRW->resultUpdateRect.top)
             {
-                //swprintf(buffer, 256, L"ERROR-resultUpdateRect.top %d %d\n", ptestRW->resultUpdateRect.top, ptestRWcompare->resultUpdateRect.top);
-                //OutputDebugStringW(buffer);
+                trace("ERROR-resultUpdateRect.top %d %d\n", (int)ptestRW->resultUpdateRect.top, (int)ptestRWcompare->resultUpdateRect.top);
                 countErrors++;
             }
             if (ptestRWcompare->resultUpdateRect.right != ptestRW->resultUpdateRect.right)
             {
-                //swprintf(buffer, 256, L"ERROR-resultUpdateRect.right %d %d\n", ptestRW->resultUpdateRect.right, ptestRWcompare->resultUpdateRect.right);
-                //OutputDebugStringW(buffer);
+                trace("ERROR-resultUpdateRect.right %d %d\n", (int)ptestRW->resultUpdateRect.right, (int)ptestRWcompare->resultUpdateRect.right);
                 countErrors++;
             }
             if (ptestRWcompare->resultUpdateRect.bottom != ptestRW->resultUpdateRect.bottom)
             {
-                //swprintf(buffer, 256, L"ERROR-resultUpdateRect.bottom %d %d\n", ptestRW->resultUpdateRect.bottom, ptestRWcompare->resultUpdateRect.bottom);
-                //OutputDebugStringW(buffer);
+                trace("ERROR-resultUpdateRect.bottom %d %d\n", (int)ptestRW->resultUpdateRect.bottom, (int)ptestRWcompare->resultUpdateRect.bottom);
                 countErrors++;
             }
         }
         if (ptestRWcompare->resultWmEraseGnd != ptestRW->resultWmEraseGnd)
         {
-            //swprintf(buffer, 256, L"ERROR-resultWmEraseGnd %d %d\n", ptestRW->resultWmEraseGnd, ptestRWcompare->resultWmEraseGnd);
-            //OutputDebugStringW(buffer);
+            trace("ERROR-resultWmEraseGnd %d %d\n", ptestRW->resultWmEraseGnd, ptestRWcompare->resultWmEraseGnd);
             countErrors++;
         }
         if (ptestRWcompare->resultWmNcPaint != ptestRW->resultWmNcPaint)
         {
-            //swprintf(buffer, 256, L"ERROR-resultWmNcPaint %d %d\n", ptestRW->resultWmNcPaint, ptestRWcompare->resultWmNcPaint);
-            //OutputDebugStringW(buffer);
+            trace("ERROR-resultWmNcPaint %d %d\n", ptestRW->resultWmNcPaint, ptestRWcompare->resultWmNcPaint);
             countErrors++;
         }
         if (ptestRWcompare->resultPaintIndex != ptestRW->resultPaintIndex)
         {
-            //swprintf(buffer, 256, L"ERROR-resultPaintIndex %d %d\n", ptestRW->resultPaintIndex, ptestRWcompare->resultPaintIndex);
-            //OutputDebugStringW(buffer);
+            trace("ERROR-resultPaintIndex %d %d\n", ptestRW->resultPaintIndex, ptestRWcompare->resultPaintIndex);
             countErrors++;
         }
     }
     if (countErrors > 0)
     {
-        //swprintf(buffer, 256, L"ERRORS - %d\n", countErrors);
-        //OutputDebugStringW(buffer);
-    }
-    else
-    {
-        //swprintf(buffer, 256, L"NO ERRORS\n");
-        //OutputDebugStringW(buffer);
+        trace("ERRORS - %d\n", countErrors);
     }
 
-    //swprintf(buffer, 256, L"\n");
-    //OutputDebugStringW(buffer);
-
-    //std::this_thread::sleep_for(std::chrono::seconds(1));
     return countErrors;
 }
 
@@ -464,15 +426,7 @@ void FlagsRedrawWindowTest()
 {
     STRUCT_TestRedrawWindow testRW;
     STRUCT_TestRedrawWindowCompare testRWcompare;
-    //UINT countErrors = 0;
 
-    //AllocConsole();
-    //FILE* pCout;
-    //freopen_s(&pCout, "CONOUT$", "w", stdout);
-    
-    // tests FOR RDW_ERASE
-    //testRW.winw = 800;
-    //testRW.winh = 600;
     testRW.testPixelPre1x = 50;
     testRW.testPixelPre1y = 50;
     testRW.testPixelPre2x = 50;
@@ -482,6 +436,7 @@ void FlagsRedrawWindowTest()
     testRW.testPixelPost2x = 50;
     testRW.testPixelPost2y = 550;
     
+    // RDW_ERASE tests    
     testRW.testName = L"Test1";
     testRW.flags = 0;
     testRW.useRegion = TRUE;
@@ -500,7 +455,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test1 fail");
 
     testRW.testName = L"Test2";
     testRW.flags = RDW_ERASE;
@@ -520,7 +475,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test2 fail");
 
     testRW.testName = L"Test3";
     testRW.flags = RDW_INVALIDATE;
@@ -540,7 +495,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test3 fail");
 
     testRW.testName = L"Test4";
     testRW.flags = RDW_INVALIDATE | RDW_ERASE;
@@ -560,9 +515,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = TRUE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test4 fail");
 
-    // test RDW_FRAME
+    // RDW_FRAME tests
     testRW.testName = L"Test5";
     testRW.flags = RDW_FRAME;
     testRW.useRegion = TRUE;
@@ -581,7 +536,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test5 fail");
 
     testRW.testName = L"Test6";
     testRW.flags = RDW_INVALIDATE | RDW_FRAME;
@@ -601,9 +556,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = TRUE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test6 fail");
 
-    // test RDW_INTERNALPAINT
+    // RDW_INTERNALPAINT tests
     testRW.testName = L"Test7";
     testRW.flags = RDW_INTERNALPAINT;
     testRW.useRegion = TRUE;
@@ -622,7 +577,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test7 fail");
 
     testRW.testName = L"Test8";
     testRW.flags = RDW_INVALIDATE | RDW_INTERNALPAINT;
@@ -642,9 +597,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test8 fail");
 
-    // test RDW_NOERASE
+    // RDW_NOERASE tests
     testRW.testName = L"Test9";
     testRW.flags = RDW_NOERASE;
     testRW.useRegion = TRUE;
@@ -663,7 +618,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test9 fail");
 
     testRW.testName = L"Test10";
     testRW.flags = RDW_INVALIDATE | RDW_NOERASE;
@@ -683,7 +638,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test10 fail");
 
     testRW.testName = L"Test11";
     testRW.flags = RDW_NOERASE | RDW_ERASE;
@@ -703,7 +658,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test11 fail");
 
     testRW.testName = L"Test12";
     testRW.flags = RDW_INVALIDATE | RDW_NOERASE | RDW_ERASE;
@@ -723,9 +678,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = TRUE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test12 fail");
 
-    // test RDW_NOFRAME
+    // RDW_NOFRAME tests
     testRW.testName = L"Test13";
     testRW.flags = RDW_NOFRAME;
     testRW.useRegion = TRUE;
@@ -744,7 +699,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test13 fail");
 
     testRW.testName = L"Test14";
     testRW.flags = RDW_INVALIDATE | RDW_NOFRAME;
@@ -764,7 +719,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test14 fail");
 
     testRW.testName = L"Test15";
     testRW.flags = RDW_INVALIDATE | RDW_VALIDATE | RDW_NOFRAME;
@@ -784,7 +739,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test15 fail");
 
     testRW.testName = L"Test16";
     testRW.flags = RDW_VALIDATE | RDW_NOFRAME;
@@ -804,9 +759,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test16 fail");
 
-    // test RDW_NOINTERNALPAINT
+    // RDW_NOINTERNALPAINT tests
     testRW.testName = L"Test17";
     testRW.flags = RDW_NOINTERNALPAINT;
     testRW.useRegion = TRUE;
@@ -825,7 +780,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test17 fail");
 
     testRW.testName = L"Test18";
     testRW.flags = RDW_INVALIDATE | RDW_NOINTERNALPAINT;
@@ -845,7 +800,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test18 fail");
 
     testRW.testName = L"Test19";
     testRW.flags = RDW_VALIDATE | RDW_NOINTERNALPAINT;
@@ -865,9 +820,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test19 fail");
 
-    // test RDW_ERASENOW
+    // RDW_ERASENOW tests
     testRW.testName = L"Test20";
     testRW.flags = RDW_ERASENOW;
     testRW.useRegion = TRUE;
@@ -886,7 +841,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test20 fail");
 
     testRW.testName = L"Test21";
     testRW.flags = RDW_INVALIDATE | RDW_ERASENOW;
@@ -906,7 +861,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test21 fail");
 
     testRW.testName = L"Test22";
     testRW.flags = RDW_VALIDATE | RDW_ERASENOW;
@@ -926,9 +881,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test22 fail");
 
-    // test RDW_UPDATENOW
+    // RDW_UPDATENOW tests
     testRW.testName = L"Test23";
     testRW.flags = RDW_UPDATENOW;
     testRW.useRegion = TRUE;
@@ -947,7 +902,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test23 fail");
 
     testRW.testName = L"Test24";
     testRW.flags = RDW_INVALIDATE | RDW_UPDATENOW;
@@ -967,7 +922,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test24 fail");
 
     testRW.testName = L"Test25";
     testRW.flags = RDW_VALIDATE | RDW_UPDATENOW;
@@ -987,9 +942,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test25 fail");
 
-    // test RDW_ALLCHILDREN
+    // RDW_ALLCHILDREN/RDW_NOCHILDREN tests
     testRW.testName = L"Test26";
     testRW.flags = RDW_NOCHILDREN;
     testRW.useRegion = FALSE;
@@ -1008,7 +963,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test26 fail");
 
     testRW.testName = L"Test27";
     testRW.flags = RDW_INVALIDATE | RDW_NOCHILDREN;
@@ -1028,7 +983,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test27 fail");
 
     testRW.testName = L"Test28";
     testRW.flags = RDW_VALIDATE | RDW_NOCHILDREN;
@@ -1048,7 +1003,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test28 fail");
 
     testRW.testName = L"Test29";
     testRW.flags = RDW_ALLCHILDREN;
@@ -1068,7 +1023,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test29 fail");
 
     testRW.testName = L"Test30";
     testRW.flags = RDW_INVALIDATE | RDW_ALLCHILDREN;
@@ -1088,7 +1043,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test30 fail");
 
     testRW.testName = L"Test31";
     testRW.flags = RDW_VALIDATE | RDW_ALLCHILDREN;
@@ -1108,7 +1063,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test31 fail");
 
     testRW.testName = L"Test32";
     testRW.flags = RDW_NOCHILDREN;
@@ -1128,7 +1083,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test32 fail");
 
     testRW.testName = L"Test33";
     testRW.flags = RDW_INVALIDATE | RDW_NOCHILDREN;
@@ -1148,7 +1103,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test33 fail");
 
     testRW.testName = L"Test34";
     testRW.flags = RDW_VALIDATE | RDW_NOCHILDREN;
@@ -1168,8 +1123,9 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test34 fail");
 
+    // rect defined area tests
     testRW.testName = L"Test35";
     testRW.flags = 0;
     testRW.useRegion = FALSE;
@@ -1188,7 +1144,7 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 1;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test35 fail");
 
     testRW.testName = L"Test36";
     testRW.flags = RDW_INVALIDATE | RDW_ERASENOW;
@@ -1208,66 +1164,11 @@ void FlagsRedrawWindowTest()
     testRWcompare.resultWmEraseGnd = FALSE;
     testRWcompare.resultWmNcPaint = FALSE;
     testRWcompare.resultPaintIndex = 2;
-    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"xx");
-}*/
+    ok(0 == TestRedrawWindow2(&testRW, &testRWcompare),"Test36 fail");
+}
 
-START_ok(RedrawWindow)
+START_TEST(RedrawWindow)
 {
-    //GetMessageRedrawWindowTest();
-	//FlagsRedrawWindowTest();
-	//return 0;
-	HWND hWnd;
-    MSG msg;
-    HRGN hRgn;
-    BOOL ret;
-    int i;
-
-    SetCursorPos(0,0);
-
-    dwThreadId = GetCurrentThreadId();
-    RegisterSimpleClass(WndProc, L"CreateTest");
-
-    hWnd = CreateWindowExW(0, L"CreateTest", NULL, 0,  10, 10, 20, 20,  NULL, NULL, 0, NULL);
-    ok(hWnd != NULL, "CreateWindow failed\n");
-
-    ShowWindow(hWnd, SW_SHOW);
-
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
-    {
-        DispatchMessageA( &msg );
-    }
-
-    ok(got_paint == TRUE, "Did not process WM_PAINT message\n");
-    got_paint = FALSE;
-
-    hRgn = CreateRectRgn(0, 0, 1, 1);
-    ok(hRgn != NULL, "CreateRectRgn failed\n");
-    ret = RedrawWindow(hWnd, NULL, hRgn, RDW_INTERNALPAINT | RDW_INVALIDATE);
-    ok(ret == TRUE, "RedrawWindow failed\n");
-
-    i = 0;
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
-    {
-        RECORD_MESSAGE(1, msg.message, POST, 0, 0);
-        if (msg.message == WM_PAINT)
-        {
-            i++;
-            if (i == 10)
-            {
-                ok(got_paint == FALSE, "Received unexpected WM_PAINT message\n");
-            }
-        }
-        if (msg.message != WM_PAINT || i >= 10)
-        {
-            DispatchMessageA( &msg );
-        }
-    }
-
-    ok(i == 10, "Received %d WM_PAINT messages\n", i);
-    ok(got_paint == TRUE, "Did not process WM_PAINT message\n");
-
-    TRACE_CACHE();
-
-    //DeleteObject(hRgn);
-    //DestroyWindow(hWnd);
+    GetMessageRedrawWindowTest();
+    FlagsRedrawWindowTest();
 }
