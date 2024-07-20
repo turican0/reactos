@@ -2281,7 +2281,7 @@ co_WinPosSetWindowPos(
        if ( !(Window->style & WS_CHILD) && (Parent) && (Parent->style & WS_CLIPCHILDREN))
        {
            TRACE("SWP_FRAMECHANGED Parent %p WS_CLIPCHILDREN %p\n",Parent,Window);
-           UserSyncAndPaintWindows(Parent, RDW_CLIPCHILDREN); // NC should redraw here, see NC HACK fix.
+           UserSyncAndPaintWindows(Parent, RDW_CLIPCHILDREN | RDW_ERASE); // NC should redraw here, see NC HACK fix.
        }
    }
 
@@ -2304,14 +2304,17 @@ co_WinPosSetWindowPos(
        {
            PWND Parent = Window->spwndParent;
            if (!Parent || UserIsDesktopWindow(Parent)) Parent = Window;
-           UserSyncAndPaintWindows( Parent, RDW_ERASENOW);
+           if ((WinPos.flags & (SWP_NOMOVE | SWP_NOSIZE)) != (SWP_NOMOVE | SWP_NOSIZE))
+               UserSyncAndPaintWindows( Parent, RDW_ERASENOW | RDW_ERASE);
+           else
+               UserSyncAndPaintWindows( Parent, RDW_ERASENOW);
        }
 
        /* Give newly shown windows a chance to redraw */
        if(((WinPos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE)
                 && !(flags & SWP_AGG_NOCLIENTCHANGE) && (flags & SWP_SHOWWINDOW))
        {
-           UserSyncAndPaintWindows( Window, RDW_ERASENOW);
+           UserSyncAndPaintWindows( Window, RDW_ERASENOW | RDW_ERASE);
        }
    }
 
