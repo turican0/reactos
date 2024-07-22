@@ -24,6 +24,9 @@ typedef struct STRUCT_TestRedrawWindow {
     RECT prcClip;
     BOOL useHrgnUpdate;
     RECT hrgnUpdate;
+	//RECT hrgnUpdateWin;
+	BOOL usePrcUpdate;
+	RECT prcUpdate;
     //bool forcePaint;
     BOOL redrawResult;
     int testPixelPre1x;
@@ -61,7 +64,6 @@ typedef struct STRUCT_TestRedrawWindow {
     BOOL resultWmEraseGnd;
     BOOL resultWmNcPaint;
     int resultPaintIndex;
-    RECT prcUpdate;
 } STRUCT_TestRedrawWindow;
 
 typedef struct STRUCT_TestRedrawWindowCompare {
@@ -79,6 +81,7 @@ typedef struct STRUCT_TestRedrawWindowCompare {
     int resultPaintIndex;
     RECT hrgnUpdate;
     RECT prcUpdate;
+	//RECT hrgnUpdateWin;
 } STRUCT_TestRedrawWindowCompare;
 
 void DrawContent(HDC hdc, RECT* rect, COLORREF color) {
@@ -175,9 +178,12 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
     //WNDCLASSW wcChild;
     HWND hChildWnd = NULL;
     HRGN RgnUpdate;
+	//HRGN RgnUpdateWin;
     RECT* pUsePrcScroll;
     RECT* pUsePrcClip;
+	RECT* pPrcUpdate;
     //RECT* pHrgnUpdate;
+	//int Result;
 
     resultWmEraseGnd = FALSE;
     resultWmNcPaint = FALSE;
@@ -236,17 +242,26 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
     ReleaseDC(hwnd, hdc);
 
     RgnUpdate = NULL;
-    if (ptestRW->useHrgnUpdate) {
+    if (ptestRW->useHrgnUpdate)
+	{
         RgnUpdate = CreateRectRgn(ptestRW->hrgnUpdate.left, ptestRW->hrgnUpdate.top, ptestRW->hrgnUpdate.right, ptestRW->hrgnUpdate.bottom);
     }
     pUsePrcScroll = NULL;
-    if (ptestRW->usePrcScroll) {
+    if (ptestRW->usePrcScroll)
+	{
         pUsePrcScroll = &ptestRW->prcScroll;
     }
     pUsePrcClip = NULL;
-    if (ptestRW->usePrcClip) {
+    if (ptestRW->usePrcClip)
+	{
         pUsePrcClip = &ptestRW->prcClip;
     }
+	pPrcUpdate = NULL;
+	if(ptestRW->usePrcUpdate)
+	{
+		pPrcUpdate = &ptestRW->prcUpdate;
+	}
+		
 
     //ShowWindow(hwnd, SW_SHOW);
     ServeSomeMessages(10, 4);
@@ -266,8 +281,12 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
     ptestRW->resultColorPre3 = GetPixel(hdc, ptestRW->testPixelPre3x, ptestRW->testPixelPre3y);
     ReleaseDC(hwnd, hdc);
 
-    ptestRW->resultRedraw = ScrollWindowEx(hwnd, ptestRW->scrollX, ptestRW->scrollY, pUsePrcScroll, pUsePrcClip, RgnUpdate, &ptestRW->prcUpdate, ptestRW->flags);
-    //ptestRW->resultRedraw = ScrollWindowEx(hwnd, 0, 300, pUsePrcScroll, pUsePrcClip, RgnUpdate, NULL, ptestRW->flags);
+	/*ptestRW->resultRedraw = ScrollWindowEx(hwnd, 0, -60, pUsePrcScroll, pUsePrcClip, RgnUpdate, pPrcUpdate, SW_INVALIDATE);
+	if(!pUsePrcClip)pUsePrcClip=NULL;
+	if(!pUsePrcScroll)pUsePrcScroll=NULL;
+	if(!pPrcUpdate)pPrcUpdate=NULL;*/
+    ptestRW->resultRedraw = ScrollWindowEx(hwnd, ptestRW->scrollX, ptestRW->scrollY, pUsePrcScroll, pUsePrcClip, RgnUpdate, pPrcUpdate, ptestRW->flags);
+    
 
     /*memset(&ptestRW->horScrollInfo, 0, sizeof(ptestRW->horScrollInfo));
     ptestRW->horScrollInfo.cbSize = sizeof(ptestRW->horScrollInfo);
@@ -323,7 +342,38 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-    }*/    
+    }*/
+	
+	
+	/*RgnUpdateWin = CreateRectRgn(0, 0, 0, 0);
+	Result = GetUpdateRgn(hwnd, RgnUpdateWin, FALSE);
+	ok(Result == NULLREGION, "Result = %d\n", Result);
+	GetRgnBox(RgnUpdateWin, &ptestRW->hrgnUpdateWin);
+	ok(FALSE, "Result = %p\n", RgnUpdateWin);
+	//Result = GetUpdateRgn(hwnd, &ptestRW->hrgnUpdateWin, FALSE);
+	RECT rectx;
+	GetRgnBox(RgnUpdateWin, &rectx);
+    ok(FALSE, "Result L = %ld\n", rectx.left);
+	
+	DWORD bufferSize = GetRegionData(RgnUpdateWin, 0, NULL);
+	RGNDATA* regionData = (RGNDATA*)malloc(bufferSize);
+	if (regionData != NULL) {
+		if (GetRegionData(RgnUpdateWin, bufferSize, regionData) != 0) {
+			int rectCount = regionData->rdh.nCount;
+			ok(FALSE, "Result = %d\n", rectCount);
+			RECT* rects = (RECT*)&regionData->Buffer;
+
+			for (int i = 0; i < rectCount; ++i) {
+				RECT rect = rects[i];
+				ok(FALSE,"RECT %ld %ld %ld %ld\n",rect.left,rect.top,rect.right,rect.bottom);
+			}
+		}
+		free(regionData);
+	}
+
+	
+	
+	DeleteObject(RgnUpdateWin);*/
 
     if (hChildWnd != NULL)
         DestroyWindow(hChildWnd);
@@ -426,26 +476,58 @@ UINT TestScrollWindowEx2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWind
                 countErrors++;
             }
         }
-        if (ptestRWcompare->prcUpdate.left != ptestRW->prcUpdate.left)
-        {
-            trace("DIFFERENCE-prcUpdate.left %d %d\n", (int)ptestRW->prcUpdate.left, (int)ptestRWcompare->prcUpdate.left);
-            countErrors++;
-        }
-        if (ptestRWcompare->prcUpdate.top != ptestRW->prcUpdate.top)
-        {
-            trace("DIFFERENCE-prcUpdate.top %d %d\n", (int)ptestRW->prcUpdate.top, (int)ptestRWcompare->prcUpdate.top);
-            countErrors++;
-        }
-        if (ptestRWcompare->prcUpdate.right != ptestRW->prcUpdate.right)
-        {
-            trace("DIFFERENCE-prcUpdate.right %d %d\n", (int)ptestRW->prcUpdate.right, (int)ptestRWcompare->prcUpdate.right);
-            countErrors++;
-        }
-        if (ptestRWcompare->prcUpdate.bottom != ptestRW->prcUpdate.bottom)
-        {
-            trace("DIFFERENCE-prcUpdate.bottom %d %d\n", (int)ptestRW->prcUpdate.bottom, (int)ptestRWcompare->prcUpdate.bottom);
-            countErrors++;
-        }
+		if(ptestRW->usePrcUpdate)
+		{
+			if (ptestRWcompare->prcUpdate.left != ptestRW->prcUpdate.left)
+			{
+				trace("DIFFERENCE-prcUpdate.left %d %d\n", (int)ptestRW->prcUpdate.left, (int)ptestRWcompare->prcUpdate.left);
+				countErrors++;
+			}
+			if (ptestRWcompare->prcUpdate.top != ptestRW->prcUpdate.top)
+			{
+				trace("DIFFERENCE-prcUpdate.top %d %d\n", (int)ptestRW->prcUpdate.top, (int)ptestRWcompare->prcUpdate.top);
+				countErrors++;
+			}
+			if (ptestRWcompare->prcUpdate.right != ptestRW->prcUpdate.right)
+			{
+				trace("DIFFERENCE-prcUpdate.right %d %d\n", (int)ptestRW->prcUpdate.right, (int)ptestRWcompare->prcUpdate.right);
+				countErrors++;
+			}
+			if (ptestRWcompare->prcUpdate.bottom != ptestRW->prcUpdate.bottom)
+			{
+				trace("DIFFERENCE-prcUpdate.bottom %d %d\n", (int)ptestRW->prcUpdate.bottom, (int)ptestRWcompare->prcUpdate.bottom);
+				countErrors++;
+			}
+		}
+		//if ((ptestRWcompare->hrgnUpdateWin==NULL) != (ptestRW->hrgnUpdateWin==NULL))
+		//{
+            //trace("DIFFERENCE-hrgnUpdateWin %p %p\n", ptestRWcompare->hrgnUpdateWin, ptestRW->hrgnUpdateWin);
+            //countErrors++;
+        //}
+		//if ((ptestRWcompare->hrgnUpdateWin!=NULL) && (ptestRW->hrgnUpdateWin!=NULL))
+		/*{
+			if (ptestRWcompare->hrgnUpdateWin.left != ptestRW->hrgnUpdateWin.left)
+			{
+				trace("DIFFERENCE-hrgnUpdateWin.left %d %d\n", (int)ptestRW->hrgnUpdateWin.left, (int)ptestRWcompare->hrgnUpdateWin.left);
+				countErrors++;
+			}
+			if (ptestRWcompare->hrgnUpdateWin.top != ptestRW->hrgnUpdateWin.top)
+			{
+				trace("DIFFERENCE-hrgnUpdateWin.top %d %d\n", (int)ptestRW->hrgnUpdateWin.top, (int)ptestRWcompare->hrgnUpdateWin.top);
+				countErrors++;
+			}
+			if (ptestRWcompare->hrgnUpdateWin.right != ptestRW->hrgnUpdateWin.right)
+			{
+				trace("DIFFERENCE-hrgnUpdateWin.right %d %d\n", (int)ptestRW->hrgnUpdateWin.right, (int)ptestRWcompare->hrgnUpdateWin.right);
+				countErrors++;
+			}
+			if (ptestRWcompare->hrgnUpdateWin.bottom != ptestRW->hrgnUpdateWin.bottom)
+			{
+				trace("DIFFERENCE-hrgnUpdateWin.bottom %d %d\n", (int)ptestRW->hrgnUpdateWin.bottom, (int)ptestRWcompare->hrgnUpdateWin.bottom);
+				countErrors++;
+			}
+		}*/
+			
         if (ptestRWcompare->resultWmEraseGnd != ptestRW->resultWmEraseGnd)
         {
             trace("DIFFERENCE-resultWmEraseGnd %d %d\n", (int)ptestRW->resultWmEraseGnd, (int)ptestRWcompare->resultWmEraseGnd);
@@ -524,6 +606,7 @@ Test_ScrollWindowEx1()
     testRW.testPixelPost4y = 350;
     testRW.scrollX = 0;
 	testRW.scrollY = 300;
+	testRW.usePrcUpdate = TRUE;
 
     testRW.testName = L"Test1";
     testRW.flags = 0;
@@ -1081,6 +1164,33 @@ Test_ScrollWindowEx1()
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
     ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test20 fail\n");
+	
+	testRW.testName = L"Test21";
+    testRW.flags = SW_INVALIDATE;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = FALSE;
+    InitRect(&testRW.hrgnUpdate, 300, 0, 350, 500 );
+    testRW.testChild = FALSE;
+	testRW.usePrcUpdate = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 3, 0, 800, 300 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 2;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test21 fail\n");
 }
 
 void

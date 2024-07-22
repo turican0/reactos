@@ -413,7 +413,9 @@ IntScrollWindowEx(
                            NULL,
                            RgnUpdate,
                            rdw_flags |                                    /*    HACK    */
-                          ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : RDW_NOCHILDREN) );
+                          ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : RDW_NOCHILDREN) );	  
+	//GreDeleteObject(Window->hrgnUpdate);
+	//Window->hrgnUpdate = NtGdiCreateRectRgn(0, 0, 0, 0);
    }
 
    if (hwndCaret && (CaretWnd = UserGetWindowObject(hwndCaret)))
