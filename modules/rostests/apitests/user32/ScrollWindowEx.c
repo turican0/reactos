@@ -291,6 +291,8 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
 	if(!pPrcUpdate)pPrcUpdate=NULL;*/
     ptestRW->resultRedraw = ScrollWindowEx(hwnd, ptestRW->scrollX, ptestRW->scrollY, pUsePrcScroll, pUsePrcClip, RgnUpdate, pPrcUpdate, ptestRW->flags);
     
+	GetRgnBox(RgnUpdate, &ptestRW->hrgnUpdate);
+	
 	hdc = GetDC(hwnd);
     RECT drect3 = { 200, 0, 300, 100 };
     DrawContent(hdc, &drect3, RGB(0, 255, 255));
@@ -309,7 +311,6 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
     GetScrollInfo(hwnd, SB_VERT, &ptestRW->vertScrollInfo);
     GetScrollInfo(hwnd, SB_CTL, &ptestRW->ctlScrollInfo);*/
 
-    GetRgnBox(RgnUpdate, &ptestRW->hrgnUpdate);
     ShowWindow(hwnd, SW_SHOW);
     //UpdateWindow(hwnd);
 
@@ -321,6 +322,14 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
         ptestRW->resultColorPre3 = GetPixel(hdc, ptestRW->testPixelPre3x, ptestRW->testPixelPre3y);
         ReleaseDC(hwnd, hdc);
     }
+	
+	/*
+	PAINTSTRUCT ps;
+	hdc = BeginPaint(hwnd, &ps);
+	RECT updateRect = ps.rcPaint;
+	trace("%ld %ld %ld %ld\n", updateRect.left, updateRect.top, updateRect.right, updateRect.bottom);
+	EndPaint(hwnd, &ps);
+	*/
 
     ServeSomeMessages(10, 4);
 
@@ -339,7 +348,7 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
     ptestRW->resultWmEraseGnd = resultWmEraseGnd;
     ptestRW->resultWmNcPaint = resultWmNcPaint;
     ptestRW->resultPaintIndex = paintIndex;
-
+	
     if (RgnUpdate) DeleteObject(RgnUpdate);
 
     //UpdateWindow(hwnd);
