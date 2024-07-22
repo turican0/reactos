@@ -41,6 +41,8 @@ typedef struct STRUCT_TestRedrawWindow {
     int testPixelPost4x;
     int testPixelPost4y;
     int testChild;
+	int scrollX;
+	int scrollY;
 
     SCROLLINFO horScrollInfo;
     SCROLLINFO vertScrollInfo;
@@ -264,7 +266,7 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
     ptestRW->resultColorPre3 = GetPixel(hdc, ptestRW->testPixelPre3x, ptestRW->testPixelPre3y);
     ReleaseDC(hwnd, hdc);
 
-    ptestRW->resultRedraw = ScrollWindowEx(hwnd, 0, 300, pUsePrcScroll, pUsePrcClip, RgnUpdate, &ptestRW->prcUpdate, ptestRW->flags);
+    ptestRW->resultRedraw = ScrollWindowEx(hwnd, ptestRW->scrollX, ptestRW->scrollY, pUsePrcScroll, pUsePrcClip, RgnUpdate, &ptestRW->prcUpdate, ptestRW->flags);
     //ptestRW->resultRedraw = ScrollWindowEx(hwnd, 0, 300, pUsePrcScroll, pUsePrcClip, RgnUpdate, NULL, ptestRW->flags);
 
     /*memset(&ptestRW->horScrollInfo, 0, sizeof(ptestRW->horScrollInfo));
@@ -340,37 +342,37 @@ UINT TestScrollWindowEx2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWind
     {
         if (ptestRWcompare->resultColorPre1 != ptestRW->resultColorPre1)
         {
-            trace("ERROR-resultColorPre1 %x %x\n", (int)ptestRW->resultColorPre1, (int)ptestRWcompare->resultColorPre1);
+            trace("ERROR-resultColorPre1 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre1, (int)ptestRWcompare->resultColorPre1);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPre2 != ptestRW->resultColorPre2)
         {
-            trace("ERROR-resultColorPre2 %x %x\n", (int)ptestRW->resultColorPre2, (int)ptestRWcompare->resultColorPre2);
+            trace("ERROR-resultColorPre2 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre2, (int)ptestRWcompare->resultColorPre2);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPre3 != ptestRW->resultColorPre3)
         {
-            trace("ERROR-resultColorPre3 %x %x\n", (int)ptestRW->resultColorPre3, (int)ptestRWcompare->resultColorPre3);
+            trace("ERROR-resultColorPre3 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre3, (int)ptestRWcompare->resultColorPre3);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost1 != ptestRW->resultColorPost1)
         {
-            trace("ERROR-resultColorPost1 %x %x\n", (int)ptestRW->resultColorPost1, (int)ptestRWcompare->resultColorPost1);
+            trace("ERROR-resultColorPost1 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost1, (int)ptestRWcompare->resultColorPost1);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost2 != ptestRW->resultColorPost2)
         {
-            trace("ERROR-resultColorPost2 %x %x\n", (int)ptestRW->resultColorPost2, (int)ptestRWcompare->resultColorPost2);
+            trace("ERROR-resultColorPost2 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost2, (int)ptestRWcompare->resultColorPost2);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost3 != ptestRW->resultColorPost3)
         {
-            trace("ERROR-resultColorPost3 %x %x\n", (int)ptestRW->resultColorPost3, (int)ptestRWcompare->resultColorPost3);
+            trace("ERROR-resultColorPost3 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost3, (int)ptestRWcompare->resultColorPost3);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost4 != ptestRW->resultColorPost4)
         {
-            trace("ERROR-resultColorPost4 %x %x\n", (int)ptestRW->resultColorPost4, (int)ptestRWcompare->resultColorPost4);
+            trace("ERROR-resultColorPost4 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost4, (int)ptestRWcompare->resultColorPost4);
             countErrors++;
         }
         if (ptestRWcompare->resultNeedsUpdate != ptestRW->resultNeedsUpdate)
@@ -520,6 +522,8 @@ Test_ScrollWindowEx1()
     testRW.testPixelPost3y = 305;
     testRW.testPixelPost4x = 50;
     testRW.testPixelPost4y = 350;
+    testRW.scrollX = 0;
+	testRW.scrollY = 300;
 
     testRW.testName = L"Test1";
     testRW.flags = 0;
@@ -797,6 +801,286 @@ Test_ScrollWindowEx1()
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
     ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test10 fail");
+	
+	testRW.scrollX = 0;
+	testRW.scrollY = -20;
+
+    testRW.testName = L"Test11";
+    testRW.flags = 0;
+    testRW.usePrcScroll = FALSE;
+	
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 0, 0, 50, 70 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 200, 200 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 1;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test11 fail");
+    
+
+    testRW.testName = L"Test12";
+    testRW.flags = 0;
+    testRW.usePrcScroll = TRUE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 0, 0, 50, 70 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 50, 20 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 1;
+    InitRect(&testRWcompare.prcUpdate, 0, 0, 50, 20 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 0, 50, 20 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test12 fail");
+
+    testRW.testName = L"Test13";
+    testRW.flags = 0;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = TRUE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 0, 0, 50, 70 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 50, 20 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 1;
+    InitRect(&testRWcompare.prcUpdate, 0, 180, 800, 200 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 180, 800, 200 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test13 fail");
+
+    testRW.testName = L"Test14";
+    testRW.flags = 0;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 0, 0, 0, 0 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 50, 20 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 1;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test14 fail");
+
+    testRW.testName = L"Test15";
+    testRW.flags = SW_INVALIDATE;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 300, 0, 350, 500 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 800, 300 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 2;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test15 fail");
+
+    testRW.testName = L"Test16";
+    testRW.flags = SW_ERASE;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 300, 0, 350, 500 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 800, 300 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 1;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test16 fail");
+
+    testRW.testName = L"Test17";
+    testRW.flags = SW_ERASE | SW_INVALIDATE;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 300, 0, 350, 500 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x0000FF00;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x0000FF00;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 800, 300 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = TRUE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 2;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test17 fail");
+
+    testRW.testPixelPre1x = 50;
+    testRW.testPixelPre1y = 50;
+    testRW.testPixelPre2x = 50;
+    testRW.testPixelPre2y = 100;
+    testRW.testPixelPre3x = 50;
+    testRW.testPixelPre3y = 330;
+    testRW.testPixelPost1x = 50;
+    testRW.testPixelPost1y = 50;
+    testRW.testPixelPost2x = 50;
+    testRW.testPixelPost2y = 100;
+    testRW.testPixelPost3x = 50;
+    testRW.testPixelPost3y = 330;
+    testRW.testPixelPost4x = 50;
+    testRW.testPixelPost4y = 400;
+
+    testRW.testName = L"Test18";
+    testRW.flags = SW_SCROLLCHILDREN;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 300, 0, 350, 500 );
+    testRW.testChild = TRUE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x000000FF;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x000000FF;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 800, 300 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 1;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test18 fail");
+
+    testRW.testName = L"Test19";
+    testRW.flags = SW_SCROLLCHILDREN | SW_INVALIDATE;
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 300, 0, 350, 500 );
+    testRW.testChild = TRUE;
+
+    testRWcompare.resultColorPre1 = 0x00FF0000;
+    testRWcompare.resultColorPre2 = 0x000000FF;
+    testRWcompare.resultColorPre3 = 0x0000FF00;
+    testRWcompare.resultColorPost1 = 0x00FF0000;
+    testRWcompare.resultColorPost2 = 0x000000FF;
+    testRWcompare.resultColorPost3 = 0x0000FF00;
+    testRWcompare.resultColorPost4 = 0x0000FF00;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 800, 300 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = FALSE;
+    testRWcompare.resultWmNcPaint = FALSE;
+    testRWcompare.resultPaintIndex = 2;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test19 fail");
+
+    testRW.testName = L"Test20";
+    testRW.flags = SW_SMOOTHSCROLL | SW_INVALIDATE | (1000 << 16);
+    testRW.usePrcScroll = FALSE;
+    InitRect(&testRW.prcScroll, 0, 0, 50, 20 );
+    testRW.usePrcClip = FALSE;
+    InitRect(&testRW.prcClip, 0, 0, 800, 200 );
+    testRW.useHrgnUpdate = TRUE;
+    InitRect(&testRW.hrgnUpdate, 300, 0, 350, 500 );
+    testRW.testChild = FALSE;
+
+    testRWcompare.resultColorPre1 = 0x00FFFFFF;
+    testRWcompare.resultColorPre2 = 0x00FFFFFF;
+    testRWcompare.resultColorPre3 = 0x00FFFFFF;
+    testRWcompare.resultColorPost1 = 0x00FFFFFF;
+    testRWcompare.resultColorPost2 = 0x00FFFFFF;
+    testRWcompare.resultColorPost3 = 0x00FFFFFF;
+    testRWcompare.resultColorPost4 = 0x00FFFFFF;
+    InitRect(&testRWcompare.resultUpdateRect, 0, 0, 800, 300 );
+    testRWcompare.resultNeedsUpdate = FALSE;
+    testRWcompare.resultWmEraseGnd = TRUE;
+    testRWcompare.resultWmNcPaint = TRUE;
+    testRWcompare.resultPaintIndex = 2;
+    InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
+    InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test20 fail");
 }
 
 void
