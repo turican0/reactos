@@ -454,9 +454,12 @@ co_IntPaintWindows(PWND Wnd, ULONG Flags, BOOL Recurse)
 
                   Wnd->state &= ~(WNDS_SENDERASEBACKGROUND|WNDS_ERASEBACKGROUND);
                   // Kill the loop, so Clear before we send.
-                  if (!co_IntSendMessage(hWnd, WM_ERASEBKGND, (WPARAM)hDC, 0))
+                  if (Flags & RDW_ERASE)
                   {
-                     Wnd->state |= (WNDS_SENDERASEBACKGROUND|WNDS_ERASEBACKGROUND);
+                     if (!co_IntSendMessage(hWnd, WM_ERASEBKGND, (WPARAM)hDC, 0))
+                     {
+                        Wnd->state |= (WNDS_SENDERASEBACKGROUND|WNDS_ERASEBACKGROUND);
+                     }
                   }
                   UserReleaseDC(Wnd, hDC, FALSE);
                }
@@ -548,7 +551,7 @@ co_IntUpdateWindows(PWND Wnd, ULONG Flags, BOOL Recurse)
       {
          USER_REFERENCE_ENTRY Ref;
          UserRefObjectCo(Wnd, &Ref);
-         co_IntPaintWindows(Wnd, RDW_NOCHILDREN, FALSE);
+         co_IntPaintWindows(Wnd, RDW_NOCHILDREN | RDW_ERASE, FALSE);
          UserDerefObjectCo(Wnd);
       }
    }
@@ -1002,7 +1005,7 @@ co_UserRedrawWindow(
    {
       if ((Flags & (RDW_NOCHILDREN|RDW_ALLCHILDREN)) == 0)
          Flags |= RDW_CLIPCHILDREN;
-
+      Flags|=RDW_ERASE;
       UserSyncAndPaintWindows(Window, Flags);
    }
 
@@ -1183,7 +1186,7 @@ VOID FASTCALL
 IntPaintWindow( PWND Window )
 {
    // Handle normal painting.
-   co_IntPaintWindows( Window, RDW_NOCHILDREN, FALSE );
+   co_IntPaintWindows( Window, RDW_NOCHILDREN | RDW_ERASE, FALSE );
 }
 
 BOOL FASTCALL
@@ -1799,7 +1802,7 @@ co_UserGetUpdateRgn(PWND Window, HRGN hRgn, BOOL bErase)
    {
       USER_REFERENCE_ENTRY Ref;
       UserRefObjectCo(Window, &Ref);
-      co_IntPaintWindows(Window, RDW_NOCHILDREN, FALSE);
+      co_IntPaintWindows(Window, RDW_NOCHILDREN | RDW_ERASE, FALSE);
       UserDerefObjectCo(Window);
    }
 
@@ -1868,7 +1871,7 @@ co_UserGetUpdateRect(PWND Window, PRECT pRect, BOOL bErase)
    {
       USER_REFERENCE_ENTRY Ref;
       UserRefObjectCo(Window, &Ref);
-      co_IntPaintWindows(Window, RDW_NOCHILDREN, FALSE);
+      co_IntPaintWindows(Window, RDW_NOCHILDREN | RDW_ERASE, FALSE);
       UserDerefObjectCo(Window);
    }
 

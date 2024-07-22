@@ -70,7 +70,7 @@ co_IntGetUpdateRgn(PWND Window, PREGION Rgn, BOOL bErase)
 
     if (bErase)
     {
-       co_IntPaintWindows(Window, RDW_NOCHILDREN, FALSE);
+       co_IntPaintWindows(Window, RDW_NOCHILDREN | RDW_ERASE, FALSE);
     }
 
     Window->state &= ~WNDS_UPDATEDIRTY;
