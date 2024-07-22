@@ -407,7 +407,7 @@ IntScrollWindowEx(
       }
    }
 
-   if (flags & (SW_INVALIDATE | SW_ERASE))
+   if (flags & SW_INVALIDATE)
    {
       co_UserRedrawWindow( Window,
                            NULL,
