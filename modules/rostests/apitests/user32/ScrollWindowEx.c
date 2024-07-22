@@ -342,64 +342,64 @@ UINT TestScrollWindowEx2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWind
     {
         if (ptestRWcompare->resultColorPre1 != ptestRW->resultColorPre1)
         {
-            trace("ERROR-resultColorPre1 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre1, (int)ptestRWcompare->resultColorPre1);
+            trace("DIFFERENCE-resultColorPre1 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre1, (int)ptestRWcompare->resultColorPre1);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPre2 != ptestRW->resultColorPre2)
         {
-            trace("ERROR-resultColorPre2 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre2, (int)ptestRWcompare->resultColorPre2);
+            trace("DIFFERENCE-resultColorPre2 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre2, (int)ptestRWcompare->resultColorPre2);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPre3 != ptestRW->resultColorPre3)
         {
-            trace("ERROR-resultColorPre3 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre3, (int)ptestRWcompare->resultColorPre3);
+            trace("DIFFERENCE-resultColorPre3 0x%06x 0x%06x\n", (int)ptestRW->resultColorPre3, (int)ptestRWcompare->resultColorPre3);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost1 != ptestRW->resultColorPost1)
         {
-            trace("ERROR-resultColorPost1 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost1, (int)ptestRWcompare->resultColorPost1);
+            trace("DIFFERENCE-resultColorPost1 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost1, (int)ptestRWcompare->resultColorPost1);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost2 != ptestRW->resultColorPost2)
         {
-            trace("ERROR-resultColorPost2 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost2, (int)ptestRWcompare->resultColorPost2);
+            trace("DIFFERENCE-resultColorPost2 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost2, (int)ptestRWcompare->resultColorPost2);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost3 != ptestRW->resultColorPost3)
         {
-            trace("ERROR-resultColorPost3 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost3, (int)ptestRWcompare->resultColorPost3);
+            trace("DIFFERENCE-resultColorPost3 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost3, (int)ptestRWcompare->resultColorPost3);
             countErrors++;
         }
         if (ptestRWcompare->resultColorPost4 != ptestRW->resultColorPost4)
         {
-            trace("ERROR-resultColorPost4 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost4, (int)ptestRWcompare->resultColorPost4);
+            trace("DIFFERENCE-resultColorPost4 0x%06x 0x%06x\n", (int)ptestRW->resultColorPost4, (int)ptestRWcompare->resultColorPost4);
             countErrors++;
         }
         if (ptestRWcompare->resultNeedsUpdate != ptestRW->resultNeedsUpdate)
         {
-            trace("ERROR-resultNeedsUpdate %d %d\n", (int)ptestRW->resultNeedsUpdate, (int)ptestRWcompare->resultNeedsUpdate);
+            trace("DIFFERENCE-resultNeedsUpdate %d %d\n", (int)ptestRW->resultNeedsUpdate, (int)ptestRWcompare->resultNeedsUpdate);
             countErrors++;
         }
         if (ptestRW->resultNeedsUpdate)
         {
             if (ptestRWcompare->resultUpdateRect.left != ptestRW->resultUpdateRect.left)
             {
-                trace("ERROR-resultUpdateRect.left %d %d\n", (int)ptestRW->resultUpdateRect.left, (int)ptestRWcompare->resultUpdateRect.left);
+                trace("DIFFERENCE-resultUpdateRect.left %d %d\n", (int)ptestRW->resultUpdateRect.left, (int)ptestRWcompare->resultUpdateRect.left);
                 countErrors++;
             }
             if (ptestRWcompare->resultUpdateRect.top != ptestRW->resultUpdateRect.top)
             {
-                trace("ERROR-resultUpdateRect.top %d %d\n", (int)ptestRW->resultUpdateRect.top, (int)ptestRWcompare->resultUpdateRect.top);
+                trace("DIFFERENCE-resultUpdateRect.top %d %d\n", (int)ptestRW->resultUpdateRect.top, (int)ptestRWcompare->resultUpdateRect.top);
                 countErrors++;
             }
             if (ptestRWcompare->resultUpdateRect.right != ptestRW->resultUpdateRect.right)
             {
-                trace("ERROR-resultUpdateRect.right %d %d\n", (int)ptestRW->resultUpdateRect.right, (int)ptestRWcompare->resultUpdateRect.right);
+                trace("DIFFERENCE-resultUpdateRect.right %d %d\n", (int)ptestRW->resultUpdateRect.right, (int)ptestRWcompare->resultUpdateRect.right);
                 countErrors++;
             }
             if (ptestRWcompare->resultUpdateRect.bottom != ptestRW->resultUpdateRect.bottom)
             {
-                trace("ERROR-resultUpdateRect.bottom %d %d\n", (int)ptestRW->resultUpdateRect.bottom, (int)ptestRWcompare->resultUpdateRect.bottom);
+                trace("DIFFERENCE-resultUpdateRect.bottom %d %d\n", (int)ptestRW->resultUpdateRect.bottom, (int)ptestRWcompare->resultUpdateRect.bottom);
                 countErrors++;
             }
         }
@@ -407,58 +407,58 @@ UINT TestScrollWindowEx2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWind
         {
             if (ptestRWcompare->hrgnUpdate.left != ptestRW->hrgnUpdate.left)
             {
-                trace("ERROR-hrgnUpdate.left %d %d\n", (int)ptestRW->hrgnUpdate.left, (int)ptestRWcompare->hrgnUpdate.left);
+                trace("DIFFERENCE-hrgnUpdate.left %d %d\n", (int)ptestRW->hrgnUpdate.left, (int)ptestRWcompare->hrgnUpdate.left);
                 countErrors++;
             }
             if (ptestRWcompare->hrgnUpdate.top != ptestRW->hrgnUpdate.top)
             {
-                trace("ERROR-hrgnUpdate.top %d %d\n", (int)ptestRW->hrgnUpdate.top, (int)ptestRWcompare->hrgnUpdate.top);
+                trace("DIFFERENCE-hrgnUpdate.top %d %d\n", (int)ptestRW->hrgnUpdate.top, (int)ptestRWcompare->hrgnUpdate.top);
                 countErrors++;
             }
             if (ptestRWcompare->hrgnUpdate.right != ptestRW->hrgnUpdate.right)
             {
-                trace("ERROR-hrgnUpdate.right %d %d\n", (int)ptestRW->hrgnUpdate.right, (int)ptestRWcompare->hrgnUpdate.right);
+                trace("DIFFERENCE-hrgnUpdate.right %d %d\n", (int)ptestRW->hrgnUpdate.right, (int)ptestRWcompare->hrgnUpdate.right);
                 countErrors++;
             }
             if (ptestRWcompare->hrgnUpdate.bottom != ptestRW->hrgnUpdate.bottom)
             {
-                trace("ERROR-hrgnUpdate.bottom %d %d\n", (int)ptestRW->hrgnUpdate.bottom, (int)ptestRWcompare->hrgnUpdate.bottom);
+                trace("DIFFERENCE-hrgnUpdate.bottom %d %d\n", (int)ptestRW->hrgnUpdate.bottom, (int)ptestRWcompare->hrgnUpdate.bottom);
                 countErrors++;
             }
         }
         if (ptestRWcompare->prcUpdate.left != ptestRW->prcUpdate.left)
         {
-            trace("ERROR-prcUpdate.left %d %d\n", (int)ptestRW->prcUpdate.left, (int)ptestRWcompare->prcUpdate.left);
+            trace("DIFFERENCE-prcUpdate.left %d %d\n", (int)ptestRW->prcUpdate.left, (int)ptestRWcompare->prcUpdate.left);
             countErrors++;
         }
         if (ptestRWcompare->prcUpdate.top != ptestRW->prcUpdate.top)
         {
-            trace("ERROR-prcUpdate.top %d %d\n", (int)ptestRW->prcUpdate.top, (int)ptestRWcompare->prcUpdate.top);
+            trace("DIFFERENCE-prcUpdate.top %d %d\n", (int)ptestRW->prcUpdate.top, (int)ptestRWcompare->prcUpdate.top);
             countErrors++;
         }
         if (ptestRWcompare->prcUpdate.right != ptestRW->prcUpdate.right)
         {
-            trace("ERROR-prcUpdate.right %d %d\n", (int)ptestRW->prcUpdate.right, (int)ptestRWcompare->prcUpdate.right);
+            trace("DIFFERENCE-prcUpdate.right %d %d\n", (int)ptestRW->prcUpdate.right, (int)ptestRWcompare->prcUpdate.right);
             countErrors++;
         }
         if (ptestRWcompare->prcUpdate.bottom != ptestRW->prcUpdate.bottom)
         {
-            trace("ERROR-prcUpdate.bottom %d %d\n", (int)ptestRW->prcUpdate.bottom, (int)ptestRWcompare->prcUpdate.bottom);
+            trace("DIFFERENCE-prcUpdate.bottom %d %d\n", (int)ptestRW->prcUpdate.bottom, (int)ptestRWcompare->prcUpdate.bottom);
             countErrors++;
         }
         if (ptestRWcompare->resultWmEraseGnd != ptestRW->resultWmEraseGnd)
         {
-            trace("ERROR-resultWmEraseGnd %d %d\n", (int)ptestRW->resultWmEraseGnd, (int)ptestRWcompare->resultWmEraseGnd);
+            trace("DIFFERENCE-resultWmEraseGnd %d %d\n", (int)ptestRW->resultWmEraseGnd, (int)ptestRWcompare->resultWmEraseGnd);
             countErrors++;
         }
         if (ptestRWcompare->resultWmNcPaint != ptestRW->resultWmNcPaint)
         {
-            trace("ERROR-resultWmNcPaint %d %d\n", (int)ptestRW->resultWmNcPaint, (int)ptestRWcompare->resultWmNcPaint);
+            trace("DIFFERENCE-resultWmNcPaint %d %d\n", (int)ptestRW->resultWmNcPaint, (int)ptestRWcompare->resultWmNcPaint);
             countErrors++;
         }
         if (ptestRWcompare->resultPaintIndex != ptestRW->resultPaintIndex)
         {
-            trace("ERROR-resultPaintIndex %d %d\n", (int)ptestRW->resultPaintIndex, (int)ptestRWcompare->resultPaintIndex);
+            trace("DIFFERENCE-resultPaintIndex %d %d\n", (int)ptestRW->resultPaintIndex, (int)ptestRWcompare->resultPaintIndex);
             countErrors++;
         }
         /*swprintf(buffer, 256, L"Result OK\n");
@@ -488,7 +488,7 @@ UINT TestScrollWindowEx2(STRUCT_TestRedrawWindow* ptestRW, STRUCT_TestRedrawWind
     }*/
     if (countErrors > 0)
     {
-        trace("ERRORS - %d\n", countErrors);
+        trace("COUNT OF DIFFERENCES - %d\n", countErrors);
     }
 
     return countErrors;
@@ -550,7 +550,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test1 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test1 fail\n");
     
 
     testRW.testName = L"Test2";
@@ -577,7 +577,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 50, 20 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 50, 20 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test2 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test2 fail\n");
 
     testRW.testName = L"Test3";
     testRW.flags = 0;
@@ -603,7 +603,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 200 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 200 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test3 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test3 fail\n");
 
     testRW.testName = L"Test4";
     testRW.flags = 0;
@@ -629,7 +629,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test4 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test4 fail\n");
 
     testRW.testName = L"Test5";
     testRW.flags = SW_INVALIDATE;
@@ -655,7 +655,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test5 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test5 fail\n");
 
     testRW.testName = L"Test6";
     testRW.flags = SW_ERASE;
@@ -681,7 +681,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test6 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test6 fail\n");
 
     testRW.testName = L"Test7";
     testRW.flags = SW_ERASE | SW_INVALIDATE;
@@ -707,7 +707,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test7 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test7 fail\n");
 
     testRW.testPixelPre1x = 50;
     testRW.testPixelPre1y = 50;
@@ -748,7 +748,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test8 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test8 fail\n");
 
     testRW.testName = L"Test9";
     testRW.flags = SW_SCROLLCHILDREN | SW_INVALIDATE;
@@ -774,7 +774,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test9 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test9 fail\n");
 
     testRW.testName = L"Test10";
     testRW.flags = SW_SMOOTHSCROLL | SW_INVALIDATE | (1000 << 16);
@@ -800,7 +800,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 800, 300 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 800, 300 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test10 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test10 fail\n");
 	
 	testRW.scrollX = 0;
 	testRW.scrollY = -20;
@@ -830,7 +830,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test11 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test11 fail\n");
     
 
     testRW.testName = L"Test12";
@@ -857,7 +857,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 0, 50, 20 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 0, 50, 20 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test12 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test12 fail\n");
 
     testRW.testName = L"Test13";
     testRW.flags = 0;
@@ -883,7 +883,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 180, 800, 200 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 180, 800, 200 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test13 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test13 fail\n");
 
     testRW.testName = L"Test14";
     testRW.flags = 0;
@@ -909,7 +909,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test14 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test14 fail\n");
 
     testRW.testName = L"Test15";
     testRW.flags = SW_INVALIDATE;
@@ -935,7 +935,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test15 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test15 fail\n");
 
     testRW.testName = L"Test16";
     testRW.flags = SW_ERASE;
@@ -961,7 +961,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test16 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test16 fail\n");
 
     testRW.testName = L"Test17";
     testRW.flags = SW_ERASE | SW_INVALIDATE;
@@ -987,7 +987,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test17 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test17 fail\n");
 
     testRW.testPixelPre1x = 50;
     testRW.testPixelPre1y = 50;
@@ -1028,7 +1028,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 1;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test18 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test18 fail\n");
 
     testRW.testName = L"Test19";
     testRW.flags = SW_SCROLLCHILDREN | SW_INVALIDATE;
@@ -1054,7 +1054,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test19 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test19 fail\n");
 
     testRW.testName = L"Test20";
     testRW.flags = SW_SMOOTHSCROLL | SW_INVALIDATE | (1000 << 16);
@@ -1080,7 +1080,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test20 fail");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test20 fail\n");
 }
 
 void
