@@ -1488,8 +1488,8 @@ int WINAPI SpecialTest() {
     }*/
 	Sleep(2000);
 	
-	if (hwnd != NULL)
-        DestroyWindow(hwnd);
+	if (hwnd1 != NULL)
+        DestroyWindow(hwnd1);
 	
 	
 	const wchar_t CLASS_NAME2[] = L"ChildWindowClass2";
@@ -1553,6 +1553,12 @@ int WINAPI SpecialTest() {
 	Sleep(2000);
 
     ShowWindow(hwnd3, SW_SHOW);
+	
+	Sleep(2000);
+	
+	if (hwnd2 != NULL)
+        DestroyWindow(hwnd3);
+	
 	/*
 	NtUserShowWindowAsync
 	
@@ -1598,6 +1604,12 @@ static LRESULT handle_internal_message( PWND pWnd, UINT msg, WPARAM wparam, LPAR
 	
 	WM_SHOWWINDOW
 	co_WinPosShowWindow(Wnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE);
+
+
+CreateWindowExW
+User32CreateWindowEx
+NtUserCreateWindowEx
+co_UserCreateWindowEx
 
 	*/
 	
