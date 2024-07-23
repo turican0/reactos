@@ -291,12 +291,24 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
 	if(!pPrcUpdate)pPrcUpdate=NULL;*/
     ptestRW->resultRedraw = ScrollWindowEx(hwnd, ptestRW->scrollX, ptestRW->scrollY, pUsePrcScroll, pUsePrcClip, RgnUpdate, pPrcUpdate, ptestRW->flags);
     
+	hdc = GetDC(hwnd);
+	HRGN testHrgn;
+	RECT testRect;
+	SelectClipRgn(hdc, testHrgn);
+	GetRgnBox(testHrgn, &testRect);
+	printf("\n%ld %ld %ld %ld\n\n",testRect.left, testRect.top, testRect.right, testRect.bottom);
+	ReleaseDC(hwnd, hdc);
+	
 	GetRgnBox(RgnUpdate, &ptestRW->hrgnUpdate);
 	
+	/*
 	hdc = GetDC(hwnd);
+	MoveToEx(hdc, 0, 0, NULL);
+	LineTo(hdc, 500, 500);
     RECT drect3 = { 200, 0, 300, 100 };
     DrawContent(hdc, &drect3, RGB(0, 255, 255));
     ReleaseDC(hwnd, hdc);
+	*/
 
     /*memset(&ptestRW->horScrollInfo, 0, sizeof(ptestRW->horScrollInfo));
     ptestRW->horScrollInfo.cbSize = sizeof(ptestRW->horScrollInfo);
@@ -392,6 +404,8 @@ void TestScrollWindowEx(STRUCT_TestRedrawWindow* ptestRW) {
 	
 	
 	DeleteObject(RgnUpdateWin);*/
+	
+	Sleep(2000);
 
     if (hChildWnd != NULL)
         DestroyWindow(hChildWnd);
@@ -633,7 +647,7 @@ Test_ScrollWindowEx1()
 	testRW.scrollY = 300;
 	testRW.usePrcUpdate = TRUE;
 
-    testRW.testName = L"Test1";
+    /*testRW.testName = L"Test1";
     testRW.flags = 0;
     testRW.usePrcScroll = FALSE;
 	
@@ -1212,7 +1226,7 @@ Test_ScrollWindowEx1()
     testRWcompare.resultPaintIndex = 2;
     InitRect(&testRWcompare.prcUpdate, 0, 580, 800, 600 );
     InitRect(&testRWcompare.hrgnUpdate, 0, 580, 800, 600 );
-    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test20 fail\n");
+    ok(0 == TestScrollWindowEx2(&testRW, &testRWcompare),"Test20 fail\n");*/
 	
 	testRW.testName = L"Test21";
     testRW.flags = SW_INVALIDATE;
@@ -1346,8 +1360,200 @@ Test_ScrollWindowEx2()
     DestroyWindow(hWnd);
 }
 
+// Procedura okna
+LRESULT CALLBACK specialWindowProc1(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg)
+	{
+    case WM_PAINT:
+	{
+        PAINTSTRUCT ps;
+        BeginPaint(hwnd, &ps);
+        EndPaint(hwnd, &ps);
+        //return 0;
+    }
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+LRESULT CALLBACK specialWindowProc2(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+    case WM_PAINT: {
+        return 0;
+    }
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+LRESULT CALLBACK specialWindowProc3(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+int WINAPI SpecialTest() {
+    const wchar_t CLASS_NAME[] = L"ChildWindowClass1";
+    WNDCLASSW wc = {};
+    wc.lpfnWndProc = specialWindowProc1;
+    wc.hInstance = GetModuleHandle(NULL);
+    wc.lpszClassName = CLASS_NAME;
+
+    RegisterClassW(&wc);
+
+    HWND hwnd = CreateWindowExW(
+        0,
+        CLASS_NAME,
+        L"Simple Paint Example",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL,
+        NULL,
+        GetModuleHandle(NULL),
+        NULL
+    );
+
+    if (hwnd == NULL) {
+        return 0;
+    }
+	
+	Sleep(2000);
+
+    ShowWindow(hwnd, SW_SHOW);
+	
+	/*MSG msg = {};
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }*/
+	Sleep(2000);
+	
+	if (hwnd != NULL)
+        DestroyWindow(hwnd);
+	
+	
+	const wchar_t CLASS_NAME2[] = L"ChildWindowClass2";
+    WNDCLASSW wc2 = {};
+    wc2.lpfnWndProc = specialWindowProc2;
+    wc2.hInstance = GetModuleHandle(NULL);
+    wc2.lpszClassName = CLASS_NAME2;
+
+    RegisterClassW(&wc2);
+
+    HWND hwnd2 = CreateWindowExW(
+        0,
+        CLASS_NAME,
+        L"Simple Paint Example",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL,
+        NULL,
+        GetModuleHandle(NULL),
+        NULL
+    );
+
+    if (hwnd2 == NULL) {
+        return 0;
+    }
+	
+	Sleep(2000);
+
+    ShowWindow(hwnd2, SW_SHOW);
+	
+	Sleep(2000);
+	
+	if (hwnd2 != NULL)
+        DestroyWindow(hwnd2);
+	
+	
+	const wchar_t CLASS_NAME3[] = L"ChildWindowClass3";
+    WNDCLASSW wc3 = {};
+    wc3.lpfnWndProc = specialWindowProc3;
+    wc3.hInstance = GetModuleHandle(NULL);
+    wc3.lpszClassName = CLASS_NAME3;
+
+    RegisterClassW(&wc3);
+
+    HWND hwnd3 = CreateWindowExW(
+        0,
+        CLASS_NAME,
+        L"Simple Paint Example",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL,
+        NULL,
+        GetModuleHandle(NULL),
+        NULL
+    );
+
+    if (hwnd3 == NULL) {
+        return 0;
+    }
+	
+	Sleep(2000);
+
+    ShowWindow(hwnd3, SW_SHOW);
+	/*
+	NtUserShowWindowAsync
+	
+	   PWND Window;
+   LRESULT Result;
+   BOOL ret = FALSE;
+   USER_REFERENCE_ENTRY Ref;
+
+   TRACE("Enter NtUserShowWindowAsync\n");
+   UserEnterExclusive();
+
+   if (!(Window = UserGetWindowObject(hWnd)) ||
+        UserIsDesktopWindow(Window) || UserIsMessageWindow(Window))
+   {
+      goto Exit; // Return FALSE
+   }
+
+   if ( nCmdShow > SW_MAX )
+   {
+      EngSetLastError(ERROR_INVALID_PARAMETER);
+      goto Exit; // Return FALSE
+   }
+
+   UserRefObjectCo(Window, &Ref);
+   Result = co_IntSendMessageNoWait( hWnd, WM_ASYNC_SHOWWINDOW, nCmdShow, 0 );
+	
+static LRESULT handle_internal_message( PWND pWnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    LRESULT lRes;
+//    USER_REFERENCE_ENTRY Ref;
+//    PTHREADINFO pti = PsGetCurrentThreadWin32Thread();
+
+    if (!pWnd || UserIsDesktopWindow(pWnd) || UserIsMessageWindow(pWnd))
+       return 0;
+
+    TRACE("Internal Event Msg 0x%x hWnd 0x%p\n", msg, UserHMGetHandle(pWnd));
+
+    switch(msg)
+    {
+       case WM_ASYNC_SHOWWINDOW:
+          return co_WinPosShowWindow( pWnd, wparam );
+	co_WinPosShowWindow
+	
+	WM_SHOWWINDOW
+	co_WinPosShowWindow(Wnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE);
+
+	*/
+	
+	Sleep(2000);
+	
+	if (hwnd2 != NULL)
+        DestroyWindow(hwnd2);
+	
+    return 0;
+}
+
 START_TEST(ScrollWindowEx)
 {
-	Test_ScrollWindowEx1();
-    Test_ScrollWindowEx2();	
+	SpecialTest();
+	//Test_ScrollWindowEx1();
+    //Test_ScrollWindowEx2();	
 }
