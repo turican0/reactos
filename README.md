@@ -1,38 +1,44 @@
 Toto je můj notebook:<br>
-test-test-ScrollWindowEx - testovací větev<br>
-test-test-ScrollWindowEx<br>
+test-test-ScrollWindowEx - testovací větev nyni pro vsechno<br>
 <br>
-extension-RedrawWindow-apitest-by-flags<br>
 <br>
-test-extension-of-ScrollWindowEx-apitests<br>
+Apitesty:<br>
+apitests-NtUserSetTimer - apitesty pro NtUserSetTimer<br>
 <br>
-fix-RDW_ERASE-in-co_UserRedrawWindow<br>
+extension-RedrawWindow-apitest-by-flags  - apitesty pro RedrawWindow<br>
 <br>
-test--extension-of-RedrawWindow-apitest-by-flags<br>
+test-extension-of-ScrollWindowEx-apitests - apitesty pro ScrollWindowEx<br> 
 <br>
-apitests-NtUserSetTimer<br>
+<br>
+Opravy:
+fix-RDW_ERASE-in-co_UserRedrawWindow - pokus o opravu RDW_ERASE<br>
 <br>
 fix-CORE-13149<br>
 <br>
-test-CORE-13149<br>
-<br>
-fix-CORE-13149-test_wine_integration<br>
-<br>
-test-CORE-13149-2<br>
+fix-CORE-13149-test_wine_integration - pokus o integraci wine WindowsRedraw<br>
 <br>
 fix-CORE-9141<br>
 <br>
 fix-CORE-19656<br>
 <br>
-add-tests<br>
+fix-CORE-15298<br>
+<br>
+<br>
+Nepotřebné:<br>
+tests-for-HBELUSCA<br>
+<br>
+test-changes<br>
 <br>
 tests-CORE-19656<br>
 <br>
 tests-CORE-9141<br>
-
-fix-CORE-15298
-
-test-changes
-
-tests-for-HBELUSCA
+<br>
+add-tests<br>
+<br>
+test-CORE-13149-2<br>
+<br>
+test-CORE-13149<br>
+<br>
+test--extension-of-RedrawWindow-apitest-by-flags<br>
+<br>
 
