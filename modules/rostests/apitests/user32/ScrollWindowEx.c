@@ -1457,7 +1457,7 @@ int WINAPI SpecialTest() {
     WNDCLASSW wc1 = {};
     wc1.lpfnWndProc = specialWindowProc1;
     wc1.hInstance = GetModuleHandle(NULL);
-    wc1.lpszClassName = CLASS_NAME;
+    wc1.lpszClassName = CLASS_NAME1;
 
     RegisterClassW(&wc1);
 
