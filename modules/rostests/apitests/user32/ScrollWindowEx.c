@@ -1360,6 +1360,25 @@ Test_ScrollWindowEx2()
     DestroyWindow(hWnd);
 }
 
+LRESULT CALLBACK specialWindowProc0(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+
+        case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+            EndPaint(hwnd, &ps);
+        }
+        return 0;
+    }
+
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
 // Procedura okna
 LRESULT CALLBACK specialWindowProc1(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg)
@@ -1395,9 +1414,9 @@ LRESULT CALLBACK specialWindowProc3(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 }
 
 int WINAPI SpecialTest() {
-    const wchar_t CLASS_NAME[] = L"ChildWindowClass1";
+	    const wchar_t CLASS_NAME[] = L"ChildWindowClass0";
     WNDCLASSW wc = {};
-    wc.lpfnWndProc = specialWindowProc1;
+    wc.lpfnWndProc = specialWindowProc0;
     wc.hInstance = GetModuleHandle(NULL);
     wc.lpszClassName = CLASS_NAME;
 
@@ -1422,6 +1441,45 @@ int WINAPI SpecialTest() {
 	Sleep(2000);
 
     ShowWindow(hwnd, SW_SHOW);
+	
+	/*MSG msg = {};
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }*/
+	Sleep(2000);
+	
+	if (hwnd != NULL)
+        DestroyWindow(hwnd);
+	
+	
+    const wchar_t CLASS_NAME1[] = L"ChildWindowClass1";
+    WNDCLASSW wc1 = {};
+    wc1.lpfnWndProc = specialWindowProc1;
+    wc1.hInstance = GetModuleHandle(NULL);
+    wc1.lpszClassName = CLASS_NAME;
+
+    RegisterClassW(&wc1);
+
+    HWND hwnd1 = CreateWindowExW(
+        0,
+        CLASS_NAME1,
+        L"Simple Paint Example",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL,
+        NULL,
+        GetModuleHandle(NULL),
+        NULL
+    );
+
+    if (hwnd1 == NULL) {
+        return 0;
+    }
+	
+	Sleep(2000);
+
+    ShowWindow(hwnd1, SW_SHOW);
 	
 	/*MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0)) {
