@@ -1360,6 +1360,35 @@ Test_ScrollWindowEx2()
     DestroyWindow(hWnd);
 }
 
+LRESULT CALLBACK specialWindowProcx(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+        case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+
+            // Vykreslování do zařízení kontextu (HDC)
+            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+
+            // Text jako příklad vykreslení
+            const wchar_t* text = L"Hello, World!";
+            TextOutW(hdc, 50, 50, text, wcslen(text));
+
+            EndPaint(hwnd, &ps);
+            return 0;
+        }
+
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+
+        // Další zprávy zde...
+
+        default:
+            return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    }
+}
+
 LRESULT CALLBACK specialWindowProc0(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case WM_DESTROY:
@@ -1416,7 +1445,7 @@ LRESULT CALLBACK specialWindowProc3(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 int WINAPI SpecialTest() {
 	    const wchar_t CLASS_NAME[] = L"ChildWindowClass0";
     WNDCLASSW wc = {};
-    wc.lpfnWndProc = specialWindowProc0;
+    wc.lpfnWndProc = specialWindowProcx;
     wc.hInstance = GetModuleHandle(NULL);
     wc.lpszClassName = CLASS_NAME;
 
@@ -1439,14 +1468,32 @@ int WINAPI SpecialTest() {
     }
 	
 	Sleep(2000);
+	
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(hwnd, &ps);
+    FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+    EndPaint(hwnd, &ps);
+	
+	//HRGN hRgn = CreateEllipticRgn(50, 50, 350, 350); // Tvar elipsy, upravte podle potřeby
+    //SetWindowRgn(hwnd, hRgn, TRUE);
+	
+	Sleep(2000);
 
     ShowWindow(hwnd, SW_SHOW);
+	//UpdateWindow(hwnd);
+	//InvalidateRect(hwnd, NULL, TRUE);
 	
 	/*MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }*/
+	Sleep(2000);
+	
+	ShowWindow(hwnd, SW_MINIMIZE);
+
+	Sleep(2000);
+	ShowWindow(hwnd, SW_MAXIMIZE);
 	Sleep(2000);
 	
 	if (hwnd != NULL)
@@ -1480,7 +1527,10 @@ int WINAPI SpecialTest() {
 	Sleep(2000);
 
     ShowWindow(hwnd1, SW_SHOW);
-	
+	hdc = BeginPaint(hwnd, &ps);
+    FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+    EndPaint(hwnd, &ps);
+	ShowWindow(hwnd1, SW_SHOW);
 	/*MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -1550,6 +1600,9 @@ int WINAPI SpecialTest() {
         return 0;
     }
 	
+	//HRGN hRgn = CreateEllipticRgn(50, 50, 350, 350); // Tvar elipsy, upravte podle potřeby
+    //SetWindowRgn(hwnd, hRgn, TRUE);
+	
 	Sleep(2000);
 
     ShowWindow(hwnd3, SW_SHOW);
@@ -1610,6 +1663,10 @@ CreateWindowExW
 User32CreateWindowEx
 NtUserCreateWindowEx
 co_UserCreateWindowEx
+
+SetWindowRgn(NtUserSetWindowRgn) - nastaveni oblasti
+WS_POPUP - bez okraju
+WS_OVERLAPPEDWINDOW - s okraji
 
 	*/
 	
