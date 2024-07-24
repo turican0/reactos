@@ -1068,6 +1068,7 @@ IntDefWindowProc(
          }
          break;
 
+	  case WM_CREATE:
       case WM_ERASEBKGND:
       case WM_ICONERASEBKGND:
       {
@@ -1154,6 +1155,32 @@ IntDefWindowProc(
                  UserDrawIconEx(hDC, x, y, Wnd->pcls->spicn, 0, 0, 0, 0, DI_NORMAL | DI_COMPAT | DI_DEFAULTSIZE);
                  UserDereferenceObject(Wnd->pcls->spicn);
              }
+			 
+				RECT ClientRect;
+				IntGetClientRect(Wnd, &ClientRect);
+				HBRUSH hBrush = IntGetSysColorBrush(RGB(0, 255, 0));
+				FillRect(hDC, &ClientRect, hBrush);
+				//DeleteObject(hBrush);
+
+//////////////////////
+		/*RECT Rect;
+         HBRUSH hBrush = Wnd->pcls->hbrBackground;
+         if (!hBrush) return 0;
+         if (hBrush <= (HBRUSH)COLOR_MENUBAR)
+         {
+            hBrush = IntGetSysColorBrush(HandleToUlong(hBrush));
+         }
+         if (Wnd->pcls->style & CS_PARENTDC)
+         {            
+            IntGetClientRect(Wnd, &Rect);
+            GreDPtoLP((HDC)wParam, (LPPOINT)&Rect, 2);
+         }
+         else
+         {
+            GdiGetClipBox((HDC)wParam, &Rect);
+         }
+         FillRect((HDC)wParam, &Rect, hBrush);*/
+/////////////////////
 
              IntEndPaint(Wnd, &Ps);
          }

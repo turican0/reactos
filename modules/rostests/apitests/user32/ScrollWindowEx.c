@@ -1443,7 +1443,7 @@ LRESULT CALLBACK specialWindowProc3(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 }
 
 int WINAPI SpecialTest() {
-	    const wchar_t CLASS_NAME[] = L"ChildWindowClass0";
+	const wchar_t CLASS_NAME[] = L"ChildWindowClass0";
     WNDCLASSW wc = {};
     wc.lpfnWndProc = specialWindowProcx;
     wc.hInstance = GetModuleHandle(NULL);
@@ -1480,6 +1480,8 @@ int WINAPI SpecialTest() {
 	Sleep(2000);
 
     ShowWindow(hwnd, SW_SHOW);
+	ServeSomeMessages(10, 4);
+	
 	//UpdateWindow(hwnd);
 	//InvalidateRect(hwnd, NULL, TRUE);
 	
@@ -1491,9 +1493,12 @@ int WINAPI SpecialTest() {
 	Sleep(2000);
 	
 	ShowWindow(hwnd, SW_MINIMIZE);
-
+	ServeSomeMessages(10, 4);
+	
 	Sleep(2000);
 	ShowWindow(hwnd, SW_MAXIMIZE);
+	ServeSomeMessages(10, 4);
+	
 	Sleep(2000);
 	
 	if (hwnd != NULL)
@@ -1531,6 +1536,7 @@ int WINAPI SpecialTest() {
     FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
     EndPaint(hwnd, &ps);
 	ShowWindow(hwnd1, SW_SHOW);
+	ServeSomeMessages(10, 4);
 	/*MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -1569,6 +1575,7 @@ int WINAPI SpecialTest() {
 	Sleep(2000);
 
     ShowWindow(hwnd2, SW_SHOW);
+	ServeSomeMessages(10, 4);
 	
 	Sleep(2000);
 	
@@ -1606,10 +1613,11 @@ int WINAPI SpecialTest() {
 	Sleep(2000);
 
     ShowWindow(hwnd3, SW_SHOW);
+	ServeSomeMessages(10, 4);
 	
 	Sleep(2000);
 	
-	if (hwnd2 != NULL)
+	if (hwnd3 != NULL)
         DestroyWindow(hwnd3);
 	
 	/*
@@ -1678,9 +1686,95 @@ WS_OVERLAPPEDWINDOW - s okraji
     return 0;
 }
 
+LRESULT CALLBACK specialWindowProcy(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+	    /*case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hwnd, &ps);
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+			DrawContent(hdc, &rect, RGB(0, 255, 0));
+			EndPaint(hwnd, &ps);
+			return 0;
+		}*/
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+        default:
+            return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    }
+}
+
+int WINAPI SpecialTest2() {
+    // Definice třídy okna
+    const wchar_t CLASS_NAME[] = L"Simple Window Class";
+
+    WNDCLASSW wc = { };
+    wc.lpfnWndProc = specialWindowProcy;     // Funkce pro zpracování zpráv
+    wc.hInstance = GetModuleHandle(NULL);
+    wc.lpszClassName = CLASS_NAME;
+
+    // Registrace třídy okna
+    RegisterClassW(&wc);
+
+    // Vytvoření okna
+    HWND hwnd = CreateWindowExW(
+        0,                              // Rozšířený styl okna
+        CLASS_NAME,                     // Název třídy okna
+        L"Simple Window",               // Název okna
+        WS_OVERLAPPEDWINDOW,            // Styl okna
+        CW_USEDEFAULT, CW_USEDEFAULT,   // Počáteční pozice okna
+        CW_USEDEFAULT, CW_USEDEFAULT,   // Počáteční velikost okna
+        NULL,                           // Rodičovské okno
+        NULL,                           // Menu
+        GetModuleHandle(NULL),                      // Instance aplikace
+        NULL                            // Další parametry
+    );
+
+    if (hwnd == NULL) {
+        return 0;
+    }
+	
+	/*
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(hwnd, &ps);
+	RECT rect;
+	GetClientRect(hwnd, &rect);
+	DrawContent(hdc, &rect, RGB(0, 255, 0));
+	EndPaint(hwnd, &ps);
+	*/
+	
+	ShowWindow(hwnd, SW_SHOW);
+	HDC hdc = GetDC(hwnd);
+    RECT rect;
+	GetClientRect(hwnd, &rect);
+	DrawContent(hdc, &rect, RGB(0, 255, 0));
+    ReleaseDC(hwnd, hdc);
+	
+    
+	
+	ServeSomeMessages(10, 4);
+	
+	Sleep(20000);
+
+    // Hlavní smyčka zpráv
+    /*MSG msg = { };
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }*/
+	
+	if (hwnd != NULL)
+        DestroyWindow(hwnd);
+
+    return 0;
+}
+
 START_TEST(ScrollWindowEx)
 {
-	SpecialTest();
+	SpecialTest2();
+	//SpecialTest();
 	//Test_ScrollWindowEx1();
     //Test_ScrollWindowEx2();	
 }
