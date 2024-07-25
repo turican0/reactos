@@ -51,3 +51,10 @@ test--extension-of-RedrawWindow-apitest-by-flags<br>
 fix-CORE-13149-test_wine_integration - pokus o integraci wine WindowsRedraw<br>
 <br>
 
+ERR
+TRACE
+DbgPrint
+DPRINT
+DPRINT1
+ASSERT(MyVariable != NULL);
+
