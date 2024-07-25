@@ -1058,6 +1058,8 @@ FillRect(HDC hDC, CONST RECT *lprc, HBRUSH hbr)
 {
     BOOL Ret;
     HBRUSH prevhbr = NULL;
+	
+	ERR("FillRect rect %x %d %d %d %d\n",hDC, lprc->left,lprc->top,lprc->right,lprc->bottom);
 
     /* Select brush if specified */
     if (hbr)

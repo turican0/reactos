@@ -27,6 +27,8 @@ MoveToEx(
     _In_ INT y,
     _Out_opt_ LPPOINT ppt)
 {
+	DbgPrint("MoveToEx %x %d %d\n",hdc,x,y);
+	
     PDC_ATTR pdcattr;
 
     HANDLE_METADC(BOOL, MoveTo, FALSE, hdc, x, y);

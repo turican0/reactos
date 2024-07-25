@@ -544,6 +544,9 @@ IntDefWindowProc(
    USER_REFERENCE_ENTRY Ref;
 
    if (Msg > WM_USER) return 0;
+   
+   /*if((Msg!=0x20)&&(Msg!=0x84))
+	ERR("WinMsg %x\n\n",Msg);*/
 
    switch (Msg)
    {
@@ -1068,7 +1071,7 @@ IntDefWindowProc(
          }
          break;
 
-      case WM_CREATE:
+	  case WM_CREATE:
       case WM_ERASEBKGND:
       case WM_ICONERASEBKGND:
       {
@@ -1102,6 +1105,8 @@ IntDefWindowProc(
 
       case WM_NCHITTEST:
       {
+		 //co_UserRedrawWindow( Wnd, NULL, NULL, RDW_ALLCHILDREN|RDW_INVALIDATE|RDW_ERASE);
+		 
          POINT Point;
          Point.x = GET_X_LPARAM(lParam);
          Point.y = GET_Y_LPARAM(lParam);

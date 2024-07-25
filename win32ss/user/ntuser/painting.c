@@ -1630,7 +1630,7 @@ NtUserBeginPaint(HWND hWnd, PAINTSTRUCT* UnsafePs)
 
    UserRefObjectCo(Window, &Ref);
 
-   hDC = IntBeginPaint(Window, &Ps);
+   hDC = IntBeginPaint(Window, &Ps);   
 
    Status = MmCopyToCaller(UnsafePs, &Ps, sizeof(PAINTSTRUCT));
    if (! NT_SUCCESS(Status))
@@ -1646,6 +1646,10 @@ Cleanup:
 
    TRACE("Leave NtUserBeginPaint, ret=%p\n", Ret);
    UserLeave();
+   if(Ps.rcPaint.bottom==96)
+	   ERR("SPECIAL");
+   ERR("NtUserBeginPaint rect %x %d %d %d %d\n",hDC, Ps.rcPaint.left,Ps.rcPaint.top,Ps.rcPaint.right,Ps.rcPaint.bottom);
+   
    return Ret;
 }
 
