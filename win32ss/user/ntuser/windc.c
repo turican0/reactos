@@ -361,9 +361,16 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 
    if (Flags & DCX_PARENTCLIP) Flags |= DCX_CACHE;
 
+	BOOL skip_this=FALSE;
    // When GetDC is called with hWnd nz, DCX_CACHE & _WINDOW are clear w _USESTYLE set.
    if (Flags & DCX_USESTYLE)
    {
+	  if(Wnd->pcls->style & CS_OWNDC)
+	  {
+		  skip_this=TRUE;
+		  if ((!Wnd->pcls->pdce)||(!((PDCE)Wnd->pcls->pdce)->hDC))
+			return NULL;
+	  }
       Flags &= ~(DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS | DCX_PARENTCLIP);
       if (!(Flags & DCX_WINDOW)) // Not window rectangle
       {
@@ -404,7 +411,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       else
       {
          if (Wnd->style & WS_CLIPSIBLINGS) Flags |= DCX_CLIPSIBLINGS;
-         Flags |= DCX_CACHE;
+		 if(!skip_this)
+			Flags |= DCX_CACHE;
       }
    }
 
@@ -480,6 +488,11 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
          Dce = NULL; // Loop issue?
       }
       KeLeaveCriticalRegion();
+	  
+	  if(!skip_this)
+	  {
+		 
+	  
 
       Dce = (DceEmpty == NULL) ? DceUnused : DceEmpty;
 
@@ -491,9 +504,14 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 
       Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
       Dce->pwndOrg = Dce->pwndClip = Wnd;
+		}
+	  
+	  
    }
    else // If we are here, we are POWNED or having CLASS.
    {
+	   if(!skip_this)
+	  {
       KeEnterCriticalRegion();
       ListEntry = LEDce.Flink;
       while (ListEntry != &LEDce)
@@ -526,6 +544,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       {
          DceDeleteClipRgn(Dce);
       }
+	  }
+	  else
+		  return(NULL);
    }
 // First time use hax, need to use DceAllocDCE during window display init.
    if (NULL == Dce)
