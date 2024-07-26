@@ -417,37 +417,37 @@ Test_GetDCEx_CS_SwitchedStyle()
     ATOM atomClass;
     HWND hwnd1, hwnd2;
     HDC hdc1, hdc2, hdcClass;
-//1
+
     /* Create a class with CS_CLASSDC */
     atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
     ok(atomClass != 0, "Failed to register class\n");
-//2
+
     /* Create the 2 windows */
     hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
     ok(hwnd1 != NULL, "Failed to create hwnd1\n");
     hwnd2 = CreateWindowHelper(pszClassName, "Test Window2");
     ok(hwnd2 != NULL, "Failed to create hwnd2\n");
-//3
+
     /* Get the class DC from the Windows */
     hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE);
     hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE);
     hdcClass = hdc1;
     ok(hdc1 == hdc2, "Expected same DC\n");
-    ok(ReleaseDC(hwnd2, hdc2) == TRUE, "ReleaseDC failed\n");//poprve
-//4
+    ok(ReleaseDC(hwnd2, hdc2) == TRUE, "ReleaseDC failed\n");
+
     /* Switch the class to CS_OWNDC */
     ok(SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC) == CS_CLASSDC, "unexpected style\n");
     ok(GetClassLongPtrA(hwnd1, GCL_STYLE) == CS_OWNDC, "class style not set\n");
-//5
+
     /* Release the DC and try to get another one, this should fail now */
-    ok(ReleaseDC(hwnd1, hdc1) == TRUE, "ReleaseDC failed\n");//podruhe
+    ok(ReleaseDC(hwnd1, hdc1) == TRUE, "ReleaseDC failed\n");
     hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE);
     ok(hdc1 == NULL, "GetDCEx should fail\n");
-//6
+
     /* Destroy the 1st window, this should move it's own DC to the cache,
        but not the class DC, but they are the same, so... */
     DestroyWindow(hwnd1);
-//7
+
     /* Create another window, this time it should have it's own DC */
     hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
     ok(hwnd1 != NULL, "Failed to create hwnd1\n");
