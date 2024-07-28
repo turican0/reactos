@@ -64,10 +64,11 @@ HWND GetFirstHwndDC(PDCE pdce)
 	return pdce->dceWnd[0].hwndCurrent;
 }
 
+/*
 void SetFirstHwndDC(PDCE pdce, HWND hwnd)
 {
 	pdce->dceWnd[0].hwndCurrent = hwnd;
-}
+}*/
 
 void SetFirstFreeHwndDC(PDCE pdce, HWND hwnd)
 {
@@ -260,7 +261,8 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   TRACE("Alloc DCE's! %d\n",DCECount);
   //pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
   CleanHwndDC(pDce);
-  SetFirstHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
+  //SetFirstHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
+  SetFirstFreeHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
   pDce->pwndOrg  = Window;
   pDce->pwndClip = Window;
   pDce->hrgnClip = NULL;
@@ -678,7 +680,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       if (Dce == NULL) return NULL;
 
       //Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
-	  SetFirstHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
+	  //SetFirstHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
+	  SetFirstFreeHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
+	  
       Dce->pwndOrg = Dce->pwndClip = Wnd;
    }
    else // If we are here, we are POWNED or having CLASS.
@@ -927,7 +931,8 @@ DceFreeWindowDCE(PWND Window)
               pDCE->DCXFlags = DCX_DCEEMPTY|DCX_CACHE;
               //pDCE->hwndCurrent = 0;
 			  //SetFirstHwndDC(pDCE, 0);
-			  SetFirstHwndDC(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
+			  //SetFirstHwndDC(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
+			  RemoveHwndDC(pDCE,(Window ? UserHMGetHandle(Window) : NULL));
               pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
@@ -968,7 +973,8 @@ DceFreeWindowDCE(PWND Window)
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
            //pDCE->hwndCurrent = 0;
-		   SetFirstHwndDC(pDCE, 0);
+		   //SetFirstHwndDC(pDCE, 0);
+		   RemoveHwndDC(pDCE,(Window ? UserHMGetHandle(Window) : NULL));
            pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
      }
