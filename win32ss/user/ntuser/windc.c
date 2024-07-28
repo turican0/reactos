@@ -98,9 +98,14 @@ void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 }
 
 //SetFirstHwndDC
-BOOL RemoveHwndDC(PDCE pdce, HWND hwnd)
+BOOL RemoveHwndDC(PDCE pdce, PWND Window)
 {
-	if(hwnd == NULL) return FALSE;
+	if(Window == NULL)
+		return FALSE;
+	HWND hwnd = UserHMGetHandle(Window);
+	if(hwnd == NULL)
+		return FALSE;
+	//if(hwnd == NULL) return FALSE;
 	int position = -1;
 	for(int i=0;i<20;i++)
 	{
@@ -486,7 +491,7 @@ DceReleaseDC(PWND Window, DCE* dce, BOOL EndPaint)
             * by removing dirty bit. */
            //dce->hwndCurrent = 0;
 		   //SetFirstHwndDC(dce, 0);
-		   RemoveHwndDC(dce,(Window ? UserHMGetHandle(Window) : NULL));
+		   RemoveHwndDC(dce, Window);
            dce->pwndOrg  = NULL;
            dce->pwndClip = NULL;
            dce->DCXFlags &= DCX_CACHE;
@@ -944,7 +949,7 @@ DceFreeWindowDCE(PWND Window)
               //pDCE->hwndCurrent = 0;
 			  //SetFirstHwndDC(pDCE, 0);
 			  //SetFirstHwndDC(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
-			  RemoveHwndDC(pDCE,(Window ? UserHMGetHandle(Window) : NULL));
+			  RemoveHwndDC(pDCE, Window);
               pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
@@ -986,7 +991,7 @@ DceFreeWindowDCE(PWND Window)
            pDCE->DCXFlags |= DCX_DCEEMPTY;
            //pDCE->hwndCurrent = 0;
 		   //SetFirstHwndDC(pDCE, 0);
-		   RemoveHwndDC(pDCE,(Window ? UserHMGetHandle(Window) : NULL));
+		   RemoveHwndDC(pDCE, Window);
            pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
      }
