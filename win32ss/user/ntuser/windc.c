@@ -55,7 +55,11 @@ void CleanHwndDC(PDCE pdce)
 {
 	ERR("Clean HwndDC %x\n",pdce);
 	for(int i=0;i<20;i++)
+	{
 		pdce->dceWnd[i].hwndCurrent=NULL;
+		pdce->dceWnd[i].pwndOrg=NULL;
+		pdce->dceWnd[i].pwndClip=NULL;
+	}
 }
 
 HWND GetFirstHwndDC(PDCE pdce)
