@@ -55,7 +55,11 @@ void CleanHwndDC(PDCE pdce)
 {
 	ERR("Clean HwndDC %x\n",pdce);
 	for(int i=0;i<20;i++)
+	{
 		pdce->dceWnd[i].hwndCurrent=NULL;
+		pdce->dceWnd[i].pwndOrg=NULL;
+		pdce->dceWnd[i].pwndClip=NULL;
+	}
 }
 
 HWND GetFirstHwndDC(PDCE pdce)
@@ -64,13 +68,16 @@ HWND GetFirstHwndDC(PDCE pdce)
 	return pdce->dceWnd[0].hwndCurrent;
 }
 
+/*
 void SetFirstHwndDC(PDCE pdce, HWND hwnd)
 {
 	pdce->dceWnd[0].hwndCurrent = hwnd;
-}
+}*/
 
-void SetFirstFreeHwndDC(PDCE pdce, HWND hwnd)
+void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 {
+	if(Window==NULL)return;
+	HWND hwnd = UserHMGetHandle(Window);
 	ERR("Add HwndDC %x %x\n",pdce, hwnd);
 	for(int i=0;i<20;i++)
 	{
@@ -85,8 +92,10 @@ void SetFirstFreeHwndDC(PDCE pdce, HWND hwnd)
 }
 
 //SetFirstHwndDC
-BOOL RemoveHwndDC(PDCE pdce, HWND hwnd)
+BOOL RemoveHwndDC(PDCE pdce, PWND Window)
 {
+	if(Window==NULL)return FALSE;
+	HWND hwnd = UserHMGetHandle(Window);
 	if(hwnd == NULL) return FALSE;
 	int position = -1;
 	for(int i=0;i<20;i++)
@@ -260,7 +269,8 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   TRACE("Alloc DCE's! %d\n",DCECount);
   //pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
   CleanHwndDC(pDce);
-  SetFirstHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
+  //SetFirstHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
+  SetFirstFreeHwndDC(pDce, Window);
   pDce->pwndOrg  = Window;
   pDce->pwndClip = Window;
   pDce->hrgnClip = NULL;
@@ -678,7 +688,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       if (Dce == NULL) return NULL;
 
       //Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
-	  SetFirstHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
+	  //SetFirstHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
+	  SetFirstFreeHwndDC(Dce, Wnd);
       Dce->pwndOrg = Dce->pwndClip = Wnd;
    }
    else // If we are here, we are POWNED or having CLASS.
@@ -712,7 +723,6 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
              else
 				if (Dce->hDC == hDC)
 				{
-					SetFirstFreeHwndDC(Dce, UserHMGetHandle(Wnd));
 					if(BDCX_MYFLAG)ERR(" B-second DCE ");
 					break;
 				}
@@ -927,7 +937,8 @@ DceFreeWindowDCE(PWND Window)
               pDCE->DCXFlags = DCX_DCEEMPTY|DCX_CACHE;
               //pDCE->hwndCurrent = 0;
 			  //SetFirstHwndDC(pDCE, 0);
-			  SetFirstHwndDC(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
+			  //SetFirstHwndDC(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
+			  RemoveHwndDC(pDCE,Window);
               pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
@@ -968,7 +979,8 @@ DceFreeWindowDCE(PWND Window)
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
            //pDCE->hwndCurrent = 0;
-		   SetFirstHwndDC(pDCE, 0);
+		   //SetFirstHwndDC(pDCE, 0);
+		   RemoveHwndDC(dce,(Window ? UserHMGetHandle(Window) : NULL));
            pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
      }
