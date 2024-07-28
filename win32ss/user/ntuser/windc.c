@@ -53,19 +53,20 @@ DceCreateDisplayDC(VOID)
 
 void CleanHwndDC(PDCE pdce)
 {
-	ERR("Clean HwndDC %x\n",pdce);
+	if(BDCX_MYFLAG)ERR("Clean HwndDC %x\n",pdce);
 	for(int i=0;i<20;i++)
 	{
-		pdce->dceWnd[i].hwndCurrent=NULL;
 		pdce->dceWnd[i].hwndCurrent=NULL;
 		pdce->dceWnd[i].pwndOrg=NULL;
 		pdce->dceWnd[i].pwndClip=NULL;
 	}
+	pdce->classOnlyDC=FALSE;
+	//pdce->pcls=NULL;
 }
 
 HWND GetFirstHwndDC(PDCE pdce)
 {
-	ERR("GetFirstHwndDC %x  %x\n",pdce,pdce->dceWnd[0].hwndCurrent);
+	if(BDCX_MYFLAG)ERR("GetFirstHwndDC %x  %x\n",pdce,pdce->dceWnd[0].hwndCurrent);
 	return pdce->dceWnd[0].hwndCurrent;
 }
 
@@ -75,6 +76,18 @@ void SetFirstHwndDC(PDCE pdce, HWND hwnd)
 	pdce->dceWnd[0].hwndCurrent = hwnd;
 }*/
 
+int GetCountHwndDC(PDCE pdce)
+{
+	int result=0;
+	for(int i=0;i<20;i++)
+	{
+		if(pdce->dceWnd[i].hwndCurrent!=NULL)
+			result++;
+	}
+	if(BDCX_MYFLAG)ERR("GetCountHwndDC: %d\n",result);	
+	return result;
+}
+
 void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 {
 	if(Window == NULL)
@@ -82,7 +95,7 @@ void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 	HWND hwnd = UserHMGetHandle(Window);
 	if(hwnd == NULL)
 		return;
-	ERR("Add HwndDC %x %x\n",pdce, hwnd);
+	if(BDCX_MYFLAG)ERR("Add HwndDC %x %x\n",pdce, hwnd);
 	for(int i=0;i<20;i++)
 	{
 		if(pdce->dceWnd[i].hwndCurrent == hwnd)
@@ -92,6 +105,12 @@ void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 			pdce->dceWnd[i].hwndCurrent = hwnd;
 		    pdce->dceWnd[i].pwndOrg=Window;
 		    pdce->dceWnd[i].pwndClip=Window;
+			if(i>0)
+			{
+				pdce->pcls=Window->pcls;
+				pdce->classOnlyDC=TRUE;
+				if(BDCX_MYFLAG)ERR("Add class test: %x\n",Window->pcls);
+			}
 			break;
 		}
 	}	
@@ -117,14 +136,14 @@ BOOL RemoveHwndDC(PDCE pdce, PWND Window)
 	}
 	if(position==-1)
 	{
-		ERR("RemoveHwndDC-not deleted %x %x\n",pdce,hwnd);
+		if(BDCX_MYFLAG)ERR("RemoveHwndDC-not deleted %x %x\n",pdce,hwnd);
 		return FALSE;
 	}
 	for(int i=20-1;i>position;i--)
 	{
 		pdce->dceWnd[i-1].hwndCurrent=pdce->dceWnd[i].hwndCurrent;
 	}
-	ERR("RemoveHwndDC-deleted %x %x\n",pdce,hwnd);
+	if(BDCX_MYFLAG)ERR("RemoveHwndDC-deleted %x %x %x\n",pdce, pdce->hDC, hwnd);
 	return TRUE;
 }
 
@@ -139,11 +158,11 @@ BOOL ExistHwndDC(PDCE pdce, PWND Window)
 	{
 		if(pdce->dceWnd[i].hwndCurrent==hwnd)
 		{
-			ERR("Get HwndDC %x %x\n",pdce, hwnd);
+			if(BDCX_MYFLAG)ERR("Get HwndDC %x %x %x\n",pdce, pdce->hDC, hwnd);
 			return TRUE;
 		}
 	}
-	ERR("Get HwndDC-no exist %x\n",hwnd);
+	if(BDCX_MYFLAG)ERR("Get HwndDC-no exist %x\n",hwnd);
 	return FALSE;
 }
 
@@ -263,16 +282,75 @@ DceGetVisRgn(PWND Window, ULONG Flags, HWND hWndChild, ULONG CFlags)
     return Rgn;
 }
 
+int startindex=0;
+
+void WriteLEDce()
+{
+	startindex++;
+	if(startindex<10)return;
+	
+	PLIST_ENTRY ListEntry;
+	PDCE pDce = NULL;
+	//char buf[1024]="";
+	//char error_buffer[1024 * 10]="";
+	
+	ListEntry = LEDce.Flink;
+	while (ListEntry != &LEDce)
+	{
+		pDce = ((PDCE)ListEntry);//CONTAINING_RECORD(ListEntry, DCE, List);
+		ERR("- %p %p %p %p\n",(void*)pDce,(void*)pDce->pcls,(void*)ListEntry,(void*)((PDCE)ListEntry)->pcls);
+		ListEntry = ListEntry->Flink;
+	}
+	/*
+	ListEntry = LEDce.Flink;
+		  while (ListEntry != &LEDce)
+		  {
+			  if(BDCX_MYFLAG) ERR("ListEntry\n");
+			 pDce = CONTAINING_RECORD(ListEntry, DCE, List);
+			 ListEntry = ListEntry->Flink;			 
+			 if(pDce)
+			 {
+				 ERR(" %p(%p,%d) ", (void*)pDce->hDC, (void*)pDce->pcls, (int)(pDce->DCXFlags & DCX_CACHE));
+				//sprintf(buf, " %p(%p,%d) ", (void*)Dce->hDC, (void*)Dce->pcls, (int)(Dce->DCXFlags & DCX_CACHE));
+				//strcat(error_buffer, buf);
+			 }
+			 
+			 //ERR(" %x ",Dce->hDC);
+		  }
+		  pDce = NULL;*/
+		  
+		  //ERR("%s",error_buffer);
+		  /*
+		  	  ListEntry = LEDce.Flink;
+	  while (ListEntry != &LEDce)
+	  {
+		 dce = CONTAINING_RECORD(ListEntry, DCE, List);
+		 ListEntry = ListEntry->Flink;
+		 ERR(" %x ",dce->hDC);
+		 if (dce->hDC == hDc)
+		 {
+			ERR("UserReleaseDC-flags: %d",dce->DCXFlags);
+		 }
+	  }
+	  dce = NULL;
+		  */
+}
+
 PDCE FASTCALL
 DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
 {
   PDCE pDce;
+  
+  /*if(BDCX_MYFLAG)*/WriteLEDce();
 
   pDce = ExAllocatePoolWithTag(PagedPool, sizeof(DCE), USERTAG_DCE);
   if(!pDce)
         return NULL;
 
   pDce->hDC = DceCreateDisplayDC();
+  //if(startindex>=10)
+	  if(Window&&(Window->pcls))
+  ERR("DceAllocDCE %p %p %x %p %p\n",(void*)Window, (void*)Window->pcls, Window->pcls->atomClassName, (void*)pDce,(void*)pDce->hDC);
   if (!pDce->hDC)
   {
       ExFreePoolWithTag(pDce, USERTAG_DCE);
@@ -280,18 +358,30 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   }
   DCECount++;
   TRACE("Alloc DCE's! %d\n",DCECount);
+  
+  ERR("DceAllocDCE-2 %p %p\n",(void*)pDce,(void*)pDce->pcls);
+  /*if(BDCX_MYFLAG)*/WriteLEDce();
   //pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
+  ERR("DceAllocDCE-3 %p %p\n",(void*)pDce,(void*)pDce->pcls);
   CleanHwndDC(pDce);
+  ERR("DceAllocDCE-4 %p %p\n",(void*)pDce,(void*)pDce->pcls);
   //SetFirstHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
   SetFirstFreeHwndDC(pDce, Window);
+  ERR("DceAllocDCE-5 %p %p\n",(void*)pDce,(void*)pDce->pcls);
   pDce->pwndOrg  = Window;
   pDce->pwndClip = Window;
+  if(Window&&(Window->pcls))
+	pDce->pcls = Window->pcls;
   pDce->hrgnClip = NULL;
   pDce->hrgnClipPublic = NULL;
   pDce->hrgnSavedVis = NULL;
   pDce->ppiOwner = NULL;
-
+	ERR("DceAllocDCE-6 %p %p\n",(void*)pDce,(void*)pDce->pcls);
   InsertTailList(&LEDce, &pDce->List);
+  ERR("DceAllocDCE-7 %p %p\n",(void*)pDce,(void*)pDce->pcls);
+  /*if(BDCX_MYFLAG)*/WriteLEDce();
+ ERR("DceAllocDCE-8 %p %p\n",(void*)pDce,(void*)pDce->pcls);
+ ERR("DceAllocDCE-8 %p %p\n",(void*)LEDce.Blink,(void*)((PDCE)LEDce.Blink)->pcls);
 
   DCU_SetDcUndeletable(pDce->hDC);
 
@@ -322,6 +412,9 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
         }
      }
   }
+  
+  /*if(BDCX_MYFLAG)*/WriteLEDce();
+  
   return(pDce);
 }
 
@@ -546,6 +639,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    {
 		ERR("UserGetDCEx - DCX_MYFLAG %d\n",Flags);
 		BDCX_MYFLAG=TRUE;
+		if(BDCX_MYFLAG)WriteLEDce();
+		/*
 		ListEntry = LEDce.Flink;
 		  while (ListEntry != &LEDce)
 		  {
@@ -553,14 +648,30 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 			 Dce = CONTAINING_RECORD(ListEntry, DCE, List);
 			 ListEntry = ListEntry->Flink;
 			 ERR(" %x ",Dce->hDC);
-			 /*if (Dce->hDC == hDC)
-			 {
-				ERR("UserGetDCEx-flags: %d",Dce->DCXFlags);
-			 }*/
+			 //if (Dce->hDC == hDC)
+			 //{
+			//	ERR("UserGetDCEx-flags: %d",Dce->DCXFlags);
+			 //}
 		  }
+		  */
 		  Dce = NULL;
    }
-
+   /*
+   if(Wnd)
+	   if(Wnd->pcls)
+		   //if(!Wnd->pcls->pdce)
+   {
+		  // Handle "CS_CLASSDC", it is tested first.
+	   if ( (Wnd->pcls->style & CS_CLASSDC) && !(Wnd->pcls->pdce) )
+	   {  // One DCE per class to have CLASS. 
+		  Wnd->pcls->pdce = DceAllocDCE( Wnd, DCE_CLASS_DC );
+	   }
+	   else if ( Wnd->pcls->style & CS_OWNDC)
+	   {  // Allocate a DCE for this window. 
+		  DceAllocDCE(Wnd, DCE_WINDOW_DC);
+	   }
+   }
+*/
    if (NULL == Wnd)
    {
       Flags &= ~DCX_USESTYLE;
@@ -590,6 +701,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
             {
                if (Wnd->pcls->pdce) hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
                TRACE("We have CLASS!!\n");
+			   ERR("We have CLASS!!\n");
             }
          }
 
@@ -722,18 +834,38 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
           {
 			  if(BDCX_MYFLAG)
 			  {
-			  ERR("ListEntry B: %x %x\n",GetFirstHwndDC(Dce),UserHMGetHandle(Wnd));
-			  ERR("ListEntry C: %x %x\n",Dce->hDC,hDC);
+			  if(BDCX_MYFLAG)ERR("ListEntry B: %x %x\n",GetFirstHwndDC(Dce),UserHMGetHandle(Wnd));
+			  if(BDCX_MYFLAG)ERR("ListEntry C: %x %x\n",Dce->hDC,hDC);
 			  }
              // Check for Window handle than HDC match for CLASS.
              //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
 		     //if (GetFirstHwndDC(Dce) == UserHMGetHandle(Wnd))
-			 if (ExistHwndDC(Dce, Wnd))
+		     if(BDCX_MYFLAG)
+				{
+					ERR("class test: %x %x\n",Wnd->pcls,Dce->pcls);
+					//if(Wnd->pcls!=NULL)if(Dce->pcls!=NULL)ERR("class test: %x %x %x %x %x\n",Wnd, Wnd->pcls->atomClassName, Wnd->pcls,Dce,Dce->pcls);
+				}
+			 if(!(Wnd->pcls->style & CS_OWNDC))
+			 {
+				 if(Wnd->pcls == Dce->pcls)
+				 {
+					 if(BDCX_MYFLAG)ERR("class Exist!!!!!!!!!!!!!\n");
+					 bUpdateVisRgn = FALSE;
+					 break;
+				 }
+			 }
+			 else if ((ExistHwndDC(Dce, Wnd))&&(Wnd->pcls->style & CS_OWNDC) && !Dce->classOnlyDC)
+			 {
+				 bUpdateVisRgn = FALSE;
+				 if(BDCX_MYFLAG)ERR(" A ");
+                 break;
+			 }
+			 /*else if ((ExistHwndDC(Dce, Wnd))&&(!(Wnd->pcls->style & CS_OWNDC) || !Dce->classOnlyDC))
              {
                 bUpdateVisRgn = FALSE;
 				if(BDCX_MYFLAG)ERR(" A ");
                 break;
-             }
+             }*/
              else
 				if (Dce->hDC == hDC)
 				{
@@ -1177,6 +1309,7 @@ IntWindowFromDC(HDC hDc)
   return Ret;
 }
 
+
 INT FASTCALL
 UserReleaseDC(PWND Window, HDC hDc, BOOL EndPaint)
 {
@@ -1188,18 +1321,7 @@ UserReleaseDC(PWND Window, HDC hDc, BOOL EndPaint)
   if(BDCX_MYFLAG)
   {
 	  ERR("UserReleaseDC: %x\n",hDc);
-	  ListEntry = LEDce.Flink;
-	  while (ListEntry != &LEDce)
-	  {
-		 dce = CONTAINING_RECORD(ListEntry, DCE, List);
-		 ListEntry = ListEntry->Flink;
-		 ERR(" %x ",dce->hDC);
-		 if (dce->hDC == hDc)
-		 {
-			ERR("UserReleaseDC-flags: %d",dce->DCXFlags);
-		 }
-	  }
-	  dce = NULL;
+	  WriteLEDce();
   }
 
   TRACE("%p %p\n", Window, hDc);

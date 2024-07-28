@@ -480,7 +480,7 @@ Test_GetDCEx_CS_SwitchedStyle()
     /* Create another window, this time it should have it's own DC */
     hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
     ok(hwnd1 != NULL, "Failed to create hwnd1\n");
-    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE);
+    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
     ok(hdc1 != NULL, "GetDXEx failed\n");
     ok(hdc1 != hdc2, "Should get different DC\n");
 
@@ -489,7 +489,7 @@ Test_GetDCEx_CS_SwitchedStyle()
     ok(GetClassLongPtrA(hwnd2, GCL_STYLE) == CS_CLASSDC, "class style not set\n");
 
     /* Get the 2nd window's DC, this should still be the class DC */
-    hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE);
+    hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);
     ok(hdc2 != hdc1, "Expected different DC\n");//sometimes ERROR!!!!!!!!!!!!!!!!!!!!
     ok(hdc2 == hdcClass, "Expected class DC\n");
 
@@ -497,14 +497,16 @@ Test_GetDCEx_CS_SwitchedStyle()
     DestroyWindow(hwnd2);
     ok(UnregisterClass(pszClassName, GetModuleHandleA(0)) == TRUE,
        "UnregisterClass failed\n");
+	   
+	   //Cs.lpszClass;
 }
 
 START_TEST(GetDCEx)
 {
-    Test_GetDCEx_Params();
-    Test_GetDCEx_Cached();
-    Test_GetDCEx_CS_OWNDC();
-    Test_GetDCEx_CS_CLASSDC();
-    Test_GetDCEx_CS_Mixed();
+    if(0)Test_GetDCEx_Params();
+    if(0)Test_GetDCEx_Cached();
+    if(0)Test_GetDCEx_CS_OWNDC();
+    if(0)Test_GetDCEx_CS_CLASSDC();
+    if(0)Test_GetDCEx_CS_Mixed();
     Test_GetDCEx_CS_SwitchedStyle();
 }

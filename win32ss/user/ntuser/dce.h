@@ -27,6 +27,8 @@ typedef struct tagDCE
     LIST_ENTRY   List;
     HDC          hDC;
     DCEWND       dceWnd[20];
+	BOOL         classOnlyDC;
+	PCLS         pcls;
     PWND         pwndOrg;
     PWND         pwndClip;
     PWND         pwndRedirect;
