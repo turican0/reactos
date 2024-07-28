@@ -9,6 +9,8 @@
 
 #define DCX_USESTYLE 0x00010000
 
+#define DCX_MYFLAG   0x00200000
+
 void Test_GetDCEx_Params()
 {
 
@@ -235,7 +237,7 @@ Test_GetDCEx_CS_CLASSDC()
     ok(hwnd2 != NULL, "Failed to create hwnd2\n");
 
     /* Yeah, this doesn't work anymore. Once the */
-    hdc2 = GetDCEx(hwnd2, NULL, 0);
+    hdc2 = GetDCEx(hwnd2, NULL, DCX_MYFLAG);
     ok(hdc2 == NULL, "Expected failure\n");
 
     /* Now with DCX_USESTYLE ... */
@@ -417,11 +419,37 @@ Test_GetDCEx_CS_SwitchedStyle()
     ATOM atomClass;
     HWND hwnd1, hwnd2;
     HDC hdc1, hdc2, hdcClass;
+	
+	///////////////my tests
+	//1/
+	atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
+	hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
+	hwnd2 = CreateWindowHelper(pszClassName, "Test Window2");
+	hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
+	hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);
+	//ReleaseDC(hwnd1, hdc2);
+	SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+	printf("Second Get:%d\n",NULL!=GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG));
+	DestroyWindow(hwnd1);
+	DestroyWindow(hwnd2);
+	UnregisterClass(pszClassName, GetModuleHandleA(0));
+	
+	//2/
+	atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
+	hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
+	hwnd2 = CreateWindowHelper(pszClassName, "Test Window2");
+	hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
+	SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+	printf("Second Get:%d\n",NULL!=GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG));
+	DestroyWindow(hwnd1);
+	DestroyWindow(hwnd2);
+	UnregisterClass(pszClassName, GetModuleHandleA(0));	
+	///////////////my tests
 
     /* Create a class with CS_CLASSDC */
     atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
     ok(atomClass != 0, "Failed to register class\n");
-
+	
     /* Create the 2 windows */
     hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
     ok(hwnd1 != NULL, "Failed to create hwnd1\n");
@@ -429,8 +457,8 @@ Test_GetDCEx_CS_SwitchedStyle()
     ok(hwnd2 != NULL, "Failed to create hwnd2\n");
 
     /* Get the class DC from the Windows */
-    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE);
-    hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE);
+    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
+    hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);
     hdcClass = hdc1;
     ok(hdc1 == hdc2, "Expected same DC\n");
     ok(ReleaseDC(hwnd2, hdc2) == TRUE, "ReleaseDC failed\n");
@@ -438,10 +466,11 @@ Test_GetDCEx_CS_SwitchedStyle()
     /* Switch the class to CS_OWNDC */
     ok(SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC) == CS_CLASSDC, "unexpected style\n");
     ok(GetClassLongPtrA(hwnd1, GCL_STYLE) == CS_OWNDC, "class style not set\n");
+	ok(GetClassLongPtrA(hwnd2, GCL_STYLE) == CS_OWNDC, "class style not set\n");
 
     /* Release the DC and try to get another one, this should fail now */
     ok(ReleaseDC(hwnd1, hdc1) == TRUE, "ReleaseDC failed\n");
-    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE);
+    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
     ok(hdc1 == NULL, "GetDCEx should fail\n");
 
     /* Destroy the 1st window, this should move it's own DC to the cache,
@@ -461,7 +490,7 @@ Test_GetDCEx_CS_SwitchedStyle()
 
     /* Get the 2nd window's DC, this should still be the class DC */
     hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE);
-    ok(hdc2 != hdc1, "Expected different DC\n");
+    ok(hdc2 != hdc1, "Expected different DC\n");//sometimes ERROR!!!!!!!!!!!!!!!!!!!!
     ok(hdc2 == hdcClass, "Expected class DC\n");
 
     DestroyWindow(hwnd1);

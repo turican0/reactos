@@ -14,11 +14,19 @@ typedef enum
     DCE_WINDOW_DC   /* This is a window DC (style CS_OWNDC) */
 } DCE_TYPE, *PDCE_TYPE;
 
+typedef struct tagDCEWND
+{
+	HWND         hwndCurrent;
+    PWND         pwndOrg;
+    PWND         pwndClip;
+}
+DCEWND;
+
 typedef struct tagDCE
 {
     LIST_ENTRY   List;
     HDC          hDC;
-    HWND         hwndCurrent;
+    DCEWND       dceWnd[20];
     PWND         pwndOrg;
     PWND         pwndClip;
     PWND         pwndRedirect;

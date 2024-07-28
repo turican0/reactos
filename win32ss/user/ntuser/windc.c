@@ -17,12 +17,16 @@ DBG_DEFAULT_CHANNEL(UserDce);
 static LIST_ENTRY LEDce;
 static INT DCECount = 0; // Count of DCE in system.
 
+BOOL BDCX_MYFLAG=FALSE;
+
 #define DCX_CACHECOMPAREMASK (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | \
                               DCX_NORESETATTRS | DCX_LOCKWINDOWUPDATE | \
                               DCX_LAYEREDWIN | DCX_CACHE | DCX_WINDOW | \
                               DCX_PARENTCLIP)
 
 /* FUNCTIONS *****************************************************************/
+
+#define DCX_MYFLAG   0x00200000
 
 CODE_SEG("INIT")
 NTSTATUS
@@ -47,11 +51,166 @@ DceCreateDisplayDC(VOID)
   return IntGdiCreateDC(&DriverName, NULL, NULL, NULL, FALSE);
 }
 
+void CleanHwndDC(PDCE pdce)
+{
+	ERR("Clean HwndDC %x\n",pdce);
+	for(int i=0;i<20;i++)
+		pdce->dceWnd[i].hwndCurrent=NULL;
+}
+
+HWND GetFirstHwndDC(PDCE pdce)
+{
+	ERR("GetFirstHwndDC %x  %x\n",pdce,pdce->dceWnd[0].hwndCurrent);
+	return pdce->dceWnd[0].hwndCurrent;
+}
+
+void SetFirstHwndDC(PDCE pdce, HWND hwnd)
+{
+	pdce->dceWnd[0].hwndCurrent = hwnd;
+}
+
+void SetFirstFreeHwndDC(PDCE pdce, HWND hwnd)
+{
+	ERR("Add HwndDC %x %x\n",pdce, hwnd);
+	for(int i=0;i<20;i++)
+	{
+		if(pdce->dceWnd[i].hwndCurrent == hwnd)
+			break;
+		if(pdce->dceWnd[i].hwndCurrent == NULL)
+		{
+			pdce->dceWnd[i].hwndCurrent = hwnd;
+			break;
+		}
+	}	
+}
+
+//SetFirstHwndDC
+BOOL RemoveHwndDC(PDCE pdce, HWND hwnd)
+{
+	if(hwnd == NULL) return FALSE;
+	int position = -1;
+	for(int i=0;i<20;i++)
+	{
+		if(pdce->dceWnd[i].hwndCurrent==hwnd)
+		{
+			position=i;
+			break;
+		}
+	}
+	if(position==-1)
+	{
+		ERR("RemoveHwndDC-not deleted %x %x\n",pdce,hwnd);
+		return FALSE;
+	}
+	for(int i=20-1;i>position;i--)
+	{
+		pdce->dceWnd[i-1].hwndCurrent=pdce->dceWnd[i].hwndCurrent;
+	}
+	ERR("RemoveHwndDC-deleted %x %x\n",pdce,hwnd);
+	return TRUE;
+}
+
+BOOL ExistHwndDC(PDCE pdce, HWND hwnd)
+{
+	if(hwnd == NULL) return FALSE;
+	for(int i=0;i<20;i++)
+	{
+		if(pdce->dceWnd[i].hwndCurrent==hwnd)
+		{
+			ERR("Get HwndDC %x %x\n",pdce, hwnd);
+			return TRUE;
+		}
+	}
+	ERR("Get HwndDC-no exist %x\n",hwnd);
+	return FALSE;
+}
+
+/*
+void CleanHwndDC(PDCE pdce)
+{
+	ERR("Clean HwndDC %x\n",pdce);
+	for(int i=0;i<20;i++)
+	{
+		pdce->dceWnd[i].hwndCurrent=NULL;
+		pdce->dceWnd[i].pwndOrg=NULL;
+		pdce->dceWnd[i].pwndClip=NULL;
+	}
+}
+
+HWND GetFirstHwndDC(PDCE pdce)
+{
+	ERR("GetFirstHwndDC %x  %x\n",pdce,pdce->dceWnd[0].hwndCurrent);
+	return pdce->dceWnd[0].hwndCurrent;
+}
+
+void SetFirstHwndDC(PDCE pdce, HWND hwnd)
+{
+	pdce->dceWnd[0].hwndCurrent = hwnd;
+}
+
+void SetFirstFreeHwndDC(PDCE pdce, HWND hwnd)
+{
+	ERR("Add HwndDC %x %x\n",pdce, hwnd);
+	for(int i=0;i<20;i++)
+	{
+		if(pdce->dceWnd[i].hwndCurrent == hwnd)
+			break;
+		if(pdce->dceWnd[i].hwndCurrent == NULL)
+		{
+			pdce->dceWnd[i].hwndCurrent = hwnd;
+			break;
+		}
+	}	
+}
+
+//SetFirstHwndDC
+BOOL RemoveHwndDC(PDCE pdce, HWND hwnd)
+{
+	if(hwnd == NULL) return FALSE;
+	int position = -1;
+	for(int i=0;i<20;i++)
+	{
+		if(pdce->dceWnd[i].hwndCurrent==hwnd)
+		{
+			position=i;
+			break;
+		}
+	}
+	if(position==-1)
+	{
+		ERR("RemoveHwndDC-not deleted %x %x\n",pdce,hwnd);
+		return FALSE;
+	}
+	for(int i=20-1;i>position;i--)
+	{
+		pdce->dceWnd[i-1]=pdce->dceWnd[i];
+	}
+	ERR("RemoveHwndDC-deleted %x %x\n",pdce,hwnd);
+	return TRUE;
+}
+
+BOOL ExistHwndDC(PDCE pdce, HWND hwnd)
+{
+	if(hwnd == NULL) return FALSE;
+	for(int i=0;i<20;i++)
+	{
+		if(pdce->dceWnd[i].hwndCurrent==hwnd)
+		{
+			ERR("Get HwndDC %x %x\n",pdce, hwnd);
+			return TRUE;
+		}
+	}
+	ERR("Get HwndDC-no exist %x\n",hwnd);
+	return FALSE;
+}
+*/
+
 /* Returns the DCE pointer from the HDC handle */
 DCE*
 FASTCALL
 DceGetDceFromDC(HDC hdc)
 {
+	if(BDCX_MYFLAG)ERR("DceGetDceFromDC\n");
     PLIST_ENTRY ListEntry;
     DCE* dce;
 
@@ -99,7 +258,9 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   }
   DCECount++;
   TRACE("Alloc DCE's! %d\n",DCECount);
-  pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
+  //pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
+  CleanHwndDC(pDce);
+  SetFirstHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
   pDce->pwndOrg  = Window;
   pDce->pwndClip = Window;
   pDce->hrgnClip = NULL;
@@ -276,8 +437,9 @@ noparent:
 }
 
 static INT FASTCALL
-DceReleaseDC(DCE* dce, BOOL EndPaint)
+DceReleaseDC(PWND Window, DCE* dce, BOOL EndPaint)
 {
+	if(BDCX_MYFLAG)ERR("DceReleaseDC\n");
    if (DCX_DCEBUSY != (dce->DCXFlags & (DCX_INDESTROY | DCX_DCEEMPTY | DCX_DCEBUSY)))
    {
       return 0;
@@ -295,6 +457,7 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
       DceDeleteClipRgn(dce);
    }
 
+	if(BDCX_MYFLAG)ERR("dce->DCXFlags & DCX_CACHE %d\n",(dce->DCXFlags & DCX_CACHE));
    if (dce->DCXFlags & DCX_CACHE)
    {
       if (!(dce->DCXFlags & DCX_NORESETATTRS))
@@ -307,7 +470,9 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
            /* Don't keep around invalidated entries
             * because SetDCState() disables hVisRgn updates
             * by removing dirty bit. */
-           dce->hwndCurrent = 0;
+           //dce->hwndCurrent = 0;
+		   //SetFirstHwndDC(dce, 0);
+		   RemoveHwndDC(dce,(Window ? UserHMGetHandle(Window) : NULL));
            dce->pwndOrg  = NULL;
            dce->pwndClip = NULL;
            dce->DCXFlags &= DCX_CACHE;
@@ -352,6 +517,26 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    HDC hDC = NULL;
    PPROCESSINFO ppi;
    PLIST_ENTRY ListEntry;
+   
+   BDCX_MYFLAG=FALSE;
+   if(Flags & DCX_MYFLAG)
+   {
+		ERR("UserGetDCEx - DCX_MYFLAG %d\n",Flags);
+		BDCX_MYFLAG=TRUE;
+		ListEntry = LEDce.Flink;
+		  while (ListEntry != &LEDce)
+		  {
+			  if(BDCX_MYFLAG) ERR("ListEntry\n");
+			 Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+			 ListEntry = ListEntry->Flink;
+			 ERR(" %x ",Dce->hDC);
+			 /*if (Dce->hDC == hDC)
+			 {
+				ERR("UserGetDCEx-flags: %d",Dce->DCXFlags);
+			 }*/
+		  }
+		  Dce = NULL;
+   }
 
    if (NULL == Wnd)
    {
@@ -451,6 +636,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 
    if (Flags & DCX_CACHE)
    { // Scan the cheap wine list for our match.
+      if(BDCX_MYFLAG) ERR("DCX_CACHE\n");
       DCE* DceEmpty = NULL;
       DCE* DceUnused = NULL;
       KeEnterCriticalRegion();
@@ -470,7 +656,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
             {
                DceEmpty = Dce;
             }
-            else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
+            //else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
+			//else if (GetFirstHwndDC(Dce) == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
+			else if (ExistHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL)) &&
                      ((Dce->DCXFlags & DCX_CACHECOMPAREMASK) == DcxFlags))
             {
                UpdateClipOrigin = TRUE;
@@ -489,32 +677,53 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       }
       if (Dce == NULL) return NULL;
 
-      Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+      //Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+	  SetFirstHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
       Dce->pwndOrg = Dce->pwndClip = Wnd;
    }
    else // If we are here, we are POWNED or having CLASS.
    {
+	   if(BDCX_MYFLAG)ERR("NO-DCX_CACHE\n");
       KeEnterCriticalRegion();
       ListEntry = LEDce.Flink;
       while (ListEntry != &LEDce)
       {
+		  if(BDCX_MYFLAG)ERR("ListEntry\n");
           Dce = CONTAINING_RECORD(ListEntry, DCE, List);
           ListEntry = ListEntry->Flink;
 
           // Skip Cache DCE entries.
           if (!(Dce->DCXFlags & DCX_CACHE))
           {
+			  if(BDCX_MYFLAG)
+			  {
+			  ERR("ListEntry B: %x %x\n",GetFirstHwndDC(Dce),UserHMGetHandle(Wnd));
+			  ERR("ListEntry C: %x %x\n",Dce->hDC,hDC);
+			  }
              // Check for Window handle than HDC match for CLASS.
-             if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
+             //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
+		     //if (GetFirstHwndDC(Dce) == UserHMGetHandle(Wnd))
+			 if (ExistHwndDC(Dce, UserHMGetHandle(Wnd)))
              {
                 bUpdateVisRgn = FALSE;
+				if(BDCX_MYFLAG)ERR(" A ");
                 break;
              }
-             else if (Dce->hDC == hDC) break;
+             else
+				if (Dce->hDC == hDC)
+				{
+					SetFirstFreeHwndDC(Dce, UserHMGetHandle(Wnd));
+					if(BDCX_MYFLAG)ERR(" B-second DCE ");
+					break;
+				}
+				
           }
+		  if(BDCX_MYFLAG)ERR(" C ");
           Dce = NULL; // Loop issue?
       }
       KeLeaveCriticalRegion();
+	  
+	  if(BDCX_MYFLAG)ERR(" EEE %x\n",Dce);
 
       if (Dce == NULL)
       {
@@ -687,6 +896,8 @@ DceFreeWindowDCE(PWND Window)
 {
   PDCE pDCE;
   PLIST_ENTRY ListEntry;
+  
+  if(BDCX_MYFLAG)ERR("DceFreeWindowDCE\n");
 
   if (DCECount <= 0)
   {
@@ -699,7 +910,9 @@ DceFreeWindowDCE(PWND Window)
   {
      pDCE = CONTAINING_RECORD(ListEntry, DCE, List);
      ListEntry = ListEntry->Flink;
-     if ( pDCE->hwndCurrent == UserHMGetHandle(Window) &&
+     //if ( pDCE->hwndCurrent == UserHMGetHandle(Window) &&
+	 //if ( GetFirstHwndDC(pDCE) == UserHMGetHandle(Window) &&
+	 if ( ExistHwndDC(pDCE,UserHMGetHandle(Window)) &&
           !(pDCE->DCXFlags & DCX_DCEEMPTY) )
      {
         if (!(pDCE->DCXFlags & DCX_CACHE)) /* Owned or Class DCE */
@@ -712,7 +925,9 @@ DceFreeWindowDCE(PWND Window)
               // Should release VisRgn than reset it to default.
               DceUpdateVisRgn(pDCE, Window, pDCE->DCXFlags);
               pDCE->DCXFlags = DCX_DCEEMPTY|DCX_CACHE;
-              pDCE->hwndCurrent = 0;
+              //pDCE->hwndCurrent = 0;
+			  //SetFirstHwndDC(pDCE, 0);
+			  SetFirstHwndDC(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
               pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
@@ -732,7 +947,8 @@ DceFreeWindowDCE(PWND Window)
            else
            {
               ERR("Not POWNED or CLASSDC hwndCurrent -> %p \n",
-                  pDCE->hwndCurrent);
+                  //pDCE->hwndCurrent);
+				  GetFirstHwndDC(pDCE));
               // ASSERT(FALSE); /* bug 5320 */
            }
         }
@@ -748,10 +964,11 @@ DceFreeWindowDCE(PWND Window)
                * (for 1.0?).
                */
               ERR("[%p] GetDC() without ReleaseDC()!\n", UserHMGetHandle(Window));
-              DceReleaseDC(pDCE, FALSE);
+              DceReleaseDC(Window, pDCE, FALSE);//xxxxxxxx release All DC?
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
-           pDCE->hwndCurrent = 0;
+           //pDCE->hwndCurrent = 0;
+		   SetFirstHwndDC(pDCE, 0);
            pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
      }
@@ -763,6 +980,8 @@ DceFreeClassDCE(PDCE pdceClass)
 {
    PDCE pDCE;
    PLIST_ENTRY ListEntry;
+   
+   if(BDCX_MYFLAG)ERR("DceFreeClassDCE\n");
 
    ListEntry = LEDce.Flink;
    while (ListEntry != &LEDce)
@@ -781,6 +1000,8 @@ DceFreeThreadDCE(PTHREADINFO pti)
 {
    PDCE pDCE;
    PLIST_ENTRY ListEntry;
+   
+   if(BDCX_MYFLAG)ERR("DceFreeThreadDCE\n");
 
    ListEntry = LEDce.Flink;
    while (ListEntry != &LEDce)
@@ -802,6 +1023,8 @@ DceEmptyCache(VOID)
 {
    PDCE pDCE;
    PLIST_ENTRY ListEntry;
+   
+   if(BDCX_MYFLAG)ERR("DceEmptyCache\n");
 
    ListEntry = LEDce.Flink;
    while (ListEntry != &LEDce)
@@ -821,6 +1044,8 @@ DceResetActiveDCEs(PWND Window)
    INT DeltaX;
    INT DeltaY;
    PLIST_ENTRY ListEntry;
+   
+   if(BDCX_MYFLAG)ERR("DceResetActiveDCEs\n");
 
    if (NULL == Window)
    {
@@ -834,20 +1059,28 @@ DceResetActiveDCEs(PWND Window)
       ListEntry = ListEntry->Flink;
       if (0 == (pDCE->DCXFlags & (DCX_DCEEMPTY|DCX_INDESTROY)))
       {
-         if (UserHMGetHandle(Window) == pDCE->hwndCurrent)
+         //if (UserHMGetHandle(Window) == pDCE->hwndCurrent)
+	     //if (UserHMGetHandle(Window) == GetFirstHwndDC(pDCE))
+		 if (ExistHwndDC(pDCE, UserHMGetHandle(Window)))
          {
             CurrentWindow = Window;
          }
          else
          {
-            if (!pDCE->hwndCurrent)
+			 /*
+            //if (!pDCE->hwndCurrent)
+			if (!GetFirstHwndDC(pDCE))
                CurrentWindow = NULL;
             else
-               CurrentWindow = UserGetWindowObject(pDCE->hwndCurrent);
+               //CurrentWindow = UserGetWindowObject(pDCE->hwndCurrent);
+		       CurrentWindow = UserGetWindowObject(GetFirstHwndDC(pDCE));
             if (NULL == CurrentWindow)
             {
                continue;
             }
+			*/
+			CurrentWindow = NULL;
+			continue;
          }
 
          if (!GreIsHandleValid(pDCE->hDC) ||
@@ -896,6 +1129,8 @@ IntWindowFromDC(HDC hDc)
   DCE *Dce;
   PLIST_ENTRY ListEntry;
   HWND Ret = NULL;
+  
+  if(BDCX_MYFLAG)ERR("IntWindowFromDC\n");
 
   ListEntry = LEDce.Flink;
   while (ListEntry != &LEDce)
@@ -907,7 +1142,8 @@ IntWindowFromDC(HDC hDc)
          if (Dce->DCXFlags & DCX_INDESTROY)
             Ret = NULL;
          else
-            Ret = Dce->hwndCurrent;
+            //Ret = Dce->hwndCurrent;
+		    Ret = GetFirstHwndDC(Dce);
          break;
       }
   }
@@ -921,6 +1157,23 @@ UserReleaseDC(PWND Window, HDC hDc, BOOL EndPaint)
   PLIST_ENTRY ListEntry;
   INT nRet = 0;
   BOOL Hit = FALSE;
+  
+  if(BDCX_MYFLAG)
+  {
+	  ERR("UserReleaseDC: %x\n",hDc);
+	  ListEntry = LEDce.Flink;
+	  while (ListEntry != &LEDce)
+	  {
+		 dce = CONTAINING_RECORD(ListEntry, DCE, List);
+		 ListEntry = ListEntry->Flink;
+		 ERR(" %x ",dce->hDC);
+		 if (dce->hDC == hDc)
+		 {
+			ERR("UserReleaseDC-flags: %d",dce->DCXFlags);
+		 }
+	  }
+	  dce = NULL;
+  }
 
   TRACE("%p %p\n", Window, hDc);
   ListEntry = LEDce.Flink;
@@ -937,7 +1190,7 @@ UserReleaseDC(PWND Window, HDC hDc, BOOL EndPaint)
 
   if ( Hit && (dce->DCXFlags & DCX_DCEBUSY))
   {
-     nRet = DceReleaseDC(dce, EndPaint);
+     nRet = DceReleaseDC(Window, dce, EndPaint);
   }
 
   return nRet;
