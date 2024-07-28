@@ -128,9 +128,13 @@ BOOL RemoveHwndDC(PDCE pdce, PWND Window)
 	return TRUE;
 }
 
-BOOL ExistHwndDC(PDCE pdce, HWND hwnd)
+BOOL ExistHwndDC(PDCE pdce, PWND Window)
 {
-	if(hwnd == NULL) return FALSE;
+	if(Window == NULL)
+		return FALSE;
+	HWND hwnd = UserHMGetHandle(Window);
+	if(hwnd == NULL)
+		return FALSE;
 	for(int i=0;i<20;i++)
 	{
 		if(pdce->dceWnd[i].hwndCurrent==hwnd)
@@ -677,7 +681,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
             }
             //else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
 			//else if (GetFirstHwndDC(Dce) == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
-			else if (ExistHwndDC(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL)) &&
+			else if (ExistHwndDC(Dce, Wnd) &&
                      ((Dce->DCXFlags & DCX_CACHECOMPAREMASK) == DcxFlags))
             {
                UpdateClipOrigin = TRUE;
@@ -724,7 +728,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
              // Check for Window handle than HDC match for CLASS.
              //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
 		     //if (GetFirstHwndDC(Dce) == UserHMGetHandle(Wnd))
-			 if (ExistHwndDC(Dce, UserHMGetHandle(Wnd)))
+			 if (ExistHwndDC(Dce, Wnd))
              {
                 bUpdateVisRgn = FALSE;
 				if(BDCX_MYFLAG)ERR(" A ");
@@ -933,7 +937,7 @@ DceFreeWindowDCE(PWND Window)
      ListEntry = ListEntry->Flink;
      //if ( pDCE->hwndCurrent == UserHMGetHandle(Window) &&
 	 //if ( GetFirstHwndDC(pDCE) == UserHMGetHandle(Window) &&
-	 if ( ExistHwndDC(pDCE,UserHMGetHandle(Window)) &&
+	 if ( ExistHwndDC(pDCE,Window) &&
           !(pDCE->DCXFlags & DCX_DCEEMPTY) )
      {
         if (!(pDCE->DCXFlags & DCX_CACHE)) /* Owned or Class DCE */
@@ -1084,7 +1088,7 @@ DceResetActiveDCEs(PWND Window)
       {
          //if (UserHMGetHandle(Window) == pDCE->hwndCurrent)
 	     //if (UserHMGetHandle(Window) == GetFirstHwndDC(pDCE))
-		 if (ExistHwndDC(pDCE, UserHMGetHandle(Window)))
+		 if (ExistHwndDC(pDCE, Window))
          {
             CurrentWindow = Window;
          }
