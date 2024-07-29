@@ -88,6 +88,23 @@ int GetCountHwndDC(PDCE pdce)
 	return result;
 }
 
+BOOL HistoryHaveClassHwndDC(PDCE pdce)
+{
+	ERR("History hwndPrimary %x\n ",pdce->hwndPrimary);
+	if(pdce->hwndPrimary==NULL)
+		return FALSE;
+	for(int i=0;i<20;i++)
+	{
+		ERR("History %d %x\n",i,pdce->dceWnd[i].hwndCurrent);
+		if(pdce->dceWnd[i].hwndCurrent == NULL)
+			break;
+		ERR("History comp %x\n ",pdce->dceWnd[i].hwndCurrent);
+		if(pdce->dceWnd[i].hwndCurrent != pdce->hwndPrimary)
+			return TRUE;
+	}
+	return FALSE;
+}
+
 void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 {
 	if(Window == NULL)
@@ -98,10 +115,15 @@ void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 	if(BDCX_MYFLAG)ERR("Add HwndDC %x %x\n",pdce, hwnd);
 	for(int i=0;i<20;i++)
 	{
+		ERR("SetFirstFreeHwndDC %d %x\n",i,pdce->dceWnd[i].hwndCurrent);
 		if(pdce->dceWnd[i].hwndCurrent == hwnd)
+		{			
+			ERR("ExistHwnd %x\n",hwnd);
 			break;
+		}
 		if(pdce->dceWnd[i].hwndCurrent == NULL)
 		{
+			ERR("New hwnd %x\n",hwnd);
 			pdce->dceWnd[i].hwndCurrent = hwnd;
 		    pdce->dceWnd[i].pwndOrg=Window;
 		    pdce->dceWnd[i].pwndClip=Window;
@@ -113,7 +135,7 @@ void SetFirstFreeHwndDC(PDCE pdce, PWND Window)
 			}
 			break;
 		}
-	}	
+	}
 }
 
 //SetFirstHwndDC
@@ -367,6 +389,8 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   ERR("DceAllocDCE-4 %p %p\n",(void*)pDce,(void*)pDce->pcls);
   //SetFirstHwndDC(pDce, (Window ? UserHMGetHandle(Window) : NULL));
   SetFirstFreeHwndDC(pDce, Window);
+  pDce->hwndPrimary = (Window ? UserHMGetHandle(Window) : NULL);
+  
   ERR("DceAllocDCE-5 %p %p\n",(void*)pDce,(void*)pDce->pcls);
   pDce->pwndOrg  = Window;
   pDce->pwndClip = Window;
@@ -822,62 +846,96 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    {
 	   if(BDCX_MYFLAG)ERR("NO-DCX_CACHE\n");
       KeEnterCriticalRegion();
-      ListEntry = LEDce.Flink;
-      while (ListEntry != &LEDce)
-      {
-		  if(BDCX_MYFLAG)ERR("ListEntry\n");
-          Dce = CONTAINING_RECORD(ListEntry, DCE, List);
-          ListEntry = ListEntry->Flink;
 
-          // Skip Cache DCE entries.
-          if (!(Dce->DCXFlags & DCX_CACHE))
-          {
-			  if(BDCX_MYFLAG)
+		  ListEntry = LEDce.Flink;
+		  while (ListEntry != &LEDce)
+		  {
+			  if(BDCX_MYFLAG)ERR("ListEntry\n");
+			  Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+			  ListEntry = ListEntry->Flink;
+
+			  // Skip Cache DCE entries.
+			  if (!(Dce->DCXFlags & DCX_CACHE))
 			  {
-			  if(BDCX_MYFLAG)ERR("ListEntry B: %x %x\n",GetFirstHwndDC(Dce),UserHMGetHandle(Wnd));
-			  if(BDCX_MYFLAG)ERR("ListEntry C: %x %x\n",Dce->hDC,hDC);
-			  }
-             // Check for Window handle than HDC match for CLASS.
-             //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
-		     //if (GetFirstHwndDC(Dce) == UserHMGetHandle(Wnd))
-		     if(BDCX_MYFLAG)
-				{
-					ERR("class test: %x %x\n",Wnd->pcls,Dce->pcls);
-					//if(Wnd->pcls!=NULL)if(Dce->pcls!=NULL)ERR("class test: %x %x %x %x %x\n",Wnd, Wnd->pcls->atomClassName, Wnd->pcls,Dce,Dce->pcls);
-				}
-			 if(!(Wnd->pcls->style & CS_OWNDC))
-			 {
-				 if(Wnd->pcls == Dce->pcls)
+				  if(Wnd->pcls->style & CS_OWNDC)
+				  {					  
+					  if(BDCX_MYFLAG)
+					  {
+					  if(BDCX_MYFLAG)ERR("ListEntry B: %x %x\n",GetFirstHwndDC(Dce),UserHMGetHandle(Wnd));
+					  if(BDCX_MYFLAG)ERR("ListEntry C: %x %x\n",Dce->hDC,hDC);
+					  }
+					 // Check for Window handle than HDC match for CLASS.
+					 //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
+					 //if (GetFirstHwndDC(Dce) == UserHMGetHandle(Wnd))
+					 if(BDCX_MYFLAG)
+						{
+							ERR("class test: %x %x\n",Wnd->pcls,Dce->pcls);
+						}
+					 if ((ExistHwndDC(Dce, Wnd))/*&&(Wnd->pcls->style & CS_OWNDC)*/ && !HistoryHaveClassHwndDC(Dce))
+					 {
+						 bUpdateVisRgn = FALSE;
+						 if(BDCX_MYFLAG)ERR(" CS_OWNDC - A ");
+						 break;
+					 }
+					 else
+						if (Dce->hDC == hDC)
+						{
+							SetFirstFreeHwndDC(Dce, Wnd);
+							if(BDCX_MYFLAG)ERR(" CS_OWNDC - B-second DCE ");
+							break;
+						}
+				  }
+				  else
+				  {
+					  if(BDCX_MYFLAG)
+				  {
+				  if(BDCX_MYFLAG)ERR("ListEntry B: %x %x\n",GetFirstHwndDC(Dce),UserHMGetHandle(Wnd));
+				  if(BDCX_MYFLAG)ERR("ListEntry C: %x %x\n",Dce->hDC,hDC);
+				  }
+				 // Check for Window handle than HDC match for CLASS.
+				 //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
+				 //if (GetFirstHwndDC(Dce) == UserHMGetHandle(Wnd))
+				 if(BDCX_MYFLAG)
+					{
+						ERR("class test: %x %x\n",Wnd->pcls,Dce->pcls);
+						//if(Wnd->pcls!=NULL)if(Dce->pcls!=NULL)ERR("class test: %x %x %x %x %x\n",Wnd, Wnd->pcls->atomClassName, Wnd->pcls,Dce,Dce->pcls);
+					}
+				 //if(!(Wnd->pcls->style & CS_OWNDC))
+				 //{
+					 if(Wnd->pcls == Dce->pcls)
+					 {
+						 if(BDCX_MYFLAG)ERR("NO CS_OWNDC - D class Exist!!!!!!!!!!!!!\n");
+						 SetFirstFreeHwndDC(Dce, Wnd);
+						 bUpdateVisRgn = FALSE;
+						 break;
+					 }
+				 //}
+				 /*else if ((ExistHwndDC(Dce, Wnd))&&(Wnd->pcls->style & CS_OWNDC) && !Dce->classOnlyDC)
 				 {
-					 if(BDCX_MYFLAG)ERR("class Exist!!!!!!!!!!!!!\n");
 					 bUpdateVisRgn = FALSE;
+					 if(BDCX_MYFLAG)ERR(" A ");
 					 break;
-				 }
-			 }
-			 else if ((ExistHwndDC(Dce, Wnd))&&(Wnd->pcls->style & CS_OWNDC) && !Dce->classOnlyDC)
-			 {
-				 bUpdateVisRgn = FALSE;
-				 if(BDCX_MYFLAG)ERR(" A ");
-                 break;
-			 }
-			 /*else if ((ExistHwndDC(Dce, Wnd))&&(!(Wnd->pcls->style & CS_OWNDC) || !Dce->classOnlyDC))
-             {
-                bUpdateVisRgn = FALSE;
-				if(BDCX_MYFLAG)ERR(" A ");
-                break;
-             }*/
-             else
-				if (Dce->hDC == hDC)
-				{
-					SetFirstFreeHwndDC(Dce, Wnd);
-					if(BDCX_MYFLAG)ERR(" B-second DCE ");
+				 }*/
+				 /*else if ((ExistHwndDC(Dce, Wnd))&&(!(Wnd->pcls->style & CS_OWNDC) || !Dce->classOnlyDC))
+				 {
+					bUpdateVisRgn = FALSE;
+					if(BDCX_MYFLAG)ERR(" A ");
 					break;
-				}
-				
-          }
-		  if(BDCX_MYFLAG)ERR(" C ");
-          Dce = NULL; // Loop issue?
-      }
+				 }*/
+				 else
+					if (Dce->hDC == hDC)
+					{
+						SetFirstFreeHwndDC(Dce, Wnd);
+						if(BDCX_MYFLAG)ERR(" CS_OWNDC - B-second DCE ");
+						break;
+					}
+				  }
+					
+			  }
+			  if(BDCX_MYFLAG)ERR(" C ");
+			  Dce = NULL; // Loop issue?
+		  }
+      
       KeLeaveCriticalRegion();
 	  
 	  if(BDCX_MYFLAG)ERR(" EEE %x\n",Dce);
@@ -999,6 +1057,8 @@ void FASTCALL
 DceFreeDCE(PDCE pdce, BOOLEAN Force)
 {
   BOOL Hit = FALSE;
+  
+  ERR("DceFreeDCE\n");
 
   ASSERT(pdce != NULL);
   if (NULL == pdce) return;
@@ -1086,7 +1146,10 @@ DceFreeWindowDCE(PWND Window)
 			  //SetFirstHwndDC(pDCE, 0);
 			  //SetFirstHwndDC(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
 			  RemoveHwndDC(pDCE, Window);
-              pDCE->pwndOrg = pDCE->pwndClip = NULL;
+			  pDCE->hwndPrimary=NULL;
+			  ERR("DceFreeWindowDCE A\n");
+              
+			  pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
                     pDCE->hDC);
@@ -1128,7 +1191,9 @@ DceFreeWindowDCE(PWND Window)
            //pDCE->hwndCurrent = 0;
 		   //SetFirstHwndDC(pDCE, 0);
 		   RemoveHwndDC(pDCE, Window);
+		   pDCE->hwndPrimary=NULL;
            pDCE->pwndOrg = pDCE->pwndClip = NULL;
+		   ERR("DceFreeWindowDCE B\n");
         }
      }
   }
