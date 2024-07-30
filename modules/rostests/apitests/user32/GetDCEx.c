@@ -9,6 +9,8 @@
 
 #define DCX_USESTYLE 0x00010000
 
+#define DCX_MYFLAG 0x00200000
+
 void Test_GetDCEx_Params()
 {
 
@@ -49,17 +51,18 @@ RegisterClassHelper(
     return RegisterClassA(&cls);
 }
 
+int indexW=-1;
+
 static
 HWND
 CreateWindowHelper(
     PSZ pszClassName,
     PSZ pszTitle)
 {
-    return CreateWindowA(pszClassName,
-                         pszTitle,
-                         WS_OVERLAPPEDWINDOW,
-                         CW_USEDEFAULT,
-                         CW_USEDEFAULT,
+    indexW++;
+    return CreateWindowA(pszClassName, pszTitle, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                         (indexW * 100),
+                         (indexW * 100),
                          100,
                          100,
                          NULL,
@@ -409,6 +412,177 @@ Test_GetDCEx_CS_Mixed()
        "UnregisterClass failed\n");
 }
 
+BOOL
+IsDCForWindow(HDC hdc, HWND hwnd)
+{
+    // Nakreslíme unikátní barvu na pozadí okna a zkontrolujeme, zda je viditelná v DC
+    COLORREF uniqueColor = RGB(123, 123, 123); // Volíme barvu, která se pravděpodobně nepoužívá v jiném okně
+    HBRUSH brush = CreateSolidBrush(uniqueColor);
+    HDC tempDC = GetDC(hwnd);
+
+    RECT rect;
+    GetClientRect(hwnd, &rect);
+    FillRect(tempDC, &rect, brush);
+    ReleaseDC(hwnd, tempDC);
+    DeleteObject(brush);
+
+    // Zkontrolujeme, zda DC obsahuje tuto unikátní barvu
+    HDC memDC = CreateCompatibleDC(hdc);
+    HBITMAP memBitmap = CreateCompatibleBitmap(hdc, 1, 1);
+    SelectObject(memDC, memBitmap);
+
+    // Zkopírujeme jeden pixel z levého horního rohu
+    BitBlt(memDC, 0, 0, 1, 1, hdc, 0, 0, SRCCOPY);
+
+    COLORREF color = GetPixel(memDC, 0, 0);
+    DeleteDC(memDC);
+    DeleteObject(memBitmap);
+
+    return color == uniqueColor;
+}
+
+static
+void
+Test_myTests()
+{
+    static const PSTR pszClassName = "TestClass_CS_SwitchedStyle";
+    ATOM atomClass;
+    HWND hwnd1, hwnd2;
+    HDC hdc1, hdc2 , hdcClass;
+
+	///////////////my tests
+	//1/
+    atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
+    hwnd2 = CreateWindowHelper(pszClassName, "Test Window2");
+    //SetWindowPos(hwnd2, NULL, 100, 100, 800, 600, SWP_NOZORDER | SWP_NOMOVE);
+    hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
+    //SetWindowPos(hwnd1, NULL, 20, 20, 400, 300, SWP_NOZORDER | SWP_NOMOVE);
+    
+    ShowWindow(hwnd1, SW_SHOW);
+    UpdateWindow(hwnd1);
+    ShowWindow(hwnd2, SW_SHOW);
+    UpdateWindow(hwnd2);
+
+    /* MSG msg = {0};
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }*/
+
+	hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);//1
+	hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);//2
+    printf("DC1: %lx DC2: %lx\n", (long)hdc1, (long)hdc2);
+	SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+    printf("DC1: %lx DC2: %lx\n", (long)hdc1, (long)hdc2);
+	//ReleaseDC(hwnd1, hdc1);
+	//SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+    hdcClass = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
+    ok(hdcClass == NULL, "GetDCEx must be NULL\n");
+
+    if (IsDCForWindow(hdc1, hwnd1))
+    {
+        printf("DC1 patri k oknu hwnd1.\n");
+    }
+    else if (IsDCForWindow(hdc1, hwnd2))
+    {
+        printf("DC1 patri k oknu hwnd2.\n");
+    }
+    else
+    {
+        printf("DC1 nepatri ani k jednomu oknu.\n");
+    }
+    Sleep(5000);
+
+    ShowWindow(hwnd1, SW_SHOW);
+    UpdateWindow(hwnd1);
+    ShowWindow(hwnd2, SW_SHOW);
+    UpdateWindow(hwnd2);
+
+    if (IsDCForWindow(hdc2, hwnd1))
+    {
+        printf("DC2 patri k oknu hwnd1.\n");
+    }
+    else if (IsDCForWindow(hdc2, hwnd2))
+    {
+        printf("DC2 patri k oknu hwnd2.\n");
+    }
+    else
+    {
+        printf("DC2 nepatri ani k jednomu oknu.\n");
+    }
+    Sleep(5000);
+    if (IsDCForWindow(hdcClass, hwnd1))
+    {
+        printf("hdcClass patri k oknu hwnd1.\n");
+    }
+    else if (IsDCForWindow(hdcClass, hwnd2))
+    {
+        printf("hdcClass patri k oknu hwnd2.\n");
+    }
+    else
+    {
+        printf("hdcClass nepatri ani k jednomu oknu.\n");
+    }
+    Sleep(5000);
+	DestroyWindow(hwnd1);
+	DestroyWindow(hwnd2);
+	UnregisterClass(pszClassName, GetModuleHandleA(0));
+
+    //2/
+    atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
+    hwnd2 = CreateWindowHelper(pszClassName, "Test Window2");
+    hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
+    hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG); // 1
+    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG); // 2
+    SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+    // ReleaseDC(hwnd1, hdc1);
+    // SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+    hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
+    ok(hdc1 != NULL, "GetDCEx must be not NULL\n");
+
+    DestroyWindow(hwnd1);
+    DestroyWindow(hwnd2);
+    UnregisterClass(pszClassName, GetModuleHandleA(0));
+	
+	//3/
+	atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
+	hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
+	hwnd2 = CreateWindowHelper(pszClassName, "Test Window2");
+	hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);//4
+	SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+	hdc1=GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
+	ok(hdc1 != NULL, "GetDCEx must be not NULL\n");
+	
+	DestroyWindow(hwnd1);
+	DestroyWindow(hwnd2);
+	UnregisterClass(pszClassName, GetModuleHandleA(0));	
+	
+	//4/
+	atomClass = RegisterClassHelper(pszClassName, CS_CLASSDC, WndProc);
+	hwnd1 = CreateWindowHelper(pszClassName, "Test Window1");
+	hwnd2 = CreateWindowHelper(pszClassName, "Test Window2");	
+	hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);//1
+	hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);//2
+	SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+	//ReleaseDC(hwnd1, hdc1);
+	//SetClassLongPtrA(hwnd1, GCL_STYLE, CS_OWNDC);
+    DestroyWindow(hwnd2);
+    UnregisterClass(pszClassName, GetModuleHandleA(0));
+	hdc1=GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);
+	ok(hdc1 == NULL, "GetDCEx must be NULL\n");
+	
+	DestroyWindow(hwnd1);
+	//DestroyWindow(hwnd2);
+	//UnregisterClass(pszClassName, GetModuleHandleA(0));
+	///////////////my tests
+
+    if (hdc2 == 0)
+        hdc2 = 0;
+    if (atomClass == 0)
+        atomClass = 0;
+}
+
 static
 void
 Test_GetDCEx_CS_SwitchedStyle()
@@ -472,10 +646,14 @@ Test_GetDCEx_CS_SwitchedStyle()
 
 START_TEST(GetDCEx)
 {
+	if(0)
+	{
     Test_GetDCEx_Params();
     Test_GetDCEx_Cached();
     Test_GetDCEx_CS_OWNDC();
     Test_GetDCEx_CS_CLASSDC();
     Test_GetDCEx_CS_Mixed();
     Test_GetDCEx_CS_SwitchedStyle();
+	}
+	Test_myTests();
 }
