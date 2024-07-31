@@ -48,6 +48,18 @@ StructDceRemoveHwnd(PDCE pDce)
     pDce->pwndCurrect = NULL;
 };
 
+void
+StructDceInit(PDCE pDce)
+{
+    pDce->pwndCurrect = NULL;
+};
+
+void
+StructDceClean(PDCE pDce)
+{
+    pDce->pwndCurrect = NULL;
+};
+
 BOOL
 StructDceCompareHwnd(PDCE pDce, HWND hwnd)
 {
@@ -133,6 +145,7 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   DCECount++;
   TRACE("Alloc DCE's! %d\n",DCECount);
   //pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
+  StructDceInit(pDce);
   StructDceAddPwnd(pDce, Window);
   //pDce->pwndOrg  = Window;
   //pDce->pwndClip = Window;
@@ -342,6 +355,7 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
             * because SetDCState() disables hVisRgn updates
             * by removing dirty bit. */
            //dce->hwndCurrent = 0;
+           StructDceClean(dce);
            StructDceRemoveHwnd(dce);
            //dce->pwndOrg  = NULL;
            //dce->pwndClip = NULL;
@@ -526,6 +540,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       if (Dce == NULL) return NULL;
       
       //Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+      StructDceInit(Dce);
       StructDceAddPwnd(Dce, Wnd);
       //Dce->pwndOrg = Dce->pwndClip = Wnd;
    }
@@ -752,6 +767,7 @@ DceFreeWindowDCE(PWND Window)
               DceUpdateVisRgn(pDCE, Window, pDCE->DCXFlags);
               pDCE->DCXFlags = DCX_DCEEMPTY|DCX_CACHE;
               //pDCE->hwndCurrent = 0;
+              StructDceClean(pDCE);
               StructDceRemoveHwnd(pDCE);
               //pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
@@ -793,6 +809,7 @@ DceFreeWindowDCE(PWND Window)
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
            //pDCE->hwndCurrent = 0;
+           StructDceClean(pDCE);
            StructDceRemoveHwnd(pDCE);
            //pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
