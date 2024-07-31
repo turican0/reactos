@@ -18,9 +18,10 @@ typedef struct tagDCE
 {
     LIST_ENTRY   List;
     HDC          hDC;
-    HWND         hwndCurrentx;
-    PWND         pwndOrg;
-    PWND         pwndClip;
+    PWND pwndCurrect;
+    //HWND         hwndCurrentx;
+    //PWND         pwndOrg;
+    //PWND         pwndClip;
     //PWND         pwndRedirect;
     HRGN         hrgnClip;
     HRGN         hrgnClipPublic;
