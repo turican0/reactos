@@ -24,46 +24,88 @@ static INT DCECount = 0; // Count of DCE in system.
 
 /* FUNCTIONS *****************************************************************/
 
+typedef struct _DCEPWND_TYPE
+{
+    LIST_ENTRY Entry;
+    PWND pwnd;
+} DCEPWND_TYPE, *PDCEPWND_TYPE;
+
 void
 StructDceAddPwnd(PDCE pDce, PWND pwnd)
 {
     pDce->pwndCurrect = pwnd;
+    /*
+    ERR("StructDceAddPwnd - A\n");
+    PDCEPWND_TYPE DCEPWNDEntry;
+    ERR("StructDceAddPwnd - B\n");
+    DCEPWNDEntry = ExAllocatePoolWithTag(PagedPool, sizeof(DCEPWNDEntry), USERTAG_DCE);
+    ERR("StructDceAddPwnd - C\n");
+    if (!DCEPWNDEntry)
+    {
+        ERR("StructDceAddPwnd - D\n");
+        return;
+    }
+    ERR("StructDceAddPwnd - E\n");
+    InsertTailList(&pDce->pwndCurrectl, &DCEPWNDEntry->Entry);
+    ERR("StructDceAddPwnd - F\n");
+    */
 };
 
 PWND
 StructDceGetPwnd(PDCE pDce)
 {
     return pDce->pwndCurrect;
+    //return CONTAINING_RECORD(pDce->pwndCurrectl.Flink, TT_FONT_ENTRY, Entry)->pwnd;
 };
 
 HWND
 StructDceGetHwnd(PDCE pDce)
 {
     return (pDce->pwndCurrect ? UserHMGetHandle(pDce->pwndCurrect) : NULL);
+    //PWND Wnd = CONTAINING_RECORD(&pDce->pwndCurrectl.Flink, TT_FONT_ENTRY, Entry)->pwnd;
+    //return (Wnd ? UserHMGetHandle(Wnd) : NULL);
 };
 
 void
 StructDceRemoveHwnd(PDCE pDce)
 {
     pDce->pwndCurrect = NULL;
-};
-
-void
-StructDceInit(PDCE pDce)
-{
-    pDce->pwndCurrect = NULL;
+    /*
+    if (!IsListEmpty(&pDce->pwndCurrectl))
+    {
+        PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
+        PTT_FONT_ENTRY FontEntry = CONTAINING_RECORD(Entry, TT_FONT_ENTRY, Entry);
+        ExFreePoolWithTag(FontEntry, USERTAG_DCE);
+    }*/
 };
 
 void
 StructDceClean(PDCE pDce)
 {
     pDce->pwndCurrect = NULL;
+    /*
+    while (!IsListEmpty(&pDce->pwndCurrectl))
+    {
+        PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
+        PTT_FONT_ENTRY FontEntry = CONTAINING_RECORD(Entry, TT_FONT_ENTRY, Entry);
+        ExFreePoolWithTag(FontEntry, USERTAG_DCE);
+    }*/
+};
+
+void
+StructDceInit(PDCE pDce)
+{
+    StructDceClean(pDce);
 };
 
 BOOL
 StructDceCompareHwnd(PDCE pDce, HWND hwnd)
 {
     HWND curHwnd = (pDce->pwndCurrect ? UserHMGetHandle(pDce->pwndCurrect) : NULL);
+    /*
+    PWND Wnd = CONTAINING_RECORD(&pDce->pwndCurrectl.Flink, TT_FONT_ENTRY, Entry)->pwnd;
+    HWND curHwnd = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+    */
     if (curHwnd == hwnd)
         return TRUE;
     return FALSE;            

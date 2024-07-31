@@ -18,7 +18,10 @@ typedef struct tagDCE
 {
     LIST_ENTRY   List;
     HDC          hDC;
+    LIST_ENTRY pwndCurrectl;
     PWND pwndCurrect;
+    //PWND pwndCurrect;
+    //LIST_ENTRY pwndCurrectl;
     //HWND         hwndCurrentx;
     //PWND         pwndOrg;
     //PWND         pwndClip;
