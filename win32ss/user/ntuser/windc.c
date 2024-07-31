@@ -24,6 +24,32 @@ static INT DCECount = 0; // Count of DCE in system.
 
 /* FUNCTIONS *****************************************************************/
 
+void
+StructDceAddHwnd(PDCE pDce, HWND hwnd)
+{
+    pDce->hwndCurrentx = hwnd;
+};
+
+HWND
+StructDceGetHwnd(PDCE pDce)
+{
+    return pDce->hwndCurrentx;
+};
+
+void
+StructDceRemoveHwnd(PDCE pDce)
+{
+    pDce->hwndCurrentx = 0;
+};
+
+BOOL
+StructDceCompareHwnd(PDCE pDce, HWND hwnd)
+{
+    if (pDce->hwndCurrentx == hwnd)
+        return TRUE;
+    return FALSE;            
+};
+
 CODE_SEG("INIT")
 NTSTATUS
 NTAPI
@@ -99,7 +125,8 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   }
   DCECount++;
   TRACE("Alloc DCE's! %d\n",DCECount);
-  pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
+  //pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
+  StructDceAddHwnd(pDce, (Window ? UserHMGetHandle(Window) : NULL));
   pDce->pwndOrg  = Window;
   pDce->pwndClip = Window;
   pDce->hrgnClip = NULL;
@@ -307,7 +334,8 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
            /* Don't keep around invalidated entries
             * because SetDCState() disables hVisRgn updates
             * by removing dirty bit. */
-           dce->hwndCurrent = 0;
+           //dce->hwndCurrent = 0;
+           StructDceRemoveHwnd(dce);
            dce->pwndOrg  = NULL;
            dce->pwndClip = NULL;
            dce->DCXFlags &= DCX_CACHE;
@@ -470,7 +498,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
             {
                DceEmpty = Dce;
             }
-            else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
+            //else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
+            else if (StructDceCompareHwnd(Dce, Wnd ? UserHMGetHandle(Wnd) : NULL) &&
                      ((Dce->DCXFlags & DCX_CACHECOMPAREMASK) == DcxFlags))
             {
                UpdateClipOrigin = TRUE;
@@ -488,8 +517,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
          Dce = DceAllocDCE(NULL, DCE_CACHE_DC);
       }
       if (Dce == NULL) return NULL;
-
-      Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+      
+      //Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+      StructDceAddHwnd(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
       Dce->pwndOrg = Dce->pwndClip = Wnd;
    }
    else // If we are here, we are POWNED or having CLASS.
@@ -505,7 +535,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
           if (!(Dce->DCXFlags & DCX_CACHE))
           {
              // Check for Window handle than HDC match for CLASS.
-             if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
+             //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
+             if (StructDceCompareHwnd(Dce, UserHMGetHandle(Wnd)))                 
              {
                 bUpdateVisRgn = FALSE;
                 break;
@@ -699,7 +730,8 @@ DceFreeWindowDCE(PWND Window)
   {
      pDCE = CONTAINING_RECORD(ListEntry, DCE, List);
      ListEntry = ListEntry->Flink;
-     if ( pDCE->hwndCurrent == UserHMGetHandle(Window) &&
+     //if ( pDCE->hwndCurrent == UserHMGetHandle(Window) &&
+     if (StructDceCompareHwnd(pDCE, UserHMGetHandle(Window)) &&
           !(pDCE->DCXFlags & DCX_DCEEMPTY) )
      {
         if (!(pDCE->DCXFlags & DCX_CACHE)) /* Owned or Class DCE */
@@ -712,7 +744,8 @@ DceFreeWindowDCE(PWND Window)
               // Should release VisRgn than reset it to default.
               DceUpdateVisRgn(pDCE, Window, pDCE->DCXFlags);
               pDCE->DCXFlags = DCX_DCEEMPTY|DCX_CACHE;
-              pDCE->hwndCurrent = 0;
+              //pDCE->hwndCurrent = 0;
+              StructDceRemoveHwnd(pDCE);
               pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
@@ -732,7 +765,8 @@ DceFreeWindowDCE(PWND Window)
            else
            {
               ERR("Not POWNED or CLASSDC hwndCurrent -> %p \n",
-                  pDCE->hwndCurrent);
+                  //pDCE->hwndCurrent);
+                  StructDceGetHwnd(pDCE));                  
               // ASSERT(FALSE); /* bug 5320 */
            }
         }
@@ -751,7 +785,8 @@ DceFreeWindowDCE(PWND Window)
               DceReleaseDC(pDCE, FALSE);
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
-           pDCE->hwndCurrent = 0;
+           //pDCE->hwndCurrent = 0;
+           StructDceRemoveHwnd(pDCE);
            pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
      }
@@ -834,16 +869,19 @@ DceResetActiveDCEs(PWND Window)
       ListEntry = ListEntry->Flink;
       if (0 == (pDCE->DCXFlags & (DCX_DCEEMPTY|DCX_INDESTROY)))
       {
-         if (UserHMGetHandle(Window) == pDCE->hwndCurrent)
+         //if (UserHMGetHandle(Window) == pDCE->hwndCurrent)
+         if (StructDceCompareHwnd(pDCE, UserHMGetHandle(Window)))
          {
             CurrentWindow = Window;
          }
          else
          {
-            if (!pDCE->hwndCurrent)
+            //if (!pDCE->hwndCurrent)
+             if (!StructDceGetHwnd(pDCE))             
                CurrentWindow = NULL;
             else
-               CurrentWindow = UserGetWindowObject(pDCE->hwndCurrent);
+               //CurrentWindow = UserGetWindowObject(pDCE->hwndCurrent);
+               CurrentWindow = UserGetWindowObject(StructDceGetHwnd(pDCE));
             if (NULL == CurrentWindow)
             {
                continue;
@@ -907,7 +945,8 @@ IntWindowFromDC(HDC hDc)
          if (Dce->DCXFlags & DCX_INDESTROY)
             Ret = NULL;
          else
-            Ret = Dce->hwndCurrent;
+            //Ret = Dce->hwndCurrent;
+            Ret = StructDceGetHwnd(Dce);             
          break;
       }
   }

@@ -18,17 +18,17 @@ typedef struct tagDCE
 {
     LIST_ENTRY   List;
     HDC          hDC;
-    HWND         hwndCurrent;
+    HWND         hwndCurrentx;
     PWND         pwndOrg;
     PWND         pwndClip;
-    PWND         pwndRedirect;
+    //PWND         pwndRedirect;
     HRGN         hrgnClip;
     HRGN         hrgnClipPublic;
     HRGN         hrgnSavedVis;
     DWORD        DCXFlags;
     PTHREADINFO  ptiOwner;
     PPROCESSINFO ppiOwner;
-    struct _MONITOR* pMonitor;
+    //struct _MONITOR* pMonitor;
 } DCE, *PDCE;
 
 /* internal DCX flags, see psdk/winuser.h for the rest */
