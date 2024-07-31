@@ -34,21 +34,39 @@ void
 StructDceAddPwnd(PDCE pDce, PWND pwnd)
 {
     pDce->pwndCurrect = pwnd;
-    /*
-    ERR("StructDceAddPwnd - A\n");
+    
+    // ERR("StructDceAddPwnd - A\n");
     PDCEPWND_TYPE DCEPWNDEntry;
-    ERR("StructDceAddPwnd - B\n");
-    DCEPWNDEntry = ExAllocatePoolWithTag(PagedPool, sizeof(DCEPWNDEntry), USERTAG_DCE);
-    ERR("StructDceAddPwnd - C\n");
+    // ERR("StructDceAddPwnd - B\n");
+    DCEPWNDEntry = ExAllocatePoolWithTag(PagedPool, sizeof(DCEPWND_TYPE), USERTAG_DCE);
+    // ERR("StructDceAddPwnd - C\n");
     if (!DCEPWNDEntry)
     {
-        ERR("StructDceAddPwnd - D\n");
+        // ERR("StructDceAddPwnd - D\n");
         return;
     }
-    ERR("StructDceAddPwnd - E\n");
+    // ERR("StructDceAddPwnd - E\n");
     InsertTailList(&pDce->pwndCurrectl, &DCEPWNDEntry->Entry);
-    ERR("StructDceAddPwnd - F\n");
-    */
+
+//(&pDce->pwndCurrectl)
+//(&DCEPWNDEntry)
+        {
+            PLIST_ENTRY OldBlink;
+            //ERR("StructDceAddPwnd - F\n");
+            OldBlink = (&pDce->pwndCurrectl)->Blink;
+            //ERR("StructDceAddPwnd - G\n");
+            (&DCEPWNDEntry->Entry)->Flink = (&pDce->pwndCurrectl);
+            //ERR("StructDceAddPwnd - H\n");
+            (&DCEPWNDEntry->Entry)->Blink = OldBlink;
+            //ERR("StructDceAddPwnd - I\n");
+            OldBlink->Flink = (&DCEPWNDEntry->Entry);
+            //ERR("StructDceAddPwnd - J\n");
+            (&pDce->pwndCurrectl)->Blink = (&DCEPWNDEntry->Entry);
+            //ERR("StructDceAddPwnd - K\n");
+        }
+
+    // ERR("StructDceAddPwnd - F\n");
+    
 };
 
 PWND
@@ -70,32 +88,33 @@ void
 StructDceRemoveHwnd(PDCE pDce)
 {
     pDce->pwndCurrect = NULL;
-    /*
+    
     if (!IsListEmpty(&pDce->pwndCurrectl))
     {
         PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
-        PTT_FONT_ENTRY FontEntry = CONTAINING_RECORD(Entry, TT_FONT_ENTRY, Entry);
-        ExFreePoolWithTag(FontEntry, USERTAG_DCE);
-    }*/
+        PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
+        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+    }
 };
 
 void
 StructDceClean(PDCE pDce)
 {
     pDce->pwndCurrect = NULL;
-    /*
+    
     while (!IsListEmpty(&pDce->pwndCurrectl))
     {
         PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
-        PTT_FONT_ENTRY FontEntry = CONTAINING_RECORD(Entry, TT_FONT_ENTRY, Entry);
-        ExFreePoolWithTag(FontEntry, USERTAG_DCE);
-    }*/
+        PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
+        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+    }
 };
 
 void
 StructDceInit(PDCE pDce)
 {
     StructDceClean(pDce);
+    InitializeListHead(&pDce->pwndCurrectl);
 };
 
 BOOL
@@ -103,7 +122,7 @@ StructDceCompareHwnd(PDCE pDce, HWND hwnd)
 {
     HWND curHwnd = (pDce->pwndCurrect ? UserHMGetHandle(pDce->pwndCurrect) : NULL);
     /*
-    PWND Wnd = CONTAINING_RECORD(&pDce->pwndCurrectl.Flink, TT_FONT_ENTRY, Entry)->pwnd;
+    PWND Wnd = CONTAINING_RECORD(&pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->pwnd;
     HWND curHwnd = (Wnd ? UserHMGetHandle(Wnd) : NULL);
     */
     if (curHwnd == hwnd)
