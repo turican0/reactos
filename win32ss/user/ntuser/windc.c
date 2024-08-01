@@ -32,23 +32,203 @@ typedef struct _DCEPWND_TYPE
 } DCEPWND_TYPE, * PDCEPWND_TYPE;
 
 void
-StructDceAddPwnd(PDCE pDce, PWND pwnd, int index)
+StructDceDrawState(PDCE pDce)
+{
+    PLIST_ENTRY ListEntry;
+    HWND hwnd = NULL;
+    ListEntry = pDce->pwndCurrectl.Flink;
+    while (ListEntry != &pDce->pwndCurrectl)
+    {
+        hwnd = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry)->hwnd;
+        ListEntry = ListEntry->Flink;
+        if (hwnd)
+            ERR("item - F3:%d\n", hwnd);
+    }
+    if (pDce->pwndCurrectl.Flink != &pDce->pwndCurrectl)
+    {
+        hwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->hwnd;
+        if (hwnd)
+            ERR("tail:%d\n", hwnd);
+    }
+    if (pDce->pwndCurrectl.Blink != &pDce->pwndCurrectl)
+    {
+        hwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->hwnd;
+        if (hwnd)
+            ERR("begin:%d\n", hwnd);
+    }
+}
+
+BOOL
+StructDceExistPwnd(PDCE pDce, PWND pwnd)
+{
+    PLIST_ENTRY ListEntry;
+    PWND listPwnd = NULL;
+    ListEntry = pDce->pwndCurrectl.Flink;
+    while (ListEntry != &pDce->pwndCurrectl)
+    {
+        listPwnd = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry)->pwnd;
+        ListEntry = ListEntry->Flink;
+        if (listPwnd == pwnd)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL
+StructDceExistHwnd(PDCE pDce, HWND hwnd)
+{
+    PLIST_ENTRY ListEntry;
+    HWND listHwnd = NULL;
+    ListEntry = pDce->pwndCurrectl.Flink;
+    while (ListEntry != &pDce->pwndCurrectl)
+    {
+        listHwnd = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry)->hwnd;
+        ListEntry = ListEntry->Flink;
+        if (listHwnd == hwnd)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+void
+StructDceAdd(PDCE pDce, PWND pwnd, int index)
+{
+    if (!pwnd)
+        return;
+    if (StructDceExistPwnd(pDce, pwnd))
+        return;
+    PDCEPWND_TYPE DCEPWNDEntry;
+    DCEPWNDEntry = ExAllocatePoolWithTag(PagedPool, sizeof(DCEPWND_TYPE), USERTAG_DCE);
+    if (!DCEPWNDEntry)
+        return;
+    DCEPWNDEntry->pwnd = pwnd;
+    DCEPWNDEntry->hwnd = (pwnd ? UserHMGetHandle(pwnd) : NULL);
+    InsertTailList(pDce->pwndCurrectl.Flink, &DCEPWNDEntry->Entry);
+};
+
+PWND
+StructDceGetFirstPwnd(PDCE pDce)
+{
+    return CONTAINING_RECORD(&pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->pwnd;
+};
+
+PWND
+StructDceGetLastPwnd(PDCE pDce)
+{
+    return CONTAINING_RECORD(&pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->pwnd;
+};
+
+HWND
+StructDceGetFirstHwnd(PDCE pDce)
+{
+    return CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->hwnd;
+};
+
+HWND
+StructDceGetLastHwnd(PDCE pDce)
+{
+    return CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->hwnd;
+};
+
+void
+StructDceRemoveLast(PDCE pDce)
+{
+    if (!IsListEmpty(&pDce->pwndCurrectl))
+    {
+        PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
+        PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
+        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+    }
+};
+
+void
+StructDceRemoveFirst(PDCE pDce)
+{
+    StructDceDrawState(pDce);
+    if (!IsListEmpty(&pDce->pwndCurrectl))
+    {
+        PLIST_ENTRY Entry = RemoveTailList(&pDce->pwndCurrectl);
+        PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
+        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+    }
+};
+
+void
+StructDceClean(PDCE pDce)
+{
+    StructDceDrawState(pDce);
+    while (!IsListEmpty(&pDce->pwndCurrectl))
+    {
+        PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
+        PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
+        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+    }
+};
+
+void
+StructDceInit(PDCE pDce)
+{
+    InitializeListHead(&pDce->pwndCurrectl);
+};
+
+BOOL
+StructDceCompareFirstPwnd(PDCE pDce, PWND pwnd, int index)
+{
+    PWND curWnd = CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->pwnd;
+    if (curWnd == pwnd)
+        return TRUE;
+    return FALSE;
+};
+
+BOOL
+StructDceCompareLastPwnd(PDCE pDce, PWND pwnd, int index)
+{
+    PWND curWnd = CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->pwnd;
+    if (curWnd == pwnd)
+        return TRUE;
+    return FALSE;
+};
+
+BOOL
+StructDceCompareFirstHwnd(PDCE pDce, HWND hwnd, int index)
+{
+    HWND curHwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->hwnd;
+    if (curHwnd == hwnd)
+        return TRUE;
+    return FALSE;
+};
+
+BOOL
+StructDceCompareLastHwnd(PDCE pDce, HWND hwnd, int index)
+{
+    HWND curHwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->hwnd;
+    if (curHwnd == hwnd)
+        return TRUE;
+    return FALSE;
+};
+
+
+
+
+
+void
+StructDceAddPwndx(PDCE pDce, PWND pwnd, int index)
 {
     pDce->pwndCurrect = pwnd;
     pDce->hwndCurrect = (pwnd ? UserHMGetHandle(pwnd) : NULL);
     
-   
+    StructDceAdd(pDce, pwnd, 0);
 };
 
 PWND
-StructDceGetPwnd(PDCE pDce, int index)
+StructDceGetPwndx(PDCE pDce, int index)
 {
     return pDce->pwndCurrect;
     //return CONTAINING_RECORD(pDce->pwndCurrectl.Flink, TT_FONT_ENTRY, Entry)->pwnd;
 };
 
 HWND
-StructDceGetHwnd(PDCE pDce, int index)
+StructDceGetHwndx(PDCE pDce, int index)
 {
     return pDce->hwndCurrect;
     //PWND Wnd = CONTAINING_RECORD(&pDce->pwndCurrectl.Flink, TT_FONT_ENTRY, Entry)->pwnd;
@@ -56,42 +236,31 @@ StructDceGetHwnd(PDCE pDce, int index)
 };
 
 void
-StructDceRemoveHwnd(PDCE pDce, int index)
+StructDceRemoveHwndx(PDCE pDce, int index)
 {
     pDce->pwndCurrect = NULL;
     pDce->hwndCurrect = NULL;
-    /*
-    if (!IsListEmpty(&pDce->pwndCurrectl))
-    {
-        PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
-        PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
-        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
-    }*/
+
+    StructDceRemoveLast(pDce);
 };
 
 void
-StructDceClean(PDCE pDce, int index)
+StructDceCleanx(PDCE pDce, int index)
 {
     pDce->pwndCurrect = NULL;
     pDce->hwndCurrect = NULL;
-    /*
-    while (!IsListEmpty(&pDce->pwndCurrectl))
-    {
-        PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
-        PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
-        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
-    }*/
+
+    StructDceClean(pDce);
 };
 
 void
-StructDceInit(PDCE pDce)
+StructDceInitx(PDCE pDce)
 {
-    //StructDceClean(pDce);
-    //InitializeListHead(&pDce->pwndCurrectl);
+    StructDceInit(pDce);
 };
 
 BOOL
-StructDceCompareHwnd(PDCE pDce, HWND hwnd, int index)
+StructDceCompareHwndx(PDCE pDce, HWND hwnd, int index)
 {
     HWND curHwnd = pDce->hwndCurrect;
     if (curHwnd == hwnd)
@@ -100,7 +269,7 @@ StructDceCompareHwnd(PDCE pDce, HWND hwnd, int index)
 };
 
 BOOL
-StructDceComparePwnd(PDCE pDce, PWND pwnd, int index)
+StructDceComparePwndx(PDCE pDce, PWND pwnd, int index)
 {
     PWND curPwnd = pDce->pwndCurrect;
     if (curPwnd == pwnd)
@@ -184,8 +353,8 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   DCECount++;
   TRACE("Alloc DCE's! %d\n",DCECount);
   //pDce->hwndCurrent = (Window ? UserHMGetHandle(Window) : NULL);
-  StructDceInit(pDce);
-  StructDceAddPwnd(pDce, Window, 1);
+  StructDceInitx(pDce);
+  StructDceAddPwndx(pDce, Window, 1);
   //pDce->pwndOrg  = Window;
   //pDce->pwndClip = Window;
   pDce->hrgnClip = NULL;
@@ -372,7 +541,7 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
    /* Restore previous visible region */
    if (EndPaint)
    {
-       DceUpdateVisRgn(dce, StructDceGetPwnd(dce, 1), dce->DCXFlags);
+       DceUpdateVisRgn(dce, StructDceGetPwndx(dce, 1), dce->DCXFlags);
    }
 
    if ((dce->DCXFlags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
@@ -394,8 +563,7 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
             * because SetDCState() disables hVisRgn updates
             * by removing dirty bit. */
            //dce->hwndCurrent = 0;
-           StructDceClean(dce, 1);
-           StructDceRemoveHwnd(dce, 1);
+           StructDceRemoveHwndx(dce, 1);
            //dce->pwndOrg  = NULL;
            //dce->pwndClip = NULL;
            dce->DCXFlags &= DCX_CACHE;
@@ -559,7 +727,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
                DceEmpty = Dce;
             }
             //else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
-            else if (StructDceComparePwnd(Dce, Wnd, 1) &&
+            else if (StructDceComparePwndx(Dce, Wnd, 1) &&
                      ((Dce->DCXFlags & DCX_CACHECOMPAREMASK) == DcxFlags))
             {
                UpdateClipOrigin = TRUE;
@@ -579,8 +747,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       if (Dce == NULL) return NULL;
       
       //Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
-      StructDceInit(Dce);
-      StructDceAddPwnd(Dce, Wnd, 2);
+      StructDceInitx(Dce);
+      StructDceAddPwndx(Dce, Wnd, 2);
       //Dce->pwndOrg = Dce->pwndClip = Wnd;
    }
    else // If we are here, we are POWNED or having CLASS.
@@ -597,7 +765,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
           {
              // Check for Window handle than HDC match for CLASS.
              //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
-             if (StructDceComparePwnd(Dce, Wnd, 2))
+             if (StructDceComparePwndx(Dce, Wnd, 2))
              {
                 bUpdateVisRgn = FALSE;
                 break;
@@ -729,7 +897,7 @@ DceFreeDCE(PDCE pdce, BOOLEAN Force)
   ASSERT(pdce != NULL);
   if (NULL == pdce) return;
 
-  StructDceClean(pdce, 2);
+  StructDceCleanx(pdce, 2);
 
   pdce->DCXFlags |= DCX_INDESTROY;
 
@@ -794,7 +962,7 @@ DceFreeWindowDCE(PWND Window)
      pDCE = CONTAINING_RECORD(ListEntry, DCE, List);
      ListEntry = ListEntry->Flink;
      //if ( pDCE->hwndCurrent == UserHMGetHandle(Window) &&
-     if (StructDceComparePwnd(pDCE, Window, 3) &&
+     if (StructDceComparePwndx(pDCE, Window, 3) &&
           !(pDCE->DCXFlags & DCX_DCEEMPTY) )
      {
         if (!(pDCE->DCXFlags & DCX_CACHE)) /* Owned or Class DCE */
@@ -808,8 +976,7 @@ DceFreeWindowDCE(PWND Window)
               DceUpdateVisRgn(pDCE, Window, pDCE->DCXFlags);
               pDCE->DCXFlags = DCX_DCEEMPTY|DCX_CACHE;
               //pDCE->hwndCurrent = 0;
-              StructDceClean(pDCE, 3);
-              StructDceRemoveHwnd(pDCE, 2);
+              StructDceRemoveHwndx(pDCE, 2);
               //pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
@@ -830,7 +997,7 @@ DceFreeWindowDCE(PWND Window)
            {
               ERR("Not POWNED or CLASSDC hwndCurrent -> %p \n",
                   //pDCE->hwndCurrent);
-                  StructDceGetPwnd(pDCE, 2));                  
+                  StructDceGetPwndx(pDCE, 2));                  
               // ASSERT(FALSE); /* bug 5320 */
            }
         }
@@ -850,8 +1017,7 @@ DceFreeWindowDCE(PWND Window)
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
            //pDCE->hwndCurrent = 0;
-           StructDceClean(pDCE, 4);
-           StructDceRemoveHwnd(pDCE, 3);
+           StructDceRemoveHwndx(pDCE, 3);
            //pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
      }
@@ -935,18 +1101,18 @@ DceResetActiveDCEs(PWND Window)
       if (0 == (pDCE->DCXFlags & (DCX_DCEEMPTY|DCX_INDESTROY)))
       {
          //if (UserHMGetHandle(Window) == pDCE->hwndCurrent)
-         if (StructDceComparePwnd(pDCE, Window, 4))
+         if (StructDceComparePwndx(pDCE, Window, 4))
          {
             CurrentWindow = Window;
          }
          else
          {
             //if (!pDCE->hwndCurrent)
-             if (!StructDceGetPwnd(pDCE, 3))
+             if (!StructDceGetPwndx(pDCE, 3))
                CurrentWindow = NULL;
             else
                //CurrentWindow = UserGetWindowObject(pDCE->hwndCurrent);
-               CurrentWindow = StructDceGetPwnd(pDCE, 4);
+               CurrentWindow = StructDceGetPwndx(pDCE, 4);
             if (NULL == CurrentWindow)
             {
                continue;
@@ -1011,7 +1177,7 @@ IntWindowFromDC(HDC hDc)
             Ret = NULL;
          else
             //Ret = Dce->hwndCurrent;
-            Ret = StructDceGetHwnd(Dce, 1);
+            Ret = StructDceGetHwndx(Dce, 1);
          break;
       }
   }
