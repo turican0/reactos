@@ -20,6 +20,7 @@ typedef struct tagDCE
     HDC          hDC;
     LIST_ENTRY pwndCurrectl;
     PWND pwndCurrect;
+    HWND hwndCurrect;
     //PWND pwndCurrect;
     //LIST_ENTRY pwndCurrectl;
     //HWND         hwndCurrentx;
