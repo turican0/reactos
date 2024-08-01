@@ -102,6 +102,9 @@ StructDceExistHwnd(PDCE pDce, HWND hwnd)
 void
 StructDceAdd(PDCE pDce, PWND pwnd, int index)
 {
+    ERR("StructDceAdd\n");
+    StructDceDrawState(pDce);
+
     if (!pwnd)
         return;
     if (StructDceExistPwnd(pDce, pwnd))
@@ -113,25 +116,31 @@ StructDceAdd(PDCE pDce, PWND pwnd, int index)
     DCEPWNDEntry->pwnd = pwnd;
     DCEPWNDEntry->hwnd = (pwnd ? UserHMGetHandle(pwnd) : NULL);
     InsertTailList(pDce->pwndCurrectl.Flink, &DCEPWNDEntry->Entry);
+
+    StructDceDrawState(pDce);
 };
 
 PWND
 StructDceGetFirstPwnd(PDCE pDce)
 {
-    return CONTAINING_RECORD(&pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->pwnd;
+    return CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->pwnd;
 };
 
+/*
 void
 StructDceGetLastXPrint(PDCE pDce)
 {
-    PDCEPWND_TYPE Entry = CONTAINING_RECORD(&pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry);
-    ERR("Both %x %x %x\n", Entry, Entry->pwnd, Entry->hwnd);
+    DCEPWND_TYPE *Entry1 = CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry);
+    ERR("Both1:%x %x %x\n", Entry1, Entry1->pwnd, Entry1->hwnd);
+    PDCEPWND_TYPE Entry2 = CONTAINING_RECORD(&pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry);
+    ERR("Both %x %x %x\n", Entry2, Entry2->pwnd, Entry2->hwnd);
 };
+*/
 
 PWND
 StructDceGetLastPwnd(PDCE pDce)
 {
-    return CONTAINING_RECORD(&pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->pwnd;
+    return CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->pwnd;
 };
 
 HWND
@@ -241,13 +250,13 @@ StructDceGetPwndx(PDCE pDce, int index)
     {
         ERR("StructDceGetPwndx %x %x\n", pDce->pwndCurrect, StructDceGetLastPwnd(pDce));
         ERR("StructDceGetHwndx %x %x\n", pDce->hwndCurrect, StructDceGetLastHwnd(pDce));
-        StructDceGetLastXPrint(pDce);
+        //StructDceGetLastXPrint(pDce);
         StructDceDrawState(pDce);
     }
 
-    return pDce->pwndCurrect;
+    //return pDce->pwndCurrect;
 
-    //return StructDceGetLastPwnd(pDce);
+    return StructDceGetLastPwnd(pDce);
 };
 
 HWND
@@ -259,8 +268,12 @@ StructDceGetHwndx(PDCE pDce, int index)
         StructDceDrawState(pDce);
     }
 
-    return pDce->hwndCurrect;
-    //return StructDceGetLastHwnd(pDce);
+    //return pDce->hwndCurrect;
+
+    ERR("StructDceGetLastHwnd\n");
+    StructDceDrawState(pDce);
+
+    return StructDceGetLastHwnd(pDce);
 };
 
 void
@@ -291,12 +304,12 @@ BOOL
 StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
 {
     
-    PWND curPwnd = pDce->pwndCurrect;
+    /* PWND curPwnd = pDce->pwndCurrect;
     if (curPwnd == pwnd)
         return TRUE;
-    return FALSE;
+    return FALSE;*/
     
-    //return StructDceCompareLastPwnd(pDce, pwnd, 0);
+    return StructDceCompareLastPwnd(pDce, pwnd, 0);
 };
 
 CODE_SEG("INIT")

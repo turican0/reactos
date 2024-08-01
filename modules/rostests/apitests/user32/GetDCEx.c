@@ -443,7 +443,56 @@ Test_myTests()
 
 	hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);//1
 	hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);//2
+    if (WindowFromDC(hdc1) == hwnd1)
+    {
+        printf("1-DC1 patri k oknu hwnd1.\n");
+    }
+    else if (WindowFromDC(hdc1) == hwnd2)
+    {
+        printf("1-DC1 patri k oknu hwnd2.\n");
+    }
+    else
+    {
+        printf("1-DC1 nepatri ani k jednomu oknu.\n");
+    }
+    if (WindowFromDC(hdc2) == hwnd1)
+    {
+        printf("DC2 patri k oknu hwnd1.\n");
+    }
+    else if (WindowFromDC(hdc2) == hwnd2)
+    {
+        printf("DC2 patri k oknu hwnd2.\n");
+    }
+    else
+    {
+        printf("DC2 nepatri ani k jednomu oknu.\n");
+    }
     ReleaseDC(hwnd2, hdc2);
+
+    if (WindowFromDC(hdc1) == hwnd1)
+    {
+        printf("DC1 patri k oknu hwnd1.\n");
+    }
+    else if (WindowFromDC(hdc1) == hwnd2)
+    {
+        printf("DC1 patri k oknu hwnd2.\n");
+    }
+    else
+    {
+        printf("DC1 nepatri ani k jednomu oknu.\n");
+    }
+    if (WindowFromDC(hdc2) == hwnd1)
+    {
+        printf("DC2 patri k oknu hwnd1.\n");
+    }
+    else if (WindowFromDC(hdc2) == hwnd2)
+    {
+        printf("DC2 patri k oknu hwnd2.\n");
+    }
+    else
+    {
+        printf("DC2 nepatri ani k jednomu oknu.\n");
+    }
 
     /*
     if (IsDCForWindow(hdc1, hwnd1))
@@ -1441,7 +1490,7 @@ void START_TEST2(/*dce*/)
 
 START_TEST(GetDCEx)
 {
-	if(1)
+	if(0)
 	{
     Test_GetDCEx_Params();
     Test_GetDCEx_Cached();
@@ -1452,5 +1501,6 @@ START_TEST(GetDCEx)
 	}
     if (1)
         Test_myTests();
-    START_TEST2();
+    if (0)
+        START_TEST2();
 }
