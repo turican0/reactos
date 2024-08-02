@@ -37,33 +37,32 @@ StructDceDrawState(PDCE pDce)
     PLIST_ENTRY ListEntry;
     HWND hwnd = NULL;
     PWND pwnd = NULL;
+    DCEPWND_TYPE *id = NULL;
     ListEntry = pDce->pwndCurrectl.Flink;
     while (ListEntry != &pDce->pwndCurrectl)
     {
+        id = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry);
         hwnd = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry)->hwnd;
+        pwnd = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry)->pwnd;
         ListEntry = ListEntry->Flink;
         if (hwnd)
-            ERR("item - F3:%d\n", hwnd);
+            ERR("Draw item: %p %p %p\n", id, hwnd, pwnd);
     }
     if (pDce->pwndCurrectl.Flink != &pDce->pwndCurrectl)
     {
-		DCEPWND_TYPE* id = CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry);
-		ERR("tail:%x\n", id);
+        id = CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry);
         hwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->hwnd;
-        if (hwnd)
-            ERR("tail-hwnd:%x\n", hwnd);
         pwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->pwnd;
-        if (pwnd)
-            ERR("tail-pwnd:%x\n", pwnd);
+        if (hwnd)
+            ERR("tail: %p %p %p\n", id, hwnd, pwnd);
     }
     if (pDce->pwndCurrectl.Blink != &pDce->pwndCurrectl)
     {
+        id = CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry);
         hwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->hwnd;
-        if (hwnd)
-            ERR("begin:%x\n", hwnd);
         pwnd = CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->pwnd;
-        if (pwnd)
-            ERR("begin-pwnd:%x\n", pwnd);
+        if (hwnd)
+            ERR("begin: %p %p %p\n", id, hwnd, pwnd);
     }
 }
 
@@ -231,6 +230,32 @@ StructDceCompareLastHwnd(PDCE pDce, HWND hwnd, int index)
     return FALSE;
 };
 
+VOID
+StructDceRemoveHwnd(PDCE pDce, HWND hwnd, int index)
+{
+    PLIST_ENTRY ListEntry;
+    HWND listHwnd = NULL;
+    ListEntry = pDce->pwndCurrectl.Flink;
+    while (ListEntry != &pDce->pwndCurrectl)
+    {
+        listHwnd = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry)->hwnd;
+        if (listHwnd == hwnd)
+        {
+            PLIST_ENTRY Entry = RemoveHeadList(ListEntry->Blink);
+            PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
+            ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+            return;
+        }
+        ListEntry = ListEntry->Flink;
+    }
+};
+
+VOID
+StructDceRemovePwnd(PDCE pDce, PWND Wnd, int index)
+{
+    HWND hwnd = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+    StructDceRemoveHwnd(pDce, hwnd, index);
+}
 
 
 
@@ -315,6 +340,8 @@ StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
     
     return StructDceCompareLastPwnd(pDce, pwnd, index);
 };
+
+
 
 CODE_SEG("INIT")
 NTSTATUS
@@ -569,15 +596,16 @@ noparent:
    }
 }
 
+/*
 static INT FASTCALL
-DceReleaseDC(DCE* dce, BOOL EndPaint)
+DceReleaseDC(DCE* dce, PWND Window, BOOL EndPaint)
 {
    if (DCX_DCEBUSY != (dce->DCXFlags & (DCX_INDESTROY | DCX_DCEEMPTY | DCX_DCEBUSY)))
    {
       return 0;
    }
 
-   /* Restore previous visible region */
+   // Restore previous visible region
    if (EndPaint)
    {
        DceUpdateVisRgn(dce, StructDceGetPwndx(dce, 1), dce->DCXFlags);
@@ -598,11 +626,12 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
 
          if (dce->DCXFlags & DCX_DCEDIRTY)
          {
-           /* Don't keep around invalidated entries
-            * because SetDCState() disables hVisRgn updates
-            * by removing dirty bit. */
+           // Don't keep around invalidated entries
+           // because SetDCState() disables hVisRgn updates
+           // by removing dirty bit.
            //dce->hwndCurrent = 0;
-           StructDceRemoveLastx(dce, 1);
+           //StructDceRemoveLastx(dce, 1);
+		   StructDceRemovePwnd(dce, Window, 1);
            //dce->pwndOrg  = NULL;
            //dce->pwndClip = NULL;
            dce->DCXFlags &= DCX_CACHE;
@@ -625,7 +654,7 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
             pDCE = CONTAINING_RECORD(ListEntry, DCE, List);
             ListEntry = ListEntry->Flink;
             if (!(pDCE->DCXFlags & DCX_DCEBUSY))
-            {  /* Free the unused cache DCEs. */
+            {  // Free the unused cache DCEs.
                DceFreeDCE(pDCE, TRUE);
             }
          }
@@ -634,7 +663,81 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
    }
    return 1; // Released!
 }
+*/
 
+static INT FASTCALL
+DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
+{
+    if (DCX_DCEBUSY != (dce->DCXFlags & (DCX_INDESTROY | DCX_DCEEMPTY | DCX_DCEBUSY)))
+    {
+        return 0;
+    }
+
+    /* Restore previous visible region */
+    if (EndPaint)
+    {
+        DceUpdateVisRgn(dce, StructDceGetPwndx(dce, 1), dce->DCXFlags);
+    }
+
+    if ((dce->DCXFlags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) && ((dce->DCXFlags & DCX_CACHE) || EndPaint))
+    {
+        DceDeleteClipRgn(dce);
+    }
+
+    if (dce->DCXFlags & DCX_CACHE)
+    {
+        if (!(dce->DCXFlags & DCX_NORESETATTRS))
+        {
+            // Clean the DC
+            if (!IntGdiCleanDC(dce->hDC))
+                return 0;
+
+            if (dce->DCXFlags & DCX_DCEDIRTY)
+            {
+                /* Don't keep around invalidated entries
+                 * because SetDCState() disables hVisRgn updates
+                 * by removing dirty bit. */
+                // dce->hwndCurrent = 0;
+                // StructDceRemoveLastx(dce, 1);
+                StructDceRemoveHwnd(dce, hwnd, 1);
+                // dce->pwndOrg  = NULL;
+                // dce->pwndClip = NULL;
+                dce->DCXFlags &= DCX_CACHE;
+                dce->DCXFlags |= DCX_DCEEMPTY;
+            }
+        }
+        dce->DCXFlags &= ~DCX_DCEBUSY;
+        TRACE("Exit!!!!! DCX_CACHE!!!!!!   hDC-> %p \n", dce->hDC);
+        if (!GreSetDCOwner(dce->hDC, GDI_OBJ_HMGR_NONE))
+            return 0;
+        dce->ptiOwner = NULL; // Reset ownership.
+        dce->ppiOwner = NULL;
+
+#if 0 // Need to research and fix before this is a "growing" issue.
+      if (++DCECache > 32)
+      {
+         ListEntry = LEDce.Flink;
+         while (ListEntry != &LEDce)
+         {
+            pDCE = CONTAINING_RECORD(ListEntry, DCE, List);
+            ListEntry = ListEntry->Flink;
+            if (!(pDCE->DCXFlags & DCX_DCEBUSY))
+            {  /* Free the unused cache DCEs. */
+               DceFreeDCE(pDCE, TRUE);
+            }
+         }
+      }
+#endif
+    }
+    return 1; // Released!
+}
+
+static INT FASTCALL
+DceReleaseDCPwnd(DCE *dce, PWND Wnd, BOOL EndPaint)
+{
+    HWND hwnd = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+    return DceReleaseDCHwnd(dce, hwnd, EndPaint);
+}
 
 HDC FASTCALL
 UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
@@ -1024,7 +1127,8 @@ DceFreeWindowDCE(PWND Window)
               DceUpdateVisRgn(pDCE, Window, pDCE->DCXFlags);
               pDCE->DCXFlags = DCX_DCEEMPTY|DCX_CACHE;
               //pDCE->hwndCurrent = 0;
-              StructDceRemoveLastx(pDCE, 2);
+              //StructDceRemoveLastx(pDCE, 2);
+              StructDceRemovePwnd(pDCE, Window, 20);
               //pDCE->pwndOrg = pDCE->pwndClip = NULL;
 
               TRACE("POWNED DCE going Cheap!! DCX_CACHE!! hDC-> %p \n",
@@ -1061,11 +1165,12 @@ DceFreeWindowDCE(PWND Window)
                * (for 1.0?).
                */
               ERR("[%p] GetDC() without ReleaseDC()!\n", UserHMGetHandle(Window));
-              DceReleaseDC(pDCE, FALSE);
+              DceReleaseDCPwnd(pDCE, Window, FALSE);
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
            //pDCE->hwndCurrent = 0;
-           StructDceRemoveLastx(pDCE, 3);
+           //StructDceRemoveLastx(pDCE, 3);
+           StructDceRemovePwnd(pDCE, Window, 30);
            //pDCE->pwndOrg = pDCE->pwndClip = NULL;
         }
      }
@@ -1233,32 +1338,39 @@ IntWindowFromDC(HDC hDc)
 }
 
 INT FASTCALL
+UserReleaseDCHwnd(HWND hwnd, HDC hDc, BOOL EndPaint)
+{
+    PDCE dce;
+    PLIST_ENTRY ListEntry;
+    INT nRet = 0;
+    BOOL Hit = FALSE;
+
+    TRACE("%p %p\n", hwnd, hDc);
+    ListEntry = LEDce.Flink;
+    while (ListEntry != &LEDce)
+    {
+        dce = CONTAINING_RECORD(ListEntry, DCE, List);
+        ListEntry = ListEntry->Flink;
+        if (dce->hDC == hDc)
+        {
+            Hit = TRUE;
+            break;
+        }
+    }
+
+    if (Hit && (dce->DCXFlags & DCX_DCEBUSY))
+    {
+        nRet = DceReleaseDCHwnd(dce, hwnd, EndPaint);
+    }
+
+    return nRet;
+}
+
+INT FASTCALL
 UserReleaseDC(PWND Window, HDC hDc, BOOL EndPaint)
 {
-  PDCE dce;
-  PLIST_ENTRY ListEntry;
-  INT nRet = 0;
-  BOOL Hit = FALSE;
-
-  TRACE("%p %p\n", Window, hDc);
-  ListEntry = LEDce.Flink;
-  while (ListEntry != &LEDce)
-  {
-     dce = CONTAINING_RECORD(ListEntry, DCE, List);
-     ListEntry = ListEntry->Flink;
-     if (dce->hDC == hDc)
-     {
-        Hit = TRUE;
-        break;
-     }
-  }
-
-  if ( Hit && (dce->DCXFlags & DCX_DCEBUSY))
-  {
-     nRet = DceReleaseDC(dce, EndPaint);
-  }
-
-  return nRet;
+    HWND hwnd = (Window ? UserHMGetHandle(Window) : NULL);
+    return UserReleaseDCHwnd(hwnd, hDc, EndPaint);
 }
 
 HDC FASTCALL

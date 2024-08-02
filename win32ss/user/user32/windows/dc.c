@@ -46,7 +46,7 @@ ReleaseDC(HWND hWnd,
 
     GdiReleaseDC ( hDC ); // Release locals.
 
-    return NtUserxReleaseDC(hDC);
+    return NtUserxReleaseDC(hDC, hWnd);
 }
 
 

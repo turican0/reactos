@@ -304,11 +304,10 @@ NtUserCallOneParam(
             Result = (DWORD_PTR)UserGetKeyboardLayout(Param);
             break;
 
-        case ONEPARAM_ROUTINE_RELEASEDC:
+        /*case ONEPARAM_ROUTINE_RELEASEDC:
             Result = UserReleaseDC(NULL, (HDC) Param, FALSE);
-            break;
-
-        case ONEPARAM_ROUTINE_REALIZEPALETTE:
+            break;*/
+	    case ONEPARAM_ROUTINE_REALIZEPALETTE:
             Result = UserRealizePalette((HDC) Param);
             break;
 
@@ -443,6 +442,10 @@ NtUserCallTwoParam(
 
     switch (Routine)
     {
+		case TWOPARAM_ROUTINE_RELEASEDC:
+            Ret = UserReleaseDCHwnd((HWND)Param1, (HDC) Param2, FALSE);
+            break;
+			
         case TWOPARAM_ROUTINE_REDRAWTITLE:
         {
             Window = UserGetWindowObject((HWND)Param1);

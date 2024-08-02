@@ -157,9 +157,9 @@ Test_GetDCEx_CS_OWNDC()
     hwnd = CreateWindowHelper(pszClassName, "Test Window1");
     ok(hwnd != NULL, "Failed to create hwnd\n");
 
-    hdc1 = GetDCEx(hwnd, NULL, 0);
+    hdc1 = GetDCEx(hwnd, NULL, DCX_MYFLAG);
     ok(hdc1 != NULL, "GetDCEx failed\n");
-    hdc2 = GetDCEx(hwnd, NULL, 0);
+    hdc2 = GetDCEx(hwnd, NULL, DCX_MYFLAG);
     ok(hdc2 != NULL, "GetDCEx failed\n");
     ok(hdc2 == hdc1, "Expected the same DC\n");
     ok(ReleaseDC(hwnd, hdc1) == TRUE, "ReleaseDC failed\n");
