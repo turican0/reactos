@@ -17,12 +17,16 @@ DBG_DEFAULT_CHANNEL(UserDce);
 static LIST_ENTRY LEDce;
 static INT DCECount = 0; // Count of DCE in system.
 
+BOOL BDCX_MYFLAG = FALSE;
+
 #define DCX_CACHECOMPAREMASK (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | \
                               DCX_NORESETATTRS | DCX_LOCKWINDOWUPDATE | \
                               DCX_LAYEREDWIN | DCX_CACHE | DCX_WINDOW | \
                               DCX_PARENTCLIP)
 
 /* FUNCTIONS *****************************************************************/
+
+#define DCX_MYFLAG 0x00200000
 
 typedef struct _DCEPWND_TYPE
 {
@@ -101,8 +105,11 @@ StructDceExistHwnd(PDCE pDce, HWND hwnd)
 void
 StructDceAdd(PDCE pDce, PWND pwnd, int index)
 {
-    ERR("StructDceAdd\n");
-    StructDceDrawState(pDce);
+    if (BDCX_MYFLAG)
+    {
+        ERR("StructDceAdd\n");
+        StructDceDrawState(pDce);
+    }
 
     if (!pwnd)
         return;
@@ -116,7 +123,8 @@ StructDceAdd(PDCE pDce, PWND pwnd, int index)
     DCEPWNDEntry->hwnd = (pwnd ? UserHMGetHandle(pwnd) : NULL);
     InsertTailList(pDce->pwndCurrectl.Flink, &DCEPWNDEntry->Entry);
 
-    StructDceDrawState(pDce);
+    if (BDCX_MYFLAG)
+        StructDceDrawState(pDce);
 };
 
 PWND
@@ -190,7 +198,8 @@ StructDceClean(PDCE pDce)
 void
 StructDceInit(PDCE pDce)
 {
-    ERR("StructDceInit\n");
+    if (BDCX_MYFLAG)
+        ERR("StructDceInit\n");
     InitializeListHead(&pDce->pwndCurrectl);
 };
 
@@ -263,7 +272,8 @@ StructDceRemovePwnd(PDCE pDce, PWND Wnd, int index)
 void
 StructDceAddPwndx(PDCE pDce, PWND pwnd, int index)
 {
-    ERR("StructDceAddPwndx %d\n", index);
+    if (BDCX_MYFLAG)
+        ERR("StructDceAddPwndx %d\n", index);
     pDce->pwndCurrect = pwnd;
     pDce->hwndCurrect = (pwnd ? UserHMGetHandle(pwnd) : NULL);
     
@@ -273,6 +283,7 @@ StructDceAddPwndx(PDCE pDce, PWND pwnd, int index)
 PWND
 StructDceGetPwndx(PDCE pDce, int index)
 {
+    if (BDCX_MYFLAG)
     if (pDce->pwndCurrect != StructDceGetLastPwnd(pDce))
     {
         ERR("StructDceGetPwndx %x %x\n", pDce->pwndCurrect, StructDceGetLastPwnd(pDce));
@@ -289,16 +300,19 @@ StructDceGetPwndx(PDCE pDce, int index)
 HWND
 StructDceGetHwndx(PDCE pDce, int index)
 {
-    if (pDce->hwndCurrect != StructDceGetLastHwnd(pDce))
+    if (BDCX_MYFLAG)
     {
-        ERR("StructDceGetHwndx %x %x\n", pDce->hwndCurrect, StructDceGetLastHwnd(pDce));
+        if (pDce->hwndCurrect != StructDceGetLastHwnd(pDce))
+        {
+            ERR("StructDceGetHwndx %x %x\n", pDce->hwndCurrect, StructDceGetLastHwnd(pDce));
+            StructDceDrawState(pDce);
+        }
+
+        // return pDce->hwndCurrect;
+
+        ERR("StructDceGetLastHwnd %d\n", index);
         StructDceDrawState(pDce);
     }
-
-    //return pDce->hwndCurrect;
-
-    ERR("StructDceGetLastHwnd %d\n", index);
-    StructDceDrawState(pDce);
 
     return StructDceGetLastHwnd(pDce);
 };
@@ -306,7 +320,8 @@ StructDceGetHwndx(PDCE pDce, int index)
 void
 StructDceRemoveLastx(PDCE pDce, int index)
 {
-    ERR("StructDceRemoveLastx %d\n", index);
+    if (BDCX_MYFLAG)
+        ERR("StructDceRemoveLastx %d\n", index);
     pDce->pwndCurrect = NULL;
     pDce->hwndCurrect = NULL;
 
@@ -751,7 +766,18 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    PPROCESSINFO ppi;
    PLIST_ENTRY ListEntry;
 
-   ERR("UserGetDCEx %p\n", Wnd);
+   BDCX_MYFLAG = FALSE;
+   if (Flags & DCX_MYFLAG)
+   {
+       ERR("UserGetDCEx - DCX_MYFLAG %d\n", Flags);
+       BDCX_MYFLAG = TRUE;
+       /* if (BDCX_MYFLAG)
+           WriteLEDce();*/
+       Dce = NULL;
+   }
+
+   if (BDCX_MYFLAG)
+       ERR("UserGetDCEx %p\n", Wnd);
 
    if (NULL == Wnd)
    {
