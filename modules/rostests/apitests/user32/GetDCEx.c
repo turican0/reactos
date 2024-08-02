@@ -445,11 +445,11 @@ Test_myTests()
 	hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);//2
     if (WindowFromDC(hdc1) == hwnd1)
     {
-        printf("1-DC1 patri k oknu hwnd1.\n");
+        printf("1-DC1 patri k oknu hwnd1. %p\n", hwnd1);
     }
     else if (WindowFromDC(hdc1) == hwnd2)
     {
-        printf("1-DC1 patri k oknu hwnd2.\n");
+        printf("1-DC1 patri k oknu hwnd2. %p\n", hwnd2);
     }
     else
     {
@@ -457,11 +457,11 @@ Test_myTests()
     }
     if (WindowFromDC(hdc2) == hwnd1)
     {
-        printf("DC2 patri k oknu hwnd1.\n");
+        printf("DC2 patri k oknu hwnd1 %p\n", hwnd1);
     }
     else if (WindowFromDC(hdc2) == hwnd2)
     {
-        printf("DC2 patri k oknu hwnd2.\n");
+        printf("DC2 patri k oknu hwnd2 %p\n", hwnd2);
     }
     else
     {
@@ -471,11 +471,11 @@ Test_myTests()
 
     if (WindowFromDC(hdc1) == hwnd1)
     {
-        printf("DC1 patri k oknu hwnd1.\n");
+        printf("DC1 patri k oknu hwnd1 %p\n", hwnd1);
     }
     else if (WindowFromDC(hdc1) == hwnd2)
     {
-        printf("DC1 patri k oknu hwnd2.\n");
+        printf("DC1 patri k oknu hwnd2 %p\n", hwnd2);
     }
     else
     {
@@ -483,11 +483,11 @@ Test_myTests()
     }
     if (WindowFromDC(hdc2) == hwnd1)
     {
-        printf("DC2 patri k oknu hwnd1.\n");
+        printf("DC2 patri k oknu hwnd1 %p\n", hwnd1);
     }
     else if (WindowFromDC(hdc2) == hwnd2)
     {
-        printf("DC2 patri k oknu hwnd2.\n");
+        printf("DC2 patri k oknu hwnd2 %p\n", hwnd2);
     }
     else
     {
@@ -1490,7 +1490,7 @@ void START_TEST2(/*dce*/)
 
 START_TEST(GetDCEx)
 {
-	if(0)
+	if(1)
 	{
     Test_GetDCEx_Params();
     Test_GetDCEx_Cached();
@@ -1499,8 +1499,8 @@ START_TEST(GetDCEx)
     Test_GetDCEx_CS_Mixed();
     Test_GetDCEx_CS_SwitchedStyle();
 	}
-    if (1)
-        Test_myTests();
     if (0)
+        Test_myTests();
+    if (1)
         START_TEST2();
 }

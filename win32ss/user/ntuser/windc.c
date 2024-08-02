@@ -191,6 +191,7 @@ StructDceClean(PDCE pDce)
 void
 StructDceInit(PDCE pDce)
 {
+    ERR("StructDceInit\n");
     InitializeListHead(&pDce->pwndCurrectl);
 };
 
@@ -237,6 +238,7 @@ StructDceCompareLastHwnd(PDCE pDce, HWND hwnd, int index)
 void
 StructDceAddPwndx(PDCE pDce, PWND pwnd, int index)
 {
+    ERR("StructDceAddPwndx %d\n", index);
     pDce->pwndCurrect = pwnd;
     pDce->hwndCurrect = (pwnd ? UserHMGetHandle(pwnd) : NULL);
     
@@ -270,7 +272,7 @@ StructDceGetHwndx(PDCE pDce, int index)
 
     //return pDce->hwndCurrect;
 
-    ERR("StructDceGetLastHwnd\n");
+    ERR("StructDceGetLastHwnd %d\n", index);
     StructDceDrawState(pDce);
 
     return StructDceGetLastHwnd(pDce);
@@ -279,6 +281,7 @@ StructDceGetHwndx(PDCE pDce, int index)
 void
 StructDceRemoveLastx(PDCE pDce, int index)
 {
+    ERR("StructDceRemoveLastx %d\n", index);
     pDce->pwndCurrect = NULL;
     pDce->hwndCurrect = NULL;
 
@@ -303,13 +306,14 @@ StructDceInitx(PDCE pDce)
 BOOL
 StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
 {
-    
+    if (index == 2)
+        return StructDceExistPwnd(pDce, pwnd);
     /* PWND curPwnd = pDce->pwndCurrect;
     if (curPwnd == pwnd)
         return TRUE;
     return FALSE;*/
     
-    return StructDceCompareLastPwnd(pDce, pwnd, 0);
+    return StructDceCompareLastPwnd(pDce, pwnd, index);
 };
 
 CODE_SEG("INIT")
@@ -644,6 +648,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    PPROCESSINFO ppi;
    PLIST_ENTRY ListEntry;
 
+   ERR("UserGetDCEx %p\n", Wnd);
+
    if (NULL == Wnd)
    {
       Flags &= ~DCX_USESTYLE;
@@ -800,13 +806,20 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
           {
              // Check for Window handle than HDC match for CLASS.
              //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
-              if (StructDceCompareLastPwndx(Dce, Wnd, 2))
+             if (StructDceCompareLastPwndx(Dce, Wnd, 2))
              {
                 bUpdateVisRgn = FALSE;
+                ERR("Get Exit-A\n");
                 break;
              }
-             else if (Dce->hDC == hDC) break;
+             else if (Dce->hDC == hDC)
+             {
+                 ERR("Get Exit-B\n");
+                 StructDceAdd(Dce, Wnd, 1);
+                 break;
+             }
           }
+          ERR("Get Exit-C\n");
           Dce = NULL; // Loop issue?
       }
       KeLeaveCriticalRegion();
