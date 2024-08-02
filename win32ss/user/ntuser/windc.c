@@ -19,6 +19,8 @@ static INT DCECount = 0; // Count of DCE in system.
 
 BOOL BDCX_MYFLAG = FALSE;
 
+#define OLDCODE_WINDC
+
 #define DCX_CACHECOMPAREMASK (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | \
                               DCX_NORESETATTRS | DCX_LOCKWINDOWUPDATE | \
                               DCX_LAYEREDWIN | DCX_CACHE | DCX_WINDOW | \
@@ -283,6 +285,9 @@ StructDceAddPwndx(PDCE pDce, PWND pwnd, int index)
 PWND
 StructDceGetPwndx(PDCE pDce, int index)
 {
+#ifdef OLDCODE_WINDC
+    return StructDceGetLastPwnd(pDce);
+#elif
     if (BDCX_MYFLAG)
     if (pDce->pwndCurrect != StructDceGetLastPwnd(pDce))
     {
@@ -291,15 +296,16 @@ StructDceGetPwndx(PDCE pDce, int index)
         //StructDceGetLastXPrint(pDce);
         StructDceDrawState(pDce);
     }
-
-    //return pDce->pwndCurrect;
-
-    return StructDceGetLastPwnd(pDce);
+    return pDce->pwndCurrect;
+#endif    
 };
 
 HWND
 StructDceGetHwndx(PDCE pDce, int index)
 {
+#ifdef OLDCODE_WINDC
+    return pDce->hwndCurrect;
+#elif
     if (BDCX_MYFLAG)
     {
         if (pDce->hwndCurrect != StructDceGetLastHwnd(pDce))
@@ -307,14 +313,12 @@ StructDceGetHwndx(PDCE pDce, int index)
             ERR("StructDceGetHwndx %x %x\n", pDce->hwndCurrect, StructDceGetLastHwnd(pDce));
             StructDceDrawState(pDce);
         }
-
-        // return pDce->hwndCurrect;
-
         ERR("StructDceGetLastHwnd %d\n", index);
         StructDceDrawState(pDce);
     }
 
     return StructDceGetLastHwnd(pDce);
+#endif
 };
 
 void
@@ -346,14 +350,16 @@ StructDceInitx(PDCE pDce)
 BOOL
 StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
 {
-    if (index == 2)
-        return StructDceExistPwnd(pDce, pwnd);
-    /* PWND curPwnd = pDce->pwndCurrect;
+#ifdef OLDCODE_WINDC
+    PWND curPwnd = pDce->pwndCurrect;
     if (curPwnd == pwnd)
         return TRUE;
-    return FALSE;*/
-    
+    return FALSE;
+#elif
+    if (index == 2)
+        return StructDceExistPwnd(pDce, pwnd);
     return StructDceCompareLastPwnd(pDce, pwnd, index);
+#endif
 };
 
 
@@ -771,8 +777,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    {
        ERR("UserGetDCEx - DCX_MYFLAG %d\n", Flags);
        BDCX_MYFLAG = TRUE;
-       /* if (BDCX_MYFLAG)
-           WriteLEDce();*/
+       if (BDCX_MYFLAG)WriteLEDce();
        Dce = NULL;
    }
 
