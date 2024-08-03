@@ -1185,6 +1185,35 @@ IntWindowFromDC(HDC hDc)
 }
 
 INT FASTCALL
+UserReleaseDCHwnd(HWND hwnd, HDC hDc, BOOL EndPaint)
+{
+  PDCE dce;
+  PLIST_ENTRY ListEntry;
+  INT nRet = 0;
+  BOOL Hit = FALSE;
+
+  TRACE("%p %p\n", hwnd, hDc);
+  ListEntry = LEDce.Flink;
+  while (ListEntry != &LEDce)
+  {
+     dce = CONTAINING_RECORD(ListEntry, DCE, List);
+     ListEntry = ListEntry->Flink;
+     if (dce->hDC == hDc)
+     {
+        Hit = TRUE;
+        break;
+     }
+  }
+
+  if ( Hit && (dce->DCXFlags & DCX_DCEBUSY))
+  {
+     nRet = DceReleaseDC(dce, EndPaint);
+  }
+
+  return nRet;
+}
+
+INT FASTCALL
 UserReleaseDC(PWND Window, HDC hDc, BOOL EndPaint)
 {
   PDCE dce;
