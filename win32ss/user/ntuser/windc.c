@@ -19,7 +19,7 @@ static INT DCECount = 0; // Count of DCE in system.
 
 BOOL BDCX_MYFLAG = FALSE;
 
-#define OLDCODE_WINDC
+//#define OLDCODE_WINDC
 
 #define DCX_CACHECOMPAREMASK (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | \
                               DCX_NORESETATTRS | DCX_LOCKWINDOWUPDATE | \
@@ -287,7 +287,7 @@ StructDceGetPwndx(PDCE pDce, int index)
 {
 #ifdef OLDCODE_WINDC
 	return pDce->pwndCurrect;
-#elif
+#else
     if (BDCX_MYFLAG)
     if (pDce->pwndCurrect != StructDceGetLastPwnd(pDce))
     {
@@ -305,7 +305,7 @@ StructDceGetHwndx(PDCE pDce, int index)
 {
 #ifdef OLDCODE_WINDC
     return pDce->hwndCurrect;
-#elif
+#else
     if (BDCX_MYFLAG)
     {
         if (pDce->hwndCurrect != StructDceGetLastHwnd(pDce))
@@ -327,15 +327,15 @@ StructDceRemoveLastx(PDCE pDce, HWND hwnd, int index)
 #ifdef OLDCODE_WINDC
     pDce->pwndCurrect = NULL;
     pDce->hwndCurrect = NULL;
-#elif
+#else
     if (BDCX_MYFLAG)
         ERR("StructDceRemoveLastx %d\n", index);
     if (index == 1)
         StructDceRemoveHwnd(pDce, hwnd, 10);
     else if (index == 2)
-        StructDceRemovePwnd(pDce, hwnd, 20);
+        StructDceRemoveHwnd(pDce, hwnd, 20);
     else if (index == 3)
-        StructDceRemovePwnd(pDCE, hwnd, 30);
+        StructDceRemoveHwnd(pDce, hwnd, 30);
     else
         StructDceRemoveLast(pDce);
 #endif
@@ -364,7 +364,7 @@ StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
     if (curPwnd == pwnd)
         return TRUE;
     return FALSE;
-#elif
+#else
     if (index == 2)
         return StructDceExistPwnd(pDce, pwnd);
     return StructDceCompareLastPwnd(pDce, pwnd, index);
