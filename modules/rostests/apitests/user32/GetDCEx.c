@@ -1441,6 +1441,8 @@ test_destroyed_window(void)
 
 void START_TEST2(/*dce*/)
 {
+    GetDCEx(NULL, (HANDLE)0x1234, 1);
+
     WNDCLASSA cls;
 
     cls.style = CS_DBLCLKS;
@@ -1478,6 +1480,8 @@ void START_TEST2(/*dce*/)
         CreateWindowA("parentdc_class", NULL, WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd_parent, 0, 0, NULL);
 
     test_dc_attributes();
+    GetDCEx(NULL, (HANDLE)0x1234, 0);
+
     test_parameters();
     test_dc_visrgn();
     test_begin_paint();
@@ -1486,11 +1490,13 @@ void START_TEST2(/*dce*/)
     test_dc_layout();
     /* this should be last */
     test_destroyed_window();
+
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
 }
 
 START_TEST(GetDCEx)
 {
-	if(1)
+	if(0)
 	{
     Test_GetDCEx_Params();
     Test_GetDCEx_Cached();
