@@ -157,9 +157,9 @@ Test_GetDCEx_CS_OWNDC()
     hwnd = CreateWindowHelper(pszClassName, "Test Window1");
     ok(hwnd != NULL, "Failed to create hwnd\n");
 
-    hdc1 = GetDCEx(hwnd, NULL, 0);
+    hdc1 = GetDCEx(hwnd, NULL, DCX_MYFLAG);
     ok(hdc1 != NULL, "GetDCEx failed\n");
-    hdc2 = GetDCEx(hwnd, NULL, 0);
+    hdc2 = GetDCEx(hwnd, NULL, DCX_MYFLAG);
     ok(hdc2 != NULL, "GetDCEx failed\n");
     ok(hdc2 == hdc1, "Expected the same DC\n");
     ok(ReleaseDC(hwnd, hdc1) == TRUE, "ReleaseDC failed\n");
@@ -443,7 +443,56 @@ Test_myTests()
 
 	hdc1 = GetDCEx(hwnd1, NULL, DCX_USESTYLE | DCX_MYFLAG);//1
 	hdc2 = GetDCEx(hwnd2, NULL, DCX_USESTYLE | DCX_MYFLAG);//2
+    if (WindowFromDC(hdc1) == hwnd1)
+    {
+        printf("1-DC1 patri k oknu hwnd1. %p\n", hwnd1);
+    }
+    else if (WindowFromDC(hdc1) == hwnd2)
+    {
+        printf("1-DC1 patri k oknu hwnd2. %p\n", hwnd2);
+    }
+    else
+    {
+        printf("1-DC1 nepatri ani k jednomu oknu.\n");
+    }
+    if (WindowFromDC(hdc2) == hwnd1)
+    {
+        printf("DC2 patri k oknu hwnd1 %p\n", hwnd1);
+    }
+    else if (WindowFromDC(hdc2) == hwnd2)
+    {
+        printf("DC2 patri k oknu hwnd2 %p\n", hwnd2);
+    }
+    else
+    {
+        printf("DC2 nepatri ani k jednomu oknu.\n");
+    }
     ReleaseDC(hwnd2, hdc2);
+
+    if (WindowFromDC(hdc1) == hwnd1)
+    {
+        printf("DC1 patri k oknu hwnd1 %p\n", hwnd1);
+    }
+    else if (WindowFromDC(hdc1) == hwnd2)
+    {
+        printf("DC1 patri k oknu hwnd2 %p\n", hwnd2);
+    }
+    else
+    {
+        printf("DC1 nepatri ani k jednomu oknu.\n");
+    }
+    if (WindowFromDC(hdc2) == hwnd1)
+    {
+        printf("DC2 patri k oknu hwnd1 %p\n", hwnd1);
+    }
+    else if (WindowFromDC(hdc2) == hwnd2)
+    {
+        printf("DC2 patri k oknu hwnd2 %p\n", hwnd2);
+    }
+    else
+    {
+        printf("DC2 nepatri ani k jednomu oknu.\n");
+    }
 
     /*
     if (IsDCForWindow(hdc1, hwnd1))
@@ -1450,7 +1499,8 @@ START_TEST(GetDCEx)
     Test_GetDCEx_CS_Mixed();
     Test_GetDCEx_CS_SwitchedStyle();
 	}
-    if (1)
+    if (0)
         Test_myTests();
-    START_TEST2();
+    if (1)
+        START_TEST2();
 }
