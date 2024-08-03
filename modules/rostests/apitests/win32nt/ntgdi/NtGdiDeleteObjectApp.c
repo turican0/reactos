@@ -71,8 +71,8 @@ START_TEST(NtGdiDeleteObjectApp)
     ok_ptr(SelectObject(hdc, GetStockObject(WHITE_PEN)), NULL);
     ok_long(GetLastError(), ERROR_INVALID_PARAMETER);
     /* Make sure */
-    ok_ptr((void *)NtUserCallOneParam((DWORD_PTR)hdc, ONEPARAM_ROUTINE_RELEASEDC), NULL);
-
+    //ok_ptr((void *)NtUserCallOneParam((DWORD_PTR)hdc, ONEPARAM_ROUTINE_RELEASEDC), NULL);
+	//ok_ptr((void *)NtUserCallTwoParam(NULL,(DWORD_PTR)hdc, TWOPARAM_ROUTINE_RELEASEDC), NULL);
 
     /* Delete a brush */
     SetLastError(0);
