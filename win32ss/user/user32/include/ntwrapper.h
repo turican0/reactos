@@ -635,7 +635,7 @@ EXTINLINE INT NtUserxGetKeyboardType(INT nTypeFlag)
 
 EXTINLINE INT NtUserxReleaseDC(HDC hDC, HWND hWnd)
 {
-    return (INT)NtUserCallTwoParam((DWORD_PTR)hDC, (DWORD_PTR)hWnd, TWOPARAM_ROUTINE_RELEASEDC);
+    return (INT)NtUserCallTwoParam((DWORD_PTR)hWnd, (DWORD_PTR)hDC, TWOPARAM_ROUTINE_RELEASEDC);
     //return (INT)NtUserCallOneParam((DWORD_PTR)hDC, ONEPARAM_ROUTINE_RELEASEDC);
 }
 

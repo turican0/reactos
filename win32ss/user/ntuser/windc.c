@@ -698,50 +698,50 @@ DceReleaseDC(DCE* dce, PWND Window, BOOL EndPaint)
 static INT FASTCALL
 DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
 {
-    if (DCX_DCEBUSY != (dce->DCXFlags & (DCX_INDESTROY | DCX_DCEEMPTY | DCX_DCEBUSY)))
-    {
-        return 0;
-    }
+   if (DCX_DCEBUSY != (dce->DCXFlags & (DCX_INDESTROY | DCX_DCEEMPTY | DCX_DCEBUSY)))
+   {
+      return 0;
+   }
 
-    /* Restore previous visible region */
-    if (EndPaint)
-    {
-        DceUpdateVisRgn(dce, StructDceGetPwndx(dce, 1), dce->DCXFlags);
-    }
+   /* Restore previous visible region */
+   if (EndPaint)
+   {
+       DceUpdateVisRgn(dce, StructDceGetPwndx(dce, 1), dce->DCXFlags);
+   }
 
-    if ((dce->DCXFlags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) && ((dce->DCXFlags & DCX_CACHE) || EndPaint))
-    {
-        DceDeleteClipRgn(dce);
-    }
+   if ((dce->DCXFlags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
+         ((dce->DCXFlags & DCX_CACHE) || EndPaint))
+   {
+      DceDeleteClipRgn(dce);
+   }
 
-    if (dce->DCXFlags & DCX_CACHE)
-    {
-        if (!(dce->DCXFlags & DCX_NORESETATTRS))
-        {
-            // Clean the DC
-            if (!IntGdiCleanDC(dce->hDC))
-                return 0;
+   if (dce->DCXFlags & DCX_CACHE)
+   {
+      if (!(dce->DCXFlags & DCX_NORESETATTRS))
+      {
+         // Clean the DC
+         if (!IntGdiCleanDC(dce->hDC)) return 0;
 
-            if (dce->DCXFlags & DCX_DCEDIRTY)
-            {
-                /* Don't keep around invalidated entries
-                 * because SetDCState() disables hVisRgn updates
-                 * by removing dirty bit. */
-                // dce->hwndCurrent = 0;
-                StructDceRemoveLastx(dce, hwnd, 1);
-                //StructDceRemoveHwnd(dce, hwnd, 1);
-                // dce->pwndOrg  = NULL;
-                // dce->pwndClip = NULL;
-                dce->DCXFlags &= DCX_CACHE;
-                dce->DCXFlags |= DCX_DCEEMPTY;
-            }
-        }
-        dce->DCXFlags &= ~DCX_DCEBUSY;
-        TRACE("Exit!!!!! DCX_CACHE!!!!!!   hDC-> %p \n", dce->hDC);
-        if (!GreSetDCOwner(dce->hDC, GDI_OBJ_HMGR_NONE))
-            return 0;
-        dce->ptiOwner = NULL; // Reset ownership.
-        dce->ppiOwner = NULL;
+         if (dce->DCXFlags & DCX_DCEDIRTY)
+         {
+           /* Don't keep around invalidated entries
+            * because SetDCState() disables hVisRgn updates
+            * by removing dirty bit. */
+           //dce->hwndCurrent = 0;
+           StructDceRemoveLastx(dce, hwnd, 1);
+           //StructDceRemoveHwnd(dce, hwnd, 1);
+           //dce->pwndOrg  = NULL;
+           //dce->pwndClip = NULL;
+           dce->DCXFlags &= DCX_CACHE;
+           dce->DCXFlags |= DCX_DCEEMPTY;
+         }
+      }
+      dce->DCXFlags &= ~DCX_DCEBUSY;
+      TRACE("Exit!!!!! DCX_CACHE!!!!!!   hDC-> %p \n", dce->hDC);
+      if (!GreSetDCOwner(dce->hDC, GDI_OBJ_HMGR_NONE))
+         return 0;
+      dce->ptiOwner = NULL; // Reset ownership.
+      dce->ppiOwner = NULL;
 
 #if 0 // Need to research and fix before this is a "growing" issue.
       if (++DCECache > 32)
@@ -758,8 +758,8 @@ DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
          }
       }
 #endif
-    }
-    return 1; // Released!
+   }
+   return 1; // Released!
 }
 
 static INT FASTCALL
