@@ -322,22 +322,21 @@ StructDceInitx(PDCE pDce)
 };
 
 BOOL
-StructDceCompareHwndx(PDCE pDce, HWND hwnd, int index)
+StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
 {
-    HWND curHwnd = pDce->hwndCurrect;
-    if (curHwnd == hwnd)
-        return TRUE;
-    return FALSE;            
-};
-
-BOOL
-StructDceComparePwndx(PDCE pDce, PWND pwnd, int index)
-{
+#ifdef OLDCODE_WINDC
     PWND curPwnd = pDce->pwndCurrect;
     if (curPwnd == pwnd)
         return TRUE;
     return FALSE;
+#elif
+    if (index == 2)
+        return StructDceExistPwnd(pDce, pwnd);
+    return StructDceCompareLastPwnd(pDce, pwnd, index);
+#endif
 };
+
+
 
 CODE_SEG("INIT")
 NTSTATUS
@@ -795,7 +794,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
                DceEmpty = Dce;
             }
             //else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
-            else if (StructDceComparePwndx(Dce, Wnd, 1) &&
+            else if (StructDceCompareLastPwndx(Dce, Wnd, 1) &&
                      ((Dce->DCXFlags & DCX_CACHECOMPAREMASK) == DcxFlags))
             {
                UpdateClipOrigin = TRUE;
@@ -833,7 +832,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
           {
              // Check for Window handle than HDC match for CLASS.
              //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
-             if (StructDceComparePwndx(Dce, Wnd, 2))
+             if (StructDceCompareLastPwndx(Dce, Wnd, 2))
              {
                 bUpdateVisRgn = FALSE;
                 break;
@@ -1030,7 +1029,7 @@ DceFreeWindowDCE(PWND Window)
      pDCE = CONTAINING_RECORD(ListEntry, DCE, List);
      ListEntry = ListEntry->Flink;
      //if ( pDCE->hwndCurrent == UserHMGetHandle(Window) &&
-     if (StructDceComparePwndx(pDCE, Window, 3) &&
+     if (StructDceCompareLastPwndx(pDCE, Window, 3) &&
           !(pDCE->DCXFlags & DCX_DCEEMPTY) )
      {
         if (!(pDCE->DCXFlags & DCX_CACHE)) /* Owned or Class DCE */
@@ -1169,7 +1168,7 @@ DceResetActiveDCEs(PWND Window)
       if (0 == (pDCE->DCXFlags & (DCX_DCEEMPTY|DCX_INDESTROY)))
       {
          //if (UserHMGetHandle(Window) == pDCE->hwndCurrent)
-         if (StructDceComparePwndx(pDCE, Window, 4))
+          if (StructDceCompareLastPwndx(pDCE, Window, 4))
          {
             CurrentWindow = Window;
          }
