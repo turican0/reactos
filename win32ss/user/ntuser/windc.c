@@ -286,7 +286,7 @@ PWND
 StructDceGetPwndx(PDCE pDce, int index)
 {
 #ifdef OLDCODE_WINDC
-    return StructDceGetLastPwnd(pDce);
+	return pDce->pwndCurrect;
 #elif
     if (BDCX_MYFLAG)
     if (pDce->pwndCurrect != StructDceGetLastPwnd(pDce))
@@ -296,7 +296,7 @@ StructDceGetPwndx(PDCE pDce, int index)
         //StructDceGetLastXPrint(pDce);
         StructDceDrawState(pDce);
     }
-    return pDce->pwndCurrect;
+    return StructDceGetLastPwnd(pDce);
 #endif    
 };
 
@@ -325,11 +325,11 @@ void
 StructDceRemoveLastx(PDCE pDce, HWND hwnd, int index)
 {
 #ifdef OLDCODE_WINDC
-    if (BDCX_MYFLAG)
-        ERR("StructDceRemoveLastx %d\n", index);
     pDce->pwndCurrect = NULL;
     pDce->hwndCurrect = NULL;
 #elif
+    if (BDCX_MYFLAG)
+        ERR("StructDceRemoveLastx %d\n", index);
     if (index == 1)
         StructDceRemoveHwnd(pDce, hwnd, 10);
     else if (index == 2)
@@ -626,75 +626,6 @@ noparent:
    }
 }
 
-/*
-static INT FASTCALL
-DceReleaseDC(DCE* dce, PWND Window, BOOL EndPaint)
-{
-   if (DCX_DCEBUSY != (dce->DCXFlags & (DCX_INDESTROY | DCX_DCEEMPTY | DCX_DCEBUSY)))
-   {
-      return 0;
-   }
-
-   // Restore previous visible region
-   if (EndPaint)
-   {
-       DceUpdateVisRgn(dce, StructDceGetPwndx(dce, 1), dce->DCXFlags);
-   }
-
-   if ((dce->DCXFlags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
-         ((dce->DCXFlags & DCX_CACHE) || EndPaint))
-   {
-      DceDeleteClipRgn(dce);
-   }
-
-   if (dce->DCXFlags & DCX_CACHE)
-   {
-      if (!(dce->DCXFlags & DCX_NORESETATTRS))
-      {
-         // Clean the DC
-         if (!IntGdiCleanDC(dce->hDC)) return 0;
-
-         if (dce->DCXFlags & DCX_DCEDIRTY)
-         {
-           // Don't keep around invalidated entries
-           // because SetDCState() disables hVisRgn updates
-           // by removing dirty bit.
-           //dce->hwndCurrent = 0;
-           //StructDceRemoveLastx(dce, 1);
-		   StructDceRemovePwnd(dce, Window, 1);
-           //dce->pwndOrg  = NULL;
-           //dce->pwndClip = NULL;
-           dce->DCXFlags &= DCX_CACHE;
-           dce->DCXFlags |= DCX_DCEEMPTY;
-         }
-      }
-      dce->DCXFlags &= ~DCX_DCEBUSY;
-      TRACE("Exit!!!!! DCX_CACHE!!!!!!   hDC-> %p \n", dce->hDC);
-      if (!GreSetDCOwner(dce->hDC, GDI_OBJ_HMGR_NONE))
-         return 0;
-      dce->ptiOwner = NULL; // Reset ownership.
-      dce->ppiOwner = NULL;
-
-#if 0 // Need to research and fix before this is a "growing" issue.
-      if (++DCECache > 32)
-      {
-         ListEntry = LEDce.Flink;
-         while (ListEntry != &LEDce)
-         {
-            pDCE = CONTAINING_RECORD(ListEntry, DCE, List);
-            ListEntry = ListEntry->Flink;
-            if (!(pDCE->DCXFlags & DCX_DCEBUSY))
-            {  // Free the unused cache DCEs.
-               DceFreeDCE(pDCE, TRUE);
-            }
-         }
-      }
-#endif
-   }
-   return 1; // Released!
-}
-*/
-
 static INT FASTCALL
 DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
 {
@@ -952,17 +883,17 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
              if (StructDceCompareLastPwndx(Dce, Wnd, 2))
              {
                 bUpdateVisRgn = FALSE;
-                ERR("Get Exit-A\n");
+                if (BDCX_MYFLAG) ERR("Get Exit-A\n");
                 break;
              }
              else if (Dce->hDC == hDC)
              {
-                 ERR("Get Exit-B\n");
+                 if (BDCX_MYFLAG) ERR("Get Exit-B\n");
                  StructDceAdd(Dce, Wnd, 1);
                  break;
              }
           }
-          ERR("Get Exit-C\n");
+          if (BDCX_MYFLAG) ERR("Get Exit-C\n");
           Dce = NULL; // Loop issue?
       }
       KeLeaveCriticalRegion();
