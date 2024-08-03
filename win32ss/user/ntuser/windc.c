@@ -593,7 +593,7 @@ noparent:
 }
 
 static INT FASTCALL
-DceReleaseDC(DCE* dce, BOOL EndPaint)
+DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
 {
    if (DCX_DCEBUSY != (dce->DCXFlags & (DCX_INDESTROY | DCX_DCEEMPTY | DCX_DCEBUSY)))
    {
@@ -658,6 +658,12 @@ DceReleaseDC(DCE* dce, BOOL EndPaint)
    return 1; // Released!
 }
 
+static INT FASTCALL
+DceReleaseDCPwnd(DCE *dce, PWND Wnd, BOOL EndPaint)
+{
+    HWND hwnd = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+    return DceReleaseDCHwnd(dce, hwnd, EndPaint);
+}
 
 HDC FASTCALL
 UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
@@ -1075,7 +1081,7 @@ DceFreeWindowDCE(PWND Window)
                * (for 1.0?).
                */
               ERR("[%p] GetDC() without ReleaseDC()!\n", UserHMGetHandle(Window));
-              DceReleaseDC(pDCE, FALSE);
+              DceReleaseDCPwnd(pDCE, Window, FALSE);
            }
            pDCE->DCXFlags |= DCX_DCEEMPTY;
            //pDCE->hwndCurrent = 0;
@@ -1269,7 +1275,7 @@ UserReleaseDCHwnd(HWND hwnd, HDC hDc, BOOL EndPaint)
 
   if ( Hit && (dce->DCXFlags & DCX_DCEBUSY))
   {
-     nRet = DceReleaseDC(dce, EndPaint);
+     nRet = DceReleaseDCHwnd(dce, hwnd, EndPaint);
   }
 
   return nRet;
@@ -1278,30 +1284,8 @@ UserReleaseDCHwnd(HWND hwnd, HDC hDc, BOOL EndPaint)
 INT FASTCALL
 UserReleaseDC(PWND Window, HDC hDc, BOOL EndPaint)
 {
-  PDCE dce;
-  PLIST_ENTRY ListEntry;
-  INT nRet = 0;
-  BOOL Hit = FALSE;
-
-  TRACE("%p %p\n", Window, hDc);
-  ListEntry = LEDce.Flink;
-  while (ListEntry != &LEDce)
-  {
-     dce = CONTAINING_RECORD(ListEntry, DCE, List);
-     ListEntry = ListEntry->Flink;
-     if (dce->hDC == hDc)
-     {
-        Hit = TRUE;
-        break;
-     }
-  }
-
-  if ( Hit && (dce->DCXFlags & DCX_DCEBUSY))
-  {
-     nRet = DceReleaseDC(dce, EndPaint);
-  }
-
-  return nRet;
+    HWND hwnd = (Window ? UserHMGetHandle(Window) : NULL);
+    return UserReleaseDCHwnd(hwnd, hDc, EndPaint);
 }
 
 HDC FASTCALL
