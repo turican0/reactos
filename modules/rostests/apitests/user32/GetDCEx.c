@@ -1221,7 +1221,7 @@ test_begin_paint(void)
     GetDCEx(NULL, (HANDLE)0x1234, 1);
     hdc = GetDC(hwnd_classdc2);
     GetDCEx(NULL, (HANDLE)0x1234, 0);
-    //GetDCEx(NULL, (HANDLE)0x1234, 2);
+    GetDCEx(NULL, (HANDLE)0x1234, 2);
 
     ok(old_hdc == hdc, "did not get the same hdc %p/%p\n", old_hdc, hdc);
     SetRectEmpty(&rect);

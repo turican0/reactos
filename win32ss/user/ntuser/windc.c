@@ -758,7 +758,10 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    if (ClipRegion == (HANDLE)0x1234)
    {
        ERR("SET UserGetDCEx %d\n",Flags);
-       BDCX_MYFLAG = Flags;
+       if (Flags<2)
+           BDCX_MYFLAG = Flags;
+       if (Flags == 2)
+           DceUpdateVisRgn(pDCE, Wnd, pDCE->DCXFlags);
        return NULL;
    }
    /*
