@@ -35,7 +35,7 @@ typedef struct tagDCE
     //PWND         pwndOrg;
     //PWND         pwndClip;
     //PWND         pwndRedirect;
-    HRGN         hrgnClipx;
+    HRGN         hrgnClip;
     //HRGN         hrgnClipPublic;
     //HRGN         hrgnSavedVis;
     DWORD        DCXFlags;

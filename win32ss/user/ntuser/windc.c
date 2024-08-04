@@ -117,6 +117,7 @@ StructDceAdd(PDCE pDce, PWND pwnd, int index)
         return;
     DCEPWNDEntry->pwnd = pwnd;
     DCEPWNDEntry->hwnd = (pwnd ? UserHMGetHandle(pwnd) : NULL);
+    DCEPWNDEntry->hrgnClip = NULL;
     InsertTailList(pDce->pwndCurrectl.Flink, &DCEPWNDEntry->Entry);
 
     if (BDCX_MYFLAG)
@@ -134,24 +135,75 @@ StructDceGetFirstPwnd(PDCE pDce)
 void
 StructDceDeleteHrgnClip(PDCE pDce, HWND hwnd)
 {
+    PLIST_ENTRY ListEntry;
+    //HWND listHwnd = NULL;
+    DCEPWND_TYPE *ActEntry = NULL;
+    ListEntry = pDce->pwndCurrectl.Flink;
+    while (ListEntry != &pDce->pwndCurrectl)
+    {
+        ActEntry = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry);
+        ListEntry = ListEntry->Flink;
+        if (ActEntry->hwnd == hwnd)
+        {
+            if (ActEntry->hrgnClip != NULL)
+            {
+                GreDeleteObject(ActEntry->hrgnClip);
+                ActEntry->hrgnClip = NULL;
+            }
+            return;
+        }
+    }
+    //return FALSE;
+
     //if null clean all
+    /*
     if (pDce->hrgnClipx != NULL)
     {
         GreDeleteObject(pDce->hrgnClipx);
         pDce->hrgnClipx = NULL;
-    }
+    }*/
 };
 
 HRGN
 StructDceGetHrgnClip(PDCE pDce, HWND hwnd)
 {
-    return pDce->hrgnClipx;
+    PLIST_ENTRY ListEntry;
+    // HWND listHwnd = NULL;
+    DCEPWND_TYPE *ActEntry = NULL;
+    ListEntry = pDce->pwndCurrectl.Flink;
+    while (ListEntry != &pDce->pwndCurrectl)
+    {
+        ActEntry = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry);
+        ListEntry = ListEntry->Flink;
+        if (ActEntry->hwnd == hwnd)
+        {
+            return ActEntry->hrgnClip;
+        }
+    }
+    return NULL;
+
+    //return pDce->hrgnClipx;
 };
 
 void
 StructDceSetHrgnClip(PDCE pDce, HWND hwnd, HRGN hrgn)
 {
-    pDce->hrgnClipx = hrgn;
+    PLIST_ENTRY ListEntry;
+    // HWND listHwnd = NULL;
+    DCEPWND_TYPE *ActEntry = NULL;
+    ListEntry = pDce->pwndCurrectl.Flink;
+    while (ListEntry != &pDce->pwndCurrectl)
+    {
+        ActEntry = CONTAINING_RECORD(ListEntry, DCEPWND_TYPE, Entry);
+        ListEntry = ListEntry->Flink;
+        if (ActEntry->hwnd == hwnd)
+        {
+            ActEntry->hrgnClip = hrgn;
+            return;
+        }
+    }
+
+    //pDce->hrgnClipx = hrgn;
 };
 
 /*
@@ -189,6 +241,17 @@ StructDceGetLastHwnd(PDCE pDce)
     return CONTAINING_RECORD(pDce->pwndCurrectl.Flink, DCEPWND_TYPE, Entry)->hwnd;
 };
 
+void 
+MyExFreePoolWithTag(PDCEPWND_TYPE P, ULONG TagToFree)
+{
+    if (P->hrgnClip != NULL)
+    {
+        GreDeleteObject(P->hrgnClip);
+        P->hrgnClip = NULL;
+    }
+    ExFreePoolWithTag(P, TagToFree);
+}
+
 void
 StructDceRemoveLast(PDCE pDce)
 {
@@ -196,7 +259,7 @@ StructDceRemoveLast(PDCE pDce)
     {
         PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
         PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
-        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+        MyExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
     }
 };
 
@@ -207,7 +270,7 @@ StructDceRemoveFirst(PDCE pDce)
     {
         PLIST_ENTRY Entry = RemoveTailList(&pDce->pwndCurrectl);
         PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
-        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+        MyExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
     }
 };
 
@@ -218,7 +281,7 @@ StructDceClean(PDCE pDce)
     {
         PLIST_ENTRY Entry = RemoveHeadList(&pDce->pwndCurrectl);
         PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
-        ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+        MyExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
     }
 };
 
@@ -281,7 +344,7 @@ StructDceRemoveHwnd(PDCE pDce, HWND hwnd, int index)
         {
             PLIST_ENTRY Entry = RemoveHeadList(ListEntry->Blink);
             PDCEPWND_TYPE DCEPWNDEntry = CONTAINING_RECORD(Entry, DCEPWND_TYPE, Entry);
-            ExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
+            MyExFreePoolWithTag(DCEPWNDEntry, USERTAG_DCE);
             return;
         }
         ListEntry = ListEntry->Flink;
@@ -487,7 +550,7 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   StructDceAddPwndx(pDce, Window, 1);
   //pDce->pwndOrg  = Window;
   //pDce->pwndClip = Window;
-  pDce->hrgnClipx = NULL;
+  //pDce->hrgnClipx = NULL;
   //pDce->hrgnClipPublic = NULL;
   //pDce->hrgnSavedVis = NULL;
   pDce->ppiOwner = NULL;
