@@ -57,4 +57,6 @@ DbgPrint
 DPRINT
 DPRINT1
 ASSERT(MyVariable != NULL);
+wine_dbgstr_rect
+OutputDebugString
 
