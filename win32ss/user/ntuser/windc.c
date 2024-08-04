@@ -66,6 +66,30 @@ StructDceDrawState(PDCE pDce, int index)
     }
 }
 
+void
+StructDceDrawRects(PDCE pDce)
+{
+    ERR("StructDceDrawRects\n");
+    if (pDce == NULL)
+        return;    
+    PRECTL pRect;
+    PDC pdc = DC_LockDc(pDce->hDC);
+    if (pdc == NULL)
+    {
+        DC_UnlockDc(pdc);
+        return;
+    }
+    if (pdc->prgnRao == NULL)
+    {
+        DC_UnlockDc(pdc);
+        return;
+    }
+    //PREGION region=pdc->prgnRao->rdh.rcBound;
+    *pRect = pdc->prgnRao->rdh.rcBound;
+    DC_UnlockDc(pdc);
+    ERR("rect: %ld %ld %ld %ld\n", pRect->left, pRect->top, pRect->right, pRect->bottom);
+}
+
 BOOL
 StructDceExistPwnd(PDCE pDce, PWND pwnd)
 {
@@ -850,7 +874,10 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    if (ClipRegion == (HANDLE)0x1234)
    {
        ERR("SET UserGetDCEx %d\n",Flags);
-       BDCX_MYFLAG = Flags;
+       if (Flags<2)
+           BDCX_MYFLAG = Flags;
+       //if (Flags == 2)
+       //    StructDceDrawRects(pDce);
        return NULL;
    }
    /*

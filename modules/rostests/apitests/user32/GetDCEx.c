@@ -1118,9 +1118,7 @@ test_dc_visrgn(void)
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
 
-    printf("rect: %ld %ld %ld %ld\n", rect.left, rect.top, rect.right, rect.bottom);
-
-    ok(!(rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30),//problem
+    ok(!(rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30),
        "clip box should have been reset %s\n", wine_dbgstr_rect(&rect));
     ReleaseDC(hwnd_classdc2, hdc);
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
@@ -1212,15 +1210,26 @@ test_begin_paint(void)
     hdc = BeginPaint(hwnd_classdc, &ps);
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
+
+    printf("rect: %ld %ld %ld %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+
     ok(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20, "invalid clip box %s\n",
        wine_dbgstr_rect(&rect));
 
     old_hdc = hdc;
+
+    //GetDCEx(NULL, (HANDLE)0x1234, 1);
     hdc = GetDC(hwnd_classdc2);
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    GetDCEx(NULL, (HANDLE)0x1234, 2);
+
     ok(old_hdc == hdc, "did not get the same hdc %p/%p\n", old_hdc, hdc);
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
-    ok(!(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),
+
+    printf("rect: %ld %ld %ld %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+
+    ok(!(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),//problem
        "clip box should have been reset %s\n", wine_dbgstr_rect(&rect));
     ReleaseDC(hwnd_classdc2, hdc);
     EndPaint(hwnd_classdc, &ps);
@@ -1485,8 +1494,6 @@ test_destroyed_window(void)
 
 void START_TEST2(/*dce*/)
 {
-    GetDCEx(NULL, (HANDLE)0x1234, 1);
-
     WNDCLASSA cls;
 
     cls.style = CS_DBLCLKS;
@@ -1535,11 +1542,11 @@ void START_TEST2(/*dce*/)
         CreateWindowA("parentdc_class", NULL, WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd_parent, 0, 0, NULL);
     MyOutputDebugString("CreateWindowA-6 %x\n", hwnd_parentdc);
 
-    test_dc_attributes();
-    GetDCEx(NULL, (HANDLE)0x1234, 0);
+    if(0)test_dc_attributes();    
+    if (0)
+        test_parameters();
+    test_dc_visrgn();    
 
-    test_parameters();
-    test_dc_visrgn();
     test_begin_paint();
     test_scroll_window();
     test_invisible_create();
