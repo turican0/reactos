@@ -14,13 +14,20 @@ typedef enum
     DCE_WINDOW_DC   /* This is a window DC (style CS_OWNDC) */
 } DCE_TYPE, *PDCE_TYPE;
 
+typedef struct _DCEPWND_TYPE
+{
+    LIST_ENTRY Entry;
+    HWND hwnd;
+    PWND pwnd;
+} DCEPWND_TYPE, *PDCEPWND_TYPE;
+
 typedef struct tagDCE
 {
     LIST_ENTRY   List;
     HDC          hDC;
     LIST_ENTRY pwndCurrectl;
-    PWND pwndCurrect;
-    HWND hwndCurrect;
+    //PWND pwndCurrect;
+    //HWND hwndCurrect;
     //PWND pwndCurrect;
     //LIST_ENTRY pwndCurrectl;
     //HWND         hwndCurrentx;
@@ -28,8 +35,8 @@ typedef struct tagDCE
     //PWND         pwndClip;
     //PWND         pwndRedirect;
     HRGN         hrgnClip;
-    HRGN         hrgnClipPublic;
-    HRGN         hrgnSavedVis;
+    //HRGN         hrgnClipPublic;
+    //HRGN         hrgnSavedVis;
     DWORD        DCXFlags;
     PTHREADINFO  ptiOwner;
     PPROCESSINFO ppiOwner;

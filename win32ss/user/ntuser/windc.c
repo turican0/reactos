@@ -30,13 +30,6 @@ BOOL BDCX_MYFLAG = FALSE;
 
 #define DCX_MYFLAG 0x00200000
 
-typedef struct _DCEPWND_TYPE
-{
-    LIST_ENTRY Entry;
-    HWND hwnd;
-    PWND pwnd;    
-} DCEPWND_TYPE, * PDCEPWND_TYPE;
-
 void
 StructDceDrawState(PDCE pDce, int index)
 {
@@ -288,9 +281,9 @@ void
 StructDceAddPwndx(PDCE pDce, PWND pwnd, int index)
 {
     if (BDCX_MYFLAG)
-        ERR("StructDceAddPwndx %d\n", index);
-    pDce->pwndCurrect = pwnd;
-    pDce->hwndCurrect = (pwnd ? UserHMGetHandle(pwnd) : NULL);
+        ERR("StructDceAddPwndx %d %p %p %p\n", index, pwnd, (pwnd ? UserHMGetHandle(pwnd) : NULL), pDce);
+    //pDce->pwndCurrect = pwnd;
+    //pDce->hwndCurrect = (pwnd ? UserHMGetHandle(pwnd) : NULL);
     
     StructDceAdd(pDce, pwnd, 0);
 };
@@ -301,14 +294,14 @@ StructDceGetPwndx(PDCE pDce, int index)
 #ifdef OLDCODE_WINDC
 	return pDce->pwndCurrect;
 #else
-    if (BDCX_MYFLAG)
+    /* if (BDCX_MYFLAG)
     if (pDce->pwndCurrect != StructDceGetLastPwnd(pDce))
     {
         ERR("StructDceGetPwndx %x %x\n", pDce->pwndCurrect, StructDceGetLastPwnd(pDce));
         ERR("StructDceGetHwndx %x %x\n", pDce->hwndCurrect, StructDceGetLastHwnd(pDce));
         //StructDceGetLastXPrint(pDce);
         StructDceDrawState(pDce,3);
-    }
+    }*/
     return StructDceGetLastPwnd(pDce);
 #endif    
 };
@@ -356,8 +349,8 @@ StructDceRemoveLastx(PDCE pDce, HWND hwnd, int index)
 void
 StructDceCleanx(PDCE pDce, int index)
 {
-    pDce->pwndCurrect = NULL;
-    pDce->hwndCurrect = NULL;
+    //pDce->pwndCurrect = NULL;
+    //pDce->hwndCurrect = NULL;
 
     StructDceClean(pDce);
 };
@@ -452,6 +445,12 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   if(!pDce)
         return NULL;
 
+   if (BDCX_MYFLAG)
+      if (Window != NULL)
+          ERR("DceAllocDCE %p %p %x %x\n", Window, (Window ? UserHMGetHandle(Window) : NULL), Window->style,
+              pDce->DCXFlags);
+        
+
   pDce->hDC = DceCreateDisplayDC();
   if (!pDce->hDC)
   {
@@ -466,8 +465,8 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   //pDce->pwndOrg  = Window;
   //pDce->pwndClip = Window;
   pDce->hrgnClip = NULL;
-  pDce->hrgnClipPublic = NULL;
-  pDce->hrgnSavedVis = NULL;
+  //pDce->hrgnClipPublic = NULL;
+  //pDce->hrgnSavedVis = NULL;
   pDce->ppiOwner = NULL;
 
   InsertTailList(&LEDce, &pDce->List);
@@ -683,7 +682,7 @@ DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
           {
               if (!(dce->DCXFlags & DCX_DCEDIRTY) /* && (dce->DCXFlags & DCX_WINDOW)*/)
               {
-                  ERR("DceReleaseDCHwnd %x\n", dce->DCXFlags);
+                  //ERR("DceReleaseDCHwnd %x\n", dce->DCXFlags);
                   StructDceRemoveHwnd(dce, hwnd, 40);
               }
           }
@@ -942,6 +941,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
              }
              else if (Dce->hDC == hDC)
              {
+                 StructDceAdd(Dce, Wnd, 50);
                  if (BDCX_MYFLAG) ERR("Get Exit-B\n");
                  break;
              }

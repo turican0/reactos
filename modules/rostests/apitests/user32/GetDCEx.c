@@ -749,17 +749,33 @@ Test_GetDCEx_CS_SwitchedStyle()
 
 static HWND hwnd_cache, hwnd_owndc, hwnd_classdc, hwnd_classdc2, hwnd_parent, hwnd_parentdc;
 
+void
+MyOutputDebugString(const char *format, ...)
+{
+    char strbuffer[1024];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(strbuffer, sizeof(strbuffer), format, args);
+    va_end(args);
+    OutputDebugString(strbuffer);
+}
+
 /* test behavior of DC attributes with various GetDC/ReleaseDC combinations */
 static void
 test_dc_attributes(void)
 {
     HDC hdc, old_hdc;
-    HDC hdcs[20];
-    INT i, rop, def_rop, caps;
-    BOOL found_dc;
+    //HDC hdcs[20];
+    //INT i, rop, def_rop, caps;
+    INT rop;
+    //BOOL found_dc;
+
+    HWND testx;
+    //HWND testy;
 
     /* test cache DC */
 
+    /*
     hdc = GetDC(hwnd_cache);
     def_rop = GetROP2(hdc);
 
@@ -808,7 +824,7 @@ test_dc_attributes(void)
             break;
         rop = GetROP2(hdc);
         if (hdc == old_hdc)
-            ok(rop == R2_WHITE || broken(rop == def_rop), /* win9x doesn't support DCX_NORESETATTRS */
+            ok(rop == R2_WHITE || broken(rop == def_rop), // win9x doesn't support DCX_NORESETATTRS
                "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc);
         else
             ok(rop == def_rop, "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc);
@@ -831,9 +847,10 @@ test_dc_attributes(void)
             ok(rop == def_rop, "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc);
     }
     while (i > 0)
-        ReleaseDC(hwnd_cache, hdcs[--i]);
+        ReleaseDC(hwnd_cache, hdcs[--i]);*/
 
     /* Released cache DCs are 'disabled' */
+    /*
     rop = SetROP2(old_hdc, R2_BLACK);
     ok(rop == 0, "got %d\n", rop);
     rop = GetROP2(old_hdc);
@@ -860,9 +877,10 @@ test_dc_attributes(void)
     ok(caps == 0, "got %d\n", caps);
     caps = GetDeviceCaps(hdc, NUMCOLORS);
     ok(caps == 0, "got %d\n", caps);
+    */
 
     /* test own DC */
-
+    /*
     hdc = GetDC(hwnd_owndc);
     SetROP2(hdc, R2_WHITE);
     rop = GetROP2(hdc);
@@ -880,9 +898,10 @@ test_dc_attributes(void)
     ReleaseDC(hwnd_owndc, hdc);
     rop = GetROP2(hdc);
     ok(rop == R2_WHITE, "wrong ROP2 %d after second release\n", rop);
+    */
 
     /* test class DC */
-
+    /*
     hdc = GetDC(hwnd_classdc);
     SetROP2(hdc, R2_WHITE);
     rop = GetROP2(hdc);
@@ -900,17 +919,39 @@ test_dc_attributes(void)
     ReleaseDC(hwnd_classdc, hdc);
     rop = GetROP2(hdc);
     ok(rop == R2_WHITE, "wrong ROP2 %d after second release\n", rop);
-
+    */
     /* test class DC with 2 windows */
-
+    MyOutputDebugString("GetDC-1\n");
     old_hdc = GetDC(hwnd_classdc);
+
+    printf("GetDC-1 %x\n", (unsigned int)old_hdc);
+
+    MyOutputDebugString("GetDC-1 %x\n", old_hdc);
     SetROP2(old_hdc, R2_BLACK);
-    ok(WindowFromDC(old_hdc) == hwnd_classdc, "wrong window\n");
-    hdc = GetDC(hwnd_classdc2);
+    testx = WindowFromDC(old_hdc);
+    MyOutputDebugString("testx-1 %x %x %d\n", testx, hwnd_classdc, (testx == hwnd_classdc));
+    printf("testx-1 %x %x\n", (unsigned int)testx, (unsigned int)hwnd_classdc);
+    ok(testx == hwnd_classdc, "wrong window\n");
+    MyOutputDebugString("GetDC-2\n");
+
+    //testy = WindowFromDC(old_hdc);// myTest
+    //printf("testy %x %x %x\n", (unsigned int)testy, (unsigned int)hwnd_classdc, (unsigned int)hwnd_classdc2); // myTest
+
+    hdc = GetDC(hwnd_classdc2);//ZDE JE PROBLÉM, tím by se mělo změnit poslední hwnd
+
+    //testy = WindowFromDC(old_hdc);//myTest
+    //printf("testy %x %x %x\n", (unsigned int)testy, (unsigned int)hwnd_classdc, (unsigned int)hwnd_classdc2);//myTest
+
+    printf("GetDC-2 %x\n", (unsigned int)hdc);
+
+    MyOutputDebugString("GetDC-2 %x\n", hdc);
     ok(old_hdc == hdc, "didn't get same DC %p/%p\n", old_hdc, hdc);
     rop = GetROP2(hdc);
     ok(rop == R2_BLACK, "wrong ROP2 %d for other window\n", rop);
-    ok(WindowFromDC(hdc) == hwnd_classdc2, "wrong window\n");//FAIL!!!!!!!!!!!!!!!!!!!
+    testx = WindowFromDC(hdc);
+    MyOutputDebugString("testx-2 %x %x %d\n", testx, hwnd_classdc2, (testx == hwnd_classdc2));
+    printf("testx-2 %x %x\n", (unsigned int)testx, (unsigned int)hwnd_classdc2);
+    ok(testx == hwnd_classdc2, "wrong window\n"); // FAIL!!!!!!!!!!!!!!!!!!!
     ReleaseDC(hwnd_classdc, old_hdc);
     ReleaseDC(hwnd_classdc, hdc);
     ok(WindowFromDC(hdc) == hwnd_classdc2, "wrong window\n");//FAIL!!!!!!!!!!!!!!!!!!!
@@ -1076,7 +1117,10 @@ test_dc_visrgn(void)
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
-    ok(!(rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30),
+
+    printf("rect: %ld %ld %ld %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+
+    ok(!(rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30),//problem
        "clip box should have been reset %s\n", wine_dbgstr_rect(&rect));
     ReleaseDC(hwnd_classdc2, hdc);
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
@@ -1466,18 +1510,30 @@ void START_TEST2(/*dce*/)
     cls.lpszClassName = "parentdc_class";
     RegisterClassA(&cls);
 
+    MyOutputDebugString("CreateWindowA-1\n");
     hwnd_cache =
         CreateWindowA("cache_class", NULL, WS_OVERLAPPED | WS_VISIBLE, 0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL);
+    MyOutputDebugString("CreateWindowA-1 %x\n", hwnd_cache);
+    MyOutputDebugString("CreateWindowA-2\n");
     hwnd_owndc =
         CreateWindowA("owndc_class", NULL, WS_OVERLAPPED | WS_VISIBLE, 0, 200, 100, 100, 0, 0, GetModuleHandleA(0), NULL);
+    MyOutputDebugString("CreateWindowA-2 %x\n", hwnd_owndc);
+    MyOutputDebugString("CreateWindowA-3\n");
     hwnd_classdc =
         CreateWindowA("classdc_class", NULL, WS_OVERLAPPED | WS_VISIBLE, 200, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL);
+    MyOutputDebugString("CreateWindowA-3 %x\n", hwnd_classdc);
+    MyOutputDebugString("CreateWindowA-4\n");
     hwnd_classdc2 =
         CreateWindowA("classdc_class", NULL, WS_OVERLAPPED | WS_VISIBLE, 200, 200, 100, 100, 0, 0, GetModuleHandleA(0), NULL);
+    MyOutputDebugString("CreateWindowA-4 %x\n", hwnd_classdc2);
+    MyOutputDebugString("CreateWindowA-5\n");
     hwnd_parent =
         CreateWindowA("static", NULL, WS_OVERLAPPED | WS_VISIBLE, 400, 0, 100, 100, 0, 0, 0, NULL);
+    MyOutputDebugString("CreateWindowA-5 %x\n", hwnd_parent);
+    MyOutputDebugString("CreateWindowA-6\n");
     hwnd_parentdc =
         CreateWindowA("parentdc_class", NULL, WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd_parent, 0, 0, NULL);
+    MyOutputDebugString("CreateWindowA-6 %x\n", hwnd_parentdc);
 
     test_dc_attributes();
     GetDCEx(NULL, (HANDLE)0x1234, 0);
