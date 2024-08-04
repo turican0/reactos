@@ -19,6 +19,7 @@ typedef struct _DCEPWND_TYPE
     LIST_ENTRY Entry;
     HWND hwnd;
     PWND pwnd;
+    HRGN hrgnClip;
 } DCEPWND_TYPE, *PDCEPWND_TYPE;
 
 typedef struct tagDCE
@@ -34,7 +35,7 @@ typedef struct tagDCE
     //PWND         pwndOrg;
     //PWND         pwndClip;
     //PWND         pwndRedirect;
-    HRGN         hrgnClip;
+    HRGN         hrgnClipx;
     //HRGN         hrgnClipPublic;
     //HRGN         hrgnSavedVis;
     DWORD        DCXFlags;

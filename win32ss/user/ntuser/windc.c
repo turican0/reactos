@@ -131,6 +131,29 @@ StructDceGetFirstPwnd(PDCE pDce)
     return CONTAINING_RECORD(pDce->pwndCurrectl.Blink, DCEPWND_TYPE, Entry)->pwnd;
 };
 
+void
+StructDceDeleteHrgnClip(PDCE pDce, HWND hwnd)
+{
+    //if null clean all
+    if (pDce->hrgnClipx != NULL)
+    {
+        GreDeleteObject(pDce->hrgnClipx);
+        pDce->hrgnClipx = NULL;
+    }
+};
+
+HRGN
+StructDceGetHrgnClip(PDCE pDce, HWND hwnd)
+{
+    return pDce->hrgnClipx;
+};
+
+void
+StructDceSetHrgnClip(PDCE pDce, HWND hwnd, HRGN hrgn)
+{
+    pDce->hrgnClipx = hrgn;
+};
+
 /*
 void
 StructDceGetLastXPrint(PDCE pDce)
@@ -464,7 +487,7 @@ DceAllocDCE(PWND Window OPTIONAL, DCE_TYPE Type)
   StructDceAddPwndx(pDce, Window, 1);
   //pDce->pwndOrg  = Window;
   //pDce->pwndClip = Window;
-  pDce->hrgnClip = NULL;
+  pDce->hrgnClipx = NULL;
   //pDce->hrgnClipPublic = NULL;
   //pDce->hrgnSavedVis = NULL;
   pDce->ppiOwner = NULL;
@@ -529,20 +552,24 @@ DceSetDrawable( PWND Window OPTIONAL,
 
 
 static VOID FASTCALL
-DceDeleteClipRgn(DCE* Dce)
+DceDeleteClipRgn(DCE* Dce, HWND hwnd)
 {
    Dce->DCXFlags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN);
 
-   if (Dce->DCXFlags & DCX_KEEPCLIPRGN )
+   if (Dce->DCXFlags & DCX_KEEPCLIPRGN)
    {
-      Dce->DCXFlags &= ~DCX_KEEPCLIPRGN;
+       Dce->DCXFlags &= ~DCX_KEEPCLIPRGN;
    }
-   else if (Dce->hrgnClip != NULL)
+   else
+       StructDceDeleteHrgnClip(Dce, hwnd);
+   /*
+       if (Dce->hrgnClip != NULL)
    {
       GreDeleteObject(Dce->hrgnClip);
    }
 
    Dce->hrgnClip = NULL;
+   */
 
    /* Make it dirty so that the vis rgn gets recomputed next time */
    Dce->DCXFlags |= DCX_DCEDIRTY;
@@ -556,6 +583,7 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
    PREGION RgnVisible = NULL;
    ULONG DcxFlags;
    PWND DesktopWindow;
+   HRGN HrgnClip;
 
    if (Flags & DCX_PARENTCLIP)
    {
@@ -597,12 +625,13 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
    }
 
 noparent:
+   HrgnClip = StructDceGetHrgnClip(Dce, (Window ? UserHMGetHandle(Window) : NULL));
    if (Flags & DCX_INTERSECTRGN)
    {
       PREGION RgnClip = NULL;
 
-      if (Dce->hrgnClip != NULL)
-          RgnClip = REGION_LockRgn(Dce->hrgnClip);
+      if (HrgnClip != NULL)
+          RgnClip = REGION_LockRgn(HrgnClip);
 
       if (RgnClip)
       {
@@ -618,9 +647,9 @@ noparent:
          RgnVisible = IntSysCreateRectpRgn(0, 0, 0, 0);
       }
    }
-   else if ((Flags & DCX_EXCLUDERGN) && Dce->hrgnClip != NULL)
+   else if ((Flags & DCX_EXCLUDERGN) && HrgnClip != NULL)
    {
-       PREGION RgnClip = REGION_LockRgn(Dce->hrgnClip);
+       PREGION RgnClip = REGION_LockRgn(HrgnClip);
        IntGdiCombineRgn(RgnVisible, RgnVisible, RgnClip, RGN_DIFF);
        REGION_UnlockRgn(RgnClip);
    }
@@ -660,7 +689,7 @@ DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
    {
        if (BDCX_MYFLAG)
            ERR("DceReleaseDCHwnd - DceDeleteClipRgn\n");
-      DceDeleteClipRgn(dce);
+       DceDeleteClipRgn(dce, hwnd);
    }
 
    if (dce->DCXFlags & DCX_CACHE)
@@ -959,7 +988,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       if ( (Flags & (DCX_INTERSECTRGN|DCX_EXCLUDERGN)) &&
            (Dce->DCXFlags & (DCX_INTERSECTRGN|DCX_EXCLUDERGN)) )
       {
-         DceDeleteClipRgn(Dce);
+          DceDeleteClipRgn(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
       }
    }
 // First time use hax, need to use DceAllocDCE during window display init.
@@ -1000,25 +1029,45 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    {
       if (!(Flags & DCX_WINDOW))
       {
+          StructDceSetHrgnClip(
+              Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL),NtGdiCreateRectRgn(
+              Wnd->rcClient.left,
+              Wnd->rcClient.top,
+              Wnd->rcClient.right,
+              Wnd->rcClient.bottom));
+          /*
          Dce->hrgnClip = NtGdiCreateRectRgn(
              Wnd->rcClient.left,
              Wnd->rcClient.top,
              Wnd->rcClient.right,
              Wnd->rcClient.bottom);
+             */
       }
       else
       {
+          StructDceSetHrgnClip(
+              Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL),NtGdiCreateRectRgn(
+              Wnd->rcWindow.left,
+              Wnd->rcWindow.top,
+              Wnd->rcWindow.right,
+              Wnd->rcWindow.bottom));
+          /*
           Dce->hrgnClip = NtGdiCreateRectRgn(
               Wnd->rcWindow.left,
               Wnd->rcWindow.top,
               Wnd->rcWindow.right,
               Wnd->rcWindow.bottom);
+          */
       }
       Dce->DCXFlags &= ~DCX_KEEPCLIPRGN;
       bUpdateVisRgn = TRUE;
    }
    else if (ClipRegion != NULL)
    {
+       StructDceDeleteHrgnClip(Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL));
+       StructDceSetHrgnClip(
+           Dce, (Wnd ? UserHMGetHandle(Wnd) : NULL), ClipRegion);
+       /*
       if (Dce->hrgnClip != NULL)
       {
          ERR("Should not be called!!\n");
@@ -1026,6 +1075,7 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
          Dce->hrgnClip = NULL;
       }
       Dce->hrgnClip = ClipRegion;
+      */
       bUpdateVisRgn = TRUE;
    }
 
@@ -1103,10 +1153,11 @@ DceFreeDCE(PDCE pdce, BOOLEAN Force)
 
   if (!Hit) IntGdiDeleteDC(pdce->hDC, TRUE);
 
-  if (pdce->hrgnClip && !(pdce->DCXFlags & DCX_KEEPCLIPRGN))
+  if (/* pdce->hrgnClip && */!(pdce->DCXFlags & DCX_KEEPCLIPRGN))
   {
-      GreDeleteObject(pdce->hrgnClip);
-      pdce->hrgnClip = NULL;
+      StructDceDeleteHrgnClip(pdce, NULL);
+      //GreDeleteObject(pdce->hrgnClip);
+      //pdce->hrgnClip = NULL;
   }
 
   RemoveEntryList(&pdce->List);
@@ -1148,7 +1199,7 @@ DceFreeWindowDCE(PWND Window)
            if (Window->pcls->style & CS_CLASSDC) /* Test Class first */
            {
               if (pDCE->DCXFlags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) /* Class DCE */
-                 DceDeleteClipRgn(pDCE);
+                   DceDeleteClipRgn(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
               // Update and reset Vis Rgn and clear the dirty bit.
               // Should release VisRgn than reset it to default.
               DceUpdateVisRgn(pDCE, Window, pDCE->DCXFlags);
@@ -1326,9 +1377,10 @@ DceResetActiveDCEs(PWND Window)
                REGION_bOffsetRgn(dc->dclevel.prgnClip, DeltaX, DeltaY);
                dc->fs |= DC_DIRTY_RAO;
             }
-            if (NULL != pDCE->hrgnClip)
+            HRGN HrgnClip = StructDceGetHrgnClip(pDCE, (Window ? UserHMGetHandle(Window) : NULL));
+            if (NULL != HrgnClip)
             {
-               NtGdiOffsetRgn(pDCE->hrgnClip, DeltaX, DeltaY);
+                NtGdiOffsetRgn(HrgnClip, DeltaX, DeltaY);
             }
          }
          DC_UnlockDc(dc);
