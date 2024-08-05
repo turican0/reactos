@@ -18,6 +18,7 @@ static LIST_ENTRY LEDce;
 static INT DCECount = 0; // Count of DCE in system.
 
 BOOL BDCX_MYFLAG = FALSE;
+BOOL SINGLE_BDCX_MYFLAG = FALSE;
 
 //#define OLDCODE_WINDC
 
@@ -742,6 +743,14 @@ DceReleaseDCPwnd(DCE *dce, PWND Wnd, BOOL EndPaint)
     return DceReleaseDCHwnd(dce, hwnd, EndPaint);
 }
 
+void
+PrintRect(HDC hDC, int index)
+{
+    RECT testRect;
+    GdiGetClipBox(hDC, &testRect);
+    ERR("PrintRect: %d %d %d %d - %d\n", testRect.left, testRect.top, testRect.right, testRect.bottom, index);
+};
+
 HDC FASTCALL
 UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 {
@@ -757,11 +766,15 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    //ERR("SET UserGetDCEx %p %p\n", ClipRegion, (HANDLE)0x12345678);
    if (ClipRegion == (HANDLE)0x1234)
    {
-       ERR("SET UserGetDCEx %d\n",Flags);
-       if (Flags<2)
+       ERR("SET UserGetDCEx %d\n", Flags);
+       if (Flags < 2)
            BDCX_MYFLAG = Flags;
-       if (Flags == 2)
-           DceUpdateVisRgn(pDCE, Wnd, pDCE->DCXFlags);
+       // if (Flags == 2)
+       //     DceUpdateVisRgn(pDCE, Wnd, pDCE->DCXFlags);
+       if (Flags == 3)
+           SINGLE_BDCX_MYFLAG = TRUE;
+       if (Flags == 4)
+           SINGLE_BDCX_MYFLAG = FALSE;
        return NULL;
    }
    /*
@@ -805,6 +818,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
             else
             {
                if (Wnd->pcls->pdce) hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
+               if (SINGLE_BDCX_MYFLAG)
+                   PrintRect(hDC, 1);
                TRACE("We have CLASS!!\n");
             }
          }
@@ -886,10 +901,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 
          if (BDCX_MYFLAG)
              StructDceDrawState(Dce,6);
+         if (SINGLE_BDCX_MYFLAG)
+             PrintRect(hDC, 2);
          //
-// The way I understand this, you can have more than one DC per window.
-// Only one Owned if one was requested and saved and one Cached.
-//
+         // The way I understand this, you can have more than one DC per window.
+         // Only one Owned if one was requested and saved and one Cached.
+         //
          if ((Dce->DCXFlags & (DCX_CACHE | DCX_DCEBUSY)) == DCX_CACHE)
          {
             DceUnused = Dce;
@@ -931,6 +948,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
           Dce = CONTAINING_RECORD(ListEntry, DCE, List);
           ListEntry = ListEntry->Flink;
 
+          if (SINGLE_BDCX_MYFLAG)
+              PrintRect(hDC, 3);
+
           // Skip Cache DCE entries.
           if (!(Dce->DCXFlags & DCX_CACHE))
           {
@@ -971,6 +991,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       return(NULL);
    }
 
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 4);
+
    if (!GreIsHandleValid(Dce->hDC))
    {
       ERR("FIXME: Got DCE with invalid hDC! %p\n", Dce->hDC);
@@ -978,7 +1001,13 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       /* FIXME: Handle error */
    }
 
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 5);
+
    Dce->DCXFlags = Flags | DCX_DCEBUSY;
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 6);
 
    /*
     * Bump it up! This prevents the random errors in wine dce tests and with
@@ -990,6 +1019,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    RemoveEntryList(&Dce->List);
    InsertHeadList(&LEDce, &Dce->List);
 
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 7);
+
    /* Introduced in rev 6691 and modified later. */
    if ( (Flags & DCX_INTERSECTUPDATE) && !ClipRegion )
    {
@@ -998,6 +1030,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       ClipRegion = Wnd->hrgnUpdate;
       bUpdateVisRgn = TRUE;
    }
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 8);
 
    if (ClipRegion == HRGN_WINDOW)
    {
@@ -1032,11 +1067,23 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       bUpdateVisRgn = TRUE;
    }
 
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 9);
+
    if (IntGdiSetHookFlags(Dce->hDC, DCHF_VALIDATEVISRGN)) bUpdateVisRgn = TRUE;
+
+   if (SINGLE_BDCX_MYFLAG)
+   {
+       PrintRect(hDC, 10);
+       ERR("UpdateClipOrigin %d\n", UpdateClipOrigin);
+   }
 
    DceSetDrawable(Wnd, Dce->hDC, Flags, UpdateClipOrigin);
 
    if (bUpdateVisRgn) DceUpdateVisRgn(Dce, Wnd, Flags);
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 11);
 
    if (Dce->DCXFlags & DCX_CACHE)
    {
@@ -1046,12 +1093,18 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       Dce->ptiOwner = GetW32ThreadInfo(); // Set the temp owning
    }
 
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 12);
+
    if ( Wnd &&
         Wnd->ExStyle & WS_EX_LAYOUTRTL &&
        !(Flags & DCX_KEEPLAYOUT) )
    {
       NtGdiSetLayout(Dce->hDC, -1, LAYOUT_RTL);
    }
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 13);
 
    if (Dce->DCXFlags & DCX_PROCESSOWNED)
    {
@@ -1060,6 +1113,9 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       Dce->ptiOwner = NULL;
       Dce->ppiOwner = ppi;
    }
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 14);
 
    if (BDCX_MYFLAG)
        StructDceDrawState(Dce,7);
