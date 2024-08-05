@@ -18,6 +18,7 @@ static LIST_ENTRY LEDce;
 static INT DCECount = 0; // Count of DCE in system.
 
 BOOL BDCX_MYFLAG = FALSE;
+BOOL SINGLE_BDCX_MYFLAG = FALSE;
 
 #define OLDCODE_WINDC
 
@@ -700,286 +701,334 @@ DceReleaseDCPwnd(DCE *dce, PWND Wnd, BOOL EndPaint)
     return DceReleaseDCHwnd(dce, hwnd, EndPaint);
 }
 
+void
+PrintRect(HDC hDC, int index)
+{
+    RECT testRect;
+    GdiGetClipBox(hDC, &testRect);
+    ERR("PrintRect: %d %d %d %d - %d\n", testRect.left, testRect.top, testRect.right, testRect.bottom, index);
+};
+
 HDC FASTCALL
 UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 {
-   PWND Parent;
-   ULONG DcxFlags;
-   DCE* Dce = NULL;
-   BOOL UpdateClipOrigin = FALSE;
-   BOOL bUpdateVisRgn = TRUE;
-   HDC hDC = NULL;
-   PPROCESSINFO ppi;
-   PLIST_ENTRY ListEntry;
+    PWND Parent;
+    ULONG DcxFlags;
+    DCE *Dce = NULL;
+    BOOL UpdateClipOrigin = FALSE;
+    BOOL bUpdateVisRgn = TRUE;
+    HDC hDC = NULL;
+    PPROCESSINFO ppi;
+    PLIST_ENTRY ListEntry;
 
-   BDCX_MYFLAG = FALSE;
-   if (Flags & DCX_MYFLAG)
-   {
-       ERR("UserGetDCEx - DCX_MYFLAG %d\n", Flags);
-       BDCX_MYFLAG = TRUE;
-       //if (BDCX_MYFLAG)WriteLEDce();
-       Dce = NULL;
-   }
+    if (ClipRegion == (HANDLE)0x1234)
+    {
+        ERR("SET UserGetDCEx %d\n", Flags);
+        if (Flags < 2)
+            BDCX_MYFLAG = Flags;
+        // if (Flags == 2)
+        //     DceUpdateVisRgn(pDCE, Wnd, pDCE->DCXFlags);
+        if (Flags == 3)
+            SINGLE_BDCX_MYFLAG = TRUE;
+        if (Flags == 4)
+            SINGLE_BDCX_MYFLAG = FALSE;
+        return NULL;
+    }
 
-   if (BDCX_MYFLAG)
-       ERR("UserGetDCEx %p\n", Wnd);
+    if (BDCX_MYFLAG)
+        ERR("UserGetDCEx %p\n", Wnd);
 
-   if (NULL == Wnd)
-   {
-      Flags &= ~DCX_USESTYLE;
-      Flags |= DCX_CACHE;
-   }
+    if (NULL == Wnd)
+    {
+        Flags &= ~DCX_USESTYLE;
+        Flags |= DCX_CACHE;
+    }
 
-   if (Flags & DCX_PARENTCLIP) Flags |= DCX_CACHE;
+    if (Flags & DCX_PARENTCLIP)
+        Flags |= DCX_CACHE;
 
-   // When GetDC is called with hWnd nz, DCX_CACHE & _WINDOW are clear w _USESTYLE set.
-   if (Flags & DCX_USESTYLE)
-   {
-      Flags &= ~(DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS | DCX_PARENTCLIP);
-      if (!(Flags & DCX_WINDOW)) // Not window rectangle
-      {
-         if (Wnd->pcls->style & CS_PARENTDC)
-         {
-            Flags |= DCX_PARENTCLIP;
-         }
-
-         if (!(Flags & DCX_CACHE) && // Not on the cheap wine list.
-             !(Wnd->pcls->style & CS_OWNDC) )
-         {
-            if (!(Wnd->pcls->style & CS_CLASSDC))
-            // The window is not POWNED or has any CLASS, so we are looking for cheap wine.
-               Flags |= DCX_CACHE;
-            else
+    // When GetDC is called with hWnd nz, DCX_CACHE & _WINDOW are clear w _USESTYLE set.
+    if (Flags & DCX_USESTYLE)
+    {
+        Flags &= ~(DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS | DCX_PARENTCLIP);
+        if (!(Flags & DCX_WINDOW)) // Not window rectangle
+        {
+            if (Wnd->pcls->style & CS_PARENTDC)
             {
-               if (Wnd->pcls->pdce) hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
-               TRACE("We have CLASS!!\n");
+                Flags |= DCX_PARENTCLIP;
             }
-         }
 
-         if (Wnd->style & WS_CLIPSIBLINGS)
-         {
-            Flags |= DCX_CLIPSIBLINGS;
-         }
+            if (!(Flags & DCX_CACHE) && // Not on the cheap wine list.
+                !(Wnd->pcls->style & CS_OWNDC))
+            {
+                if (!(Wnd->pcls->style & CS_CLASSDC))
+                    // The window is not POWNED or has any CLASS, so we are looking for cheap wine.
+                    Flags |= DCX_CACHE;
+                else
+                {
+                    if (Wnd->pcls->pdce)
+                        hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
+                    if (SINGLE_BDCX_MYFLAG)
+                        PrintRect(hDC, 1);
+                    TRACE("We have CLASS!!\n");
+                }
+            }
 
-         if (Wnd->style & WS_CLIPCHILDREN &&
-             !(Wnd->style & WS_MINIMIZE))
-         {
-            Flags |= DCX_CLIPCHILDREN;
-         }
-         /* If minized with icon in the set, we are forced to be cheap! */
-         if (Wnd->style & WS_MINIMIZE && Wnd->pcls->spicn)
-         {
+            if (Wnd->style & WS_CLIPSIBLINGS)
+            {
+                Flags |= DCX_CLIPSIBLINGS;
+            }
+
+            if (Wnd->style & WS_CLIPCHILDREN && !(Wnd->style & WS_MINIMIZE))
+            {
+                Flags |= DCX_CLIPCHILDREN;
+            }
+            /* If minized with icon in the set, we are forced to be cheap! */
+            if (Wnd->style & WS_MINIMIZE && Wnd->pcls->spicn)
+            {
+                Flags |= DCX_CACHE;
+            }
+        }
+        else
+        {
+            if (Wnd->style & WS_CLIPSIBLINGS)
+                Flags |= DCX_CLIPSIBLINGS;
             Flags |= DCX_CACHE;
-         }
-      }
-      else
-      {
-         if (Wnd->style & WS_CLIPSIBLINGS) Flags |= DCX_CLIPSIBLINGS;
-         Flags |= DCX_CACHE;
-      }
-   }
+        }
+    }
 
-   if (Flags & DCX_WINDOW) Flags &= ~DCX_CLIPCHILDREN;
+    if (Flags & DCX_WINDOW)
+        Flags &= ~DCX_CLIPCHILDREN;
 
-   if (Flags & DCX_NOCLIPCHILDREN)
-   {
-      Flags |= DCX_CACHE;
-      Flags &= ~(DCX_PARENTCLIP | DCX_CLIPCHILDREN);
-   }
+    if (Flags & DCX_NOCLIPCHILDREN)
+    {
+        Flags |= DCX_CACHE;
+        Flags &= ~(DCX_PARENTCLIP | DCX_CLIPCHILDREN);
+    }
 
-   Parent = (Wnd ? Wnd->spwndParent : NULL);
+    Parent = (Wnd ? Wnd->spwndParent : NULL);
 
-   if (NULL == Wnd || !(Wnd->style & WS_CHILD) || NULL == Parent)
-   {
-      Flags &= ~DCX_PARENTCLIP;
-      Flags |= DCX_CLIPSIBLINGS;
-   }
+    if (NULL == Wnd || !(Wnd->style & WS_CHILD) || NULL == Parent)
+    {
+        Flags &= ~DCX_PARENTCLIP;
+        Flags |= DCX_CLIPSIBLINGS;
+    }
 
-   /* It seems parent clip is ignored when clipping siblings or children */
-   if (Flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN)) Flags &= ~DCX_PARENTCLIP;
+    /* It seems parent clip is ignored when clipping siblings or children */
+    if (Flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN))
+        Flags &= ~DCX_PARENTCLIP;
 
-   if (Flags & DCX_PARENTCLIP)
-   {
-      if ((Wnd->style & WS_VISIBLE) &&
-          (Parent->style & WS_VISIBLE))
-      {
-         Flags &= ~DCX_CLIPCHILDREN;
-         if (Parent->style & WS_CLIPSIBLINGS)
-         {
-            Flags |= DCX_CLIPSIBLINGS;
-         }
-      }
-   }
-
-   // Window nz, check to see if we still own this or it is just cheap wine tonight.
-   if (!(Flags & DCX_CACHE))
-   {
-      if ( Wnd->head.pti != GetW32ThreadInfo())
-         Flags |= DCX_CACHE; // Ah~ Not Powned! Forced to be cheap~
-   }
-
-   DcxFlags = Flags & DCX_CACHECOMPAREMASK;
-
-   if (Flags & DCX_CACHE)
-   { // Scan the cheap wine list for our match.
-      DCE* DceEmpty = NULL;
-      DCE* DceUnused = NULL;
-      KeEnterCriticalRegion();
-      ListEntry = LEDce.Flink;
-      while (ListEntry != &LEDce)
-      {
-         Dce = CONTAINING_RECORD(ListEntry, DCE, List);
-         ListEntry = ListEntry->Flink;
-//
-// The way I understand this, you can have more than one DC per window.
-// Only one Owned if one was requested and saved and one Cached.
-//
-         if ((Dce->DCXFlags & (DCX_CACHE | DCX_DCEBUSY)) == DCX_CACHE)
-         {
-            DceUnused = Dce;
-            if (Dce->DCXFlags & DCX_DCEEMPTY)
+    if (Flags & DCX_PARENTCLIP)
+    {
+        if ((Wnd->style & WS_VISIBLE) && (Parent->style & WS_VISIBLE))
+        {
+            Flags &= ~DCX_CLIPCHILDREN;
+            if (Parent->style & WS_CLIPSIBLINGS)
             {
-               DceEmpty = Dce;
+                Flags |= DCX_CLIPSIBLINGS;
             }
-            //else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
-            else if (StructDceCompareLastPwndx(Dce, Wnd, 1) &&
-                     ((Dce->DCXFlags & DCX_CACHECOMPAREMASK) == DcxFlags))
+        }
+    }
+
+    // Window nz, check to see if we still own this or it is just cheap wine tonight.
+    if (!(Flags & DCX_CACHE))
+    {
+        if (Wnd->head.pti != GetW32ThreadInfo())
+            Flags |= DCX_CACHE; // Ah~ Not Powned! Forced to be cheap~
+    }
+
+    DcxFlags = Flags & DCX_CACHECOMPAREMASK;
+
+    if (Flags & DCX_CACHE)
+    { // Scan the cheap wine list for our match.
+        DCE *DceEmpty = NULL;
+        DCE *DceUnused = NULL;
+        KeEnterCriticalRegion();
+        ListEntry = LEDce.Flink;
+        while (ListEntry != &LEDce)
+        {
+            Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+            ListEntry = ListEntry->Flink;
+
+            if (SINGLE_BDCX_MYFLAG)
+                PrintRect(hDC, 2);
+            //
+            // The way I understand this, you can have more than one DC per window.
+            // Only one Owned if one was requested and saved and one Cached.
+            //
+            if ((Dce->DCXFlags & (DCX_CACHE | DCX_DCEBUSY)) == DCX_CACHE)
             {
-               UpdateClipOrigin = TRUE;
-               break;
+                DceUnused = Dce;
+                if (Dce->DCXFlags & DCX_DCEEMPTY)
+                {
+                    DceEmpty = Dce;
+                }
+                // else if (Dce->hwndCurrent == (Wnd ? UserHMGetHandle(Wnd) : NULL) &&
+                else if (StructDceCompareLastPwndx(Dce, Wnd, 1) && ((Dce->DCXFlags & DCX_CACHECOMPAREMASK) == DcxFlags))
+                {
+                    UpdateClipOrigin = TRUE;
+                    break;
+                }
             }
-         }
-         Dce = NULL; // Loop issue?
-      }
-      KeLeaveCriticalRegion();
+            Dce = NULL; // Loop issue?
+        }
+        KeLeaveCriticalRegion();
 
-      Dce = (DceEmpty == NULL) ? DceUnused : DceEmpty;
+        Dce = (DceEmpty == NULL) ? DceUnused : DceEmpty;
 
-      if (Dce == NULL)
-      {
-         Dce = DceAllocDCE(NULL, DCE_CACHE_DC);
-      }
-      if (Dce == NULL) return NULL;
-      
-      //Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
-      StructDceInitx(Dce);
-      StructDceAddPwndx(Dce, Wnd, 2);
-      //Dce->pwndOrg = Dce->pwndClip = Wnd;
-   }
-   else // If we are here, we are POWNED or having CLASS.
-   {
-      KeEnterCriticalRegion();
-      ListEntry = LEDce.Flink;
-      while (ListEntry != &LEDce)
-      {
-          Dce = CONTAINING_RECORD(ListEntry, DCE, List);
-          ListEntry = ListEntry->Flink;
+        if (Dce == NULL)
+        {
+            Dce = DceAllocDCE(NULL, DCE_CACHE_DC);
+        }
+        if (Dce == NULL)
+            return NULL;
 
-          // Skip Cache DCE entries.
-          if (!(Dce->DCXFlags & DCX_CACHE))
-          {
-             // Check for Window handle than HDC match for CLASS.
-             //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
-             if (StructDceCompareLastPwndx(Dce, Wnd, 2))
-             {
-                bUpdateVisRgn = FALSE;
-                if (BDCX_MYFLAG) ERR("Get Exit-A\n");
-                break;
-             }
-             else if (Dce->hDC == hDC)
-             {
-                 if (BDCX_MYFLAG) ERR("Get Exit-B\n");
-                 break;
-             }
-          }
-          if (BDCX_MYFLAG) ERR("Get Exit-C\n");
-          Dce = NULL; // Loop issue?
-      }
-      KeLeaveCriticalRegion();
+        // Dce->hwndCurrent = (Wnd ? UserHMGetHandle(Wnd) : NULL);
+        StructDceInitx(Dce);
+        StructDceAddPwndx(Dce, Wnd, 2);
+        // Dce->pwndOrg = Dce->pwndClip = Wnd;
+    }
+    else // If we are here, we are POWNED or having CLASS.
+    {
+        KeEnterCriticalRegion();
+        ListEntry = LEDce.Flink;
+        while (ListEntry != &LEDce)
+        {
+            Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+            ListEntry = ListEntry->Flink;
 
-      if (Dce == NULL)
-      {
-         return(NULL);
-      }
+            if (SINGLE_BDCX_MYFLAG)
+                PrintRect(hDC, 3);
 
-      if ( (Flags & (DCX_INTERSECTRGN|DCX_EXCLUDERGN)) &&
-           (Dce->DCXFlags & (DCX_INTERSECTRGN|DCX_EXCLUDERGN)) )
-      {
-         DceDeleteClipRgn(Dce);
-      }
-   }
-// First time use hax, need to use DceAllocDCE during window display init.
-   if (NULL == Dce)
-   {
-      return(NULL);
-   }
+            // Skip Cache DCE entries.
+            if (!(Dce->DCXFlags & DCX_CACHE))
+            {
+                // Check for Window handle than HDC match for CLASS.
+                // if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
+                if (StructDceCompareLastPwndx(Dce, Wnd, 2))
+                {
+                    bUpdateVisRgn = FALSE;
+                    if (BDCX_MYFLAG)
+                        ERR("Get Exit-A\n");
+                    break;
+                }
+                else if (Dce->hDC == hDC)
+                {
+                    if (BDCX_MYFLAG)
+                        ERR("Get Exit-B\n");
+                    break;
+                }
+            }
+            if (BDCX_MYFLAG)
+                ERR("Get Exit-C\n");
+            Dce = NULL; // Loop issue?
+        }
+        KeLeaveCriticalRegion();
 
-   if (!GreIsHandleValid(Dce->hDC))
-   {
-      ERR("FIXME: Got DCE with invalid hDC! %p\n", Dce->hDC);
-      Dce->hDC = DceCreateDisplayDC();
-      /* FIXME: Handle error */
-   }
+        if (Dce == NULL)
+        {
+            return (NULL);
+        }
 
-   Dce->DCXFlags = Flags | DCX_DCEBUSY;
+        if ((Flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) && (Dce->DCXFlags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)))
+        {
+            DceDeleteClipRgn(Dce);
+        }
+    }
+    // First time use hax, need to use DceAllocDCE during window display init.
+    if (NULL == Dce)
+    {
+        return (NULL);
+    }
 
-   /*
-    * Bump it up! This prevents the random errors in wine dce tests and with
-    * proper bits set in DCX_CACHECOMPAREMASK.
-    * Reference:
-    *   https://reactos.org/archives/public/ros-dev/2008-July/010498.html
-    *   https://reactos.org/archives/public/ros-dev/2008-July/010499.html
-    */
-   RemoveEntryList(&Dce->List);
-   InsertHeadList(&LEDce, &Dce->List);
+    if (SINGLE_BDCX_MYFLAG)
+        PrintRect(hDC, 4);
 
-   /* Introduced in rev 6691 and modified later. */
-   if ( (Flags & DCX_INTERSECTUPDATE) && !ClipRegion )
-   {
-      Flags |= DCX_INTERSECTRGN | DCX_KEEPCLIPRGN;
-      Dce->DCXFlags |= DCX_INTERSECTRGN | DCX_KEEPCLIPRGN;
-      ClipRegion = Wnd->hrgnUpdate;
-      bUpdateVisRgn = TRUE;
-   }
+    if (!GreIsHandleValid(Dce->hDC))
+    {
+        ERR("FIXME: Got DCE with invalid hDC! %p\n", Dce->hDC);
+        Dce->hDC = DceCreateDisplayDC();
+        /* FIXME: Handle error */
+    }
 
-   if (ClipRegion == HRGN_WINDOW)
-   {
-      if (!(Flags & DCX_WINDOW))
-      {
-         Dce->hrgnClip = NtGdiCreateRectRgn(
-             Wnd->rcClient.left,
-             Wnd->rcClient.top,
-             Wnd->rcClient.right,
-             Wnd->rcClient.bottom);
-      }
-      else
-      {
-          Dce->hrgnClip = NtGdiCreateRectRgn(
-              Wnd->rcWindow.left,
-              Wnd->rcWindow.top,
-              Wnd->rcWindow.right,
-              Wnd->rcWindow.bottom);
-      }
-      Dce->DCXFlags &= ~DCX_KEEPCLIPRGN;
-      bUpdateVisRgn = TRUE;
-   }
-   else if (ClipRegion != NULL)
-   {
-      if (Dce->hrgnClip != NULL)
-      {
-         ERR("Should not be called!!\n");
-         GreDeleteObject(Dce->hrgnClip);
-         Dce->hrgnClip = NULL;
-      }
-      Dce->hrgnClip = ClipRegion;
-      bUpdateVisRgn = TRUE;
-   }
+    if (SINGLE_BDCX_MYFLAG)
+        PrintRect(hDC, 5);
 
-   if (IntGdiSetHookFlags(Dce->hDC, DCHF_VALIDATEVISRGN)) bUpdateVisRgn = TRUE;
+    Dce->DCXFlags = Flags | DCX_DCEBUSY;
+
+    if (SINGLE_BDCX_MYFLAG)
+        PrintRect(hDC, 6);
+
+    /*
+     * Bump it up! This prevents the random errors in wine dce tests and with
+     * proper bits set in DCX_CACHECOMPAREMASK.
+     * Reference:
+     *   https://reactos.org/archives/public/ros-dev/2008-July/010498.html
+     *   https://reactos.org/archives/public/ros-dev/2008-July/010499.html
+     */
+    RemoveEntryList(&Dce->List);
+    InsertHeadList(&LEDce, &Dce->List);
+
+    if (SINGLE_BDCX_MYFLAG)
+        PrintRect(hDC, 7);
+
+    /* Introduced in rev 6691 and modified later. */
+    if ((Flags & DCX_INTERSECTUPDATE) && !ClipRegion)
+    {
+        Flags |= DCX_INTERSECTRGN | DCX_KEEPCLIPRGN;
+        Dce->DCXFlags |= DCX_INTERSECTRGN | DCX_KEEPCLIPRGN;
+        ClipRegion = Wnd->hrgnUpdate;
+        bUpdateVisRgn = TRUE;
+    }
+
+    if (SINGLE_BDCX_MYFLAG)
+        PrintRect(hDC, 8);
+
+    if (ClipRegion == HRGN_WINDOW)
+    {
+        if (!(Flags & DCX_WINDOW))
+        {
+            Dce->hrgnClip =
+                NtGdiCreateRectRgn(Wnd->rcClient.left, Wnd->rcClient.top, Wnd->rcClient.right, Wnd->rcClient.bottom);
+        }
+        else
+        {
+            Dce->hrgnClip =
+                NtGdiCreateRectRgn(Wnd->rcWindow.left, Wnd->rcWindow.top, Wnd->rcWindow.right, Wnd->rcWindow.bottom);
+        }
+        Dce->DCXFlags &= ~DCX_KEEPCLIPRGN;
+        bUpdateVisRgn = TRUE;
+    }
+    else if (ClipRegion != NULL)
+    {
+        if (Dce->hrgnClip != NULL)
+        {
+            ERR("Should not be called!!\n");
+            GreDeleteObject(Dce->hrgnClip);
+            Dce->hrgnClip = NULL;
+        }
+        Dce->hrgnClip = ClipRegion;
+        bUpdateVisRgn = TRUE;
+    }
+
+    if (SINGLE_BDCX_MYFLAG)
+        PrintRect(hDC, 9);
+
+    if (IntGdiSetHookFlags(Dce->hDC, DCHF_VALIDATEVISRGN))
+        bUpdateVisRgn = TRUE;
+
+    if (SINGLE_BDCX_MYFLAG)
+    {
+        PrintRect(hDC, 10);
+        ERR("UpdateClipOrigin %d\n", UpdateClipOrigin);
+    }
 
    DceSetDrawable(Wnd, Dce->hDC, Flags, UpdateClipOrigin);
 
    if (bUpdateVisRgn) DceUpdateVisRgn(Dce, Wnd, Flags);
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 11);
 
    if (Dce->DCXFlags & DCX_CACHE)
    {
@@ -989,12 +1038,18 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       Dce->ptiOwner = GetW32ThreadInfo(); // Set the temp owning
    }
 
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 12);
+
    if ( Wnd &&
         Wnd->ExStyle & WS_EX_LAYOUTRTL &&
        !(Flags & DCX_KEEPLAYOUT) )
    {
       NtGdiSetLayout(Dce->hDC, -1, LAYOUT_RTL);
    }
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 13);
 
    if (Dce->DCXFlags & DCX_PROCESSOWNED)
    {
@@ -1003,6 +1058,10 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       Dce->ptiOwner = NULL;
       Dce->ppiOwner = ppi;
    }
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 14);
+
 
    return(Dce->hDC);
 }
