@@ -749,6 +749,15 @@ PrintRect(HDC hDC, int index)
     RECT testRect;
     GdiGetClipBox(hDC, &testRect);
     ERR("PrintRect: %d %d %d %d - %d\n", testRect.left, testRect.top, testRect.right, testRect.bottom, index);
+    PDC dc;
+
+    dc = DC_LockDc(hDC);
+    if (!dc)
+        return;
+    ERR("dc->ptlDCOrig: %d %d\n", dc->ptlDCOrig.x, dc->ptlDCOrig.y);
+    ERR("dc->ptlFillOrigin,ptlBrushOrigin: %d %d %d %d\n", dc->ptlFillOrigin.x, dc->ptlFillOrigin.y,
+        dc->dclevel.ptlBrushOrigin.x, dc->dclevel.ptlBrushOrigin.y);
+    DC_UnlockDc(dc);
 };
 
 HDC FASTCALL
@@ -1076,9 +1085,21 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    {
        PrintRect(hDC, 10);
        ERR("UpdateClipOrigin %d\n", UpdateClipOrigin);
+       ERR("bUpdateVisRgn %d\n", bUpdateVisRgn);
+       ERR("(Flags & DCX_WINDOW) %d\n", (Flags & DCX_WINDOW));
+       if (Wnd)
+       {
+           ERR("Window->rcWindow %d %d %d %d\n", Wnd->rcWindow.bottom, Wnd->rcWindow.left, Wnd->rcWindow.right,
+               Wnd->rcWindow.top);
+           ERR("Window->rcClient %d %d %d %d\n", Wnd->rcClient.bottom, Wnd->rcClient.left, Wnd->rcClient.right,
+               Wnd->rcClient.top);
+       }
    }
 
    DceSetDrawable(Wnd, Dce->hDC, Flags, UpdateClipOrigin);
+
+   if (SINGLE_BDCX_MYFLAG)
+       PrintRect(hDC, 210);
 
    if (bUpdateVisRgn) DceUpdateVisRgn(Dce, Wnd, Flags);
 
