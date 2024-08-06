@@ -34,7 +34,9 @@ BOOL SINGLE_BDCX_MYFLAG = FALSE;
 void
 StructDceDrawState(PDCE pDce, int index)
 {
-    ERR("--Draw state: %d--\n", index);
+    ERR("--Draw state: %x %d--\n", pDce, pDce->hDC, index);
+    if (pDce->hDC)
+        ERR("HDC: %x\n", pDce->hDC);
     PLIST_ENTRY ListEntry;
     HWND hwnd = NULL;
     PWND pwnd = NULL;
@@ -371,8 +373,14 @@ StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
         return TRUE;
     return FALSE;
 #else
-    /*if (index == 2)
-        return StructDceExistPwnd(pDce, pwnd);*/
+    if (index == 2)
+    {
+        if (BDCX_MYFLAG)
+        {
+            StructDceDrawState(pDce, 100);
+        }
+        return StructDceExistPwnd(pDce, pwnd);
+    }
     return StructDceCompareLastPwnd(pDce, pwnd, index);
 #endif
 };
@@ -967,14 +975,27 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
              //if (Dce->hwndCurrent == UserHMGetHandle(Wnd))
              if (StructDceCompareLastPwndx(Dce, Wnd, 2))
              {
-                bUpdateVisRgn = FALSE;
-                if (BDCX_MYFLAG) ERR("Get Exit-A\n");
+                 if (StructDceCompareFirstPwnd(Dce, Wnd, 200))
+                    bUpdateVisRgn = FALSE;
+                 if (BDCX_MYFLAG)
+                 {
+                     ERR("Get Exit-A\n");
+                     ERR("Get Exit-WWND %x\n", Wnd);
+                 }
                 break;
              }
              else if (Dce->hDC == hDC)
              {
+                 if (BDCX_MYFLAG)
+                 {
+                     ERR("Get Exit-B\n");
+                     ERR("Get Exit-old WWND %x\n", StructDceGetLastHwnd(Dce));
+                 }
                  StructDceAdd(Dce, Wnd, 50);
-                 if (BDCX_MYFLAG) ERR("Get Exit-B\n");
+                 if (BDCX_MYFLAG)
+                 {                     
+                     ERR("Get Exit-WWND %x\n", Wnd);
+                 }                 
                  break;
              }
           }

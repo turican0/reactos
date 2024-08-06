@@ -1078,7 +1078,12 @@ test_dc_visrgn(void)
     SetRect(&rect, 10, 10, 20, 20);
     MapWindowPoints(hwnd_classdc, 0, (POINT *)&rect, 2);
     hrgn = CreateRectRgnIndirect(&rect);
+
+    //GetDCEx(NULL, (HANDLE)0x1234, 1);
     hdc = GetDCEx(hwnd_classdc, hrgn, DCX_INTERSECTRGN | DCX_USESTYLE);
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    //trace("hwnd_classdc-HDC1 %x\n", (unsigned int)hdc);
+    
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
     ok(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20, "invalid clip box %s\n",
@@ -1091,7 +1096,11 @@ test_dc_visrgn(void)
     ok(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20, "invalid clip box %s\n",
        wine_dbgstr_rect(&rect));
 
-    hdc = GetDCEx(hwnd_classdc, 0, DCX_USESTYLE);
+    //GetDCEx(NULL, (HANDLE)0x1234, 1);
+    hdc = GetDCEx(hwnd_classdc, 0, DCX_USESTYLE);    
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    //trace("hwnd_classdc-HDC2 %x\n", (unsigned int)hdc);
+
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
     ok(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20, "invalid clip box %s\n",
@@ -1103,7 +1112,14 @@ test_dc_visrgn(void)
     SetRect(&rect, 20, 20, 30, 30);
     MapWindowPoints(hwnd_classdc, 0, (POINT *)&rect, 2);
     hrgn2 = CreateRectRgnIndirect(&rect);
+
+    GetDCEx(NULL, (HANDLE)0x1234, 1);
+    GetDCEx(NULL, (HANDLE)0x1234, 3);
     hdc = GetDCEx(hwnd_classdc, hrgn2, DCX_INTERSECTRGN | DCX_USESTYLE);
+    GetDCEx(NULL, (HANDLE)0x1234, 0);
+    GetDCEx(NULL, (HANDLE)0x1234, 4);
+    trace("hwnd_classdc-HDC3 %x\n", (unsigned int)hdc);
+
     ok(GetRgnBox(hrgn, &rect) == ERROR, "region must no longer be valid\n");
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
@@ -1112,7 +1128,13 @@ test_dc_visrgn(void)
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
 
     old_hdc = hdc;
-    hdc = GetDCEx(hwnd_classdc2, 0, DCX_USESTYLE);
+    GetDCEx(NULL, (HANDLE)0x1234, 3);
+    GetDCEx(NULL, (HANDLE)0x1234, 1);
+    hdc = GetDCEx(hwnd_classdc2, 0, DCX_USESTYLE);    
+    GetDCEx(NULL, (HANDLE)0x1234, 0);
+    GetDCEx(NULL, (HANDLE)0x1234, 4);
+    trace("hwnd_classdc2-HDC4 %x\n", (unsigned int)hdc);
+
     ok(old_hdc == hdc, "did not get the same hdc %p/%p\n", old_hdc, hdc);
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
     SetRectEmpty(&rect);
@@ -1122,7 +1144,14 @@ test_dc_visrgn(void)
        "clip box should have been reset %s\n", wine_dbgstr_rect(&rect));
     ReleaseDC(hwnd_classdc2, hdc);
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
-    hdc = GetDCEx(hwnd_classdc2, 0, DCX_EXCLUDERGN | DCX_USESTYLE);
+
+    GetDCEx(NULL, (HANDLE)0x1234, 3);
+    GetDCEx(NULL, (HANDLE)0x1234, 1);
+    hdc = GetDCEx(hwnd_classdc2, 0, DCX_EXCLUDERGN | DCX_USESTYLE);    
+    GetDCEx(NULL, (HANDLE)0x1234, 0);
+    GetDCEx(NULL, (HANDLE)0x1234, 4);
+    trace("hwnd_classdc2-HDC5 %x\n", (unsigned int)hdc);
+
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
     ok(!(rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30),
        "clip box must have been reset %s\n", wine_dbgstr_rect(&rect));
@@ -1191,7 +1220,10 @@ test_begin_paint(void)
     RedrawWindow(hwnd_owndc, NULL, 0, RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE);
     SetRect(&rect, 10, 10, 20, 20);
     RedrawWindow(hwnd_owndc, &rect, 0, RDW_INVALIDATE | RDW_ERASE);
-    ok(GetDC(hwnd_owndc) == hdc, "got different hdc\n");
+    //GetDCEx(NULL, (HANDLE)0x1234, 1);
+    HDC tempDC = GetDC(hwnd_owndc);
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    ok(tempDC == hdc, "got different hdc\n");    
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
     ok(!(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),
@@ -1218,12 +1250,12 @@ test_begin_paint(void)
 
     old_hdc = hdc;
 
-    //GetDCEx(NULL, (HANDLE)0x1234, 1);
+    GetDCEx(NULL, (HANDLE)0x1234, 1);
     GetDCEx(NULL, (HANDLE)0x1234, 3);
-    GetDCEx(NULL, (HANDLE)0x1234, 5);
     hdc = GetDC(hwnd_classdc2);
     GetDCEx(NULL, (HANDLE)0x1234, 4);
-    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    GetDCEx(NULL, (HANDLE)0x1234, 0);
+    trace("hwnd_classdc-HDC2 %x\n", (unsigned int)hdc);
     //GetDCEx(NULL, (HANDLE)0x1234, 2);
 
     ok(old_hdc == hdc, "did not get the same hdc %p/%p\n", old_hdc, hdc);
