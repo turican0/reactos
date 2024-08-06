@@ -566,7 +566,11 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
    ULONG DcxFlags;
    PWND DesktopWindow;
 
-   xxxxxxxxxxxxxxxx
+   if (BDCX_MYFLAG)
+      {
+          PWND Parent = (Window ? Window->spwndParent : NULL);
+          ERR("DceUpdateVisRgn  Parent %p\n", (Parent ? UserHMGetHandle(Parent) : NULL));
+      }
 
    if (Flags & DCX_PARENTCLIP)
    {
@@ -944,7 +948,11 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 
    Parent = (Wnd ? Wnd->spwndParent : NULL);
 
-   xxxxxxxxxxxxx
+   if (BDCX_MYFLAG)
+   {
+       ERR("UserGetDCEx Parent %p\n", (Parent ? UserHMGetHandle(Parent) : NULL));
+       ERR("UserGetDCEx ClipRegion HRGN_WINDOW %d %d\n", ClipRegion, HRGN_WINDOW);
+   }
 
    if (NULL == Wnd || !(Wnd->style & WS_CHILD) || NULL == Parent)
    {
