@@ -1113,12 +1113,12 @@ test_dc_visrgn(void)
     MapWindowPoints(hwnd_classdc, 0, (POINT *)&rect, 2);
     hrgn2 = CreateRectRgnIndirect(&rect);
 
-    GetDCEx(NULL, (HANDLE)0x1234, 1);
-    GetDCEx(NULL, (HANDLE)0x1234, 3);
+    //GetDCEx(NULL, (HANDLE)0x1234, 1);
+    //GetDCEx(NULL, (HANDLE)0x1234, 3);
     hdc = GetDCEx(hwnd_classdc, hrgn2, DCX_INTERSECTRGN | DCX_USESTYLE);
-    GetDCEx(NULL, (HANDLE)0x1234, 0);
-    GetDCEx(NULL, (HANDLE)0x1234, 4);
-    trace("hwnd_classdc-HDC3 %x\n", (unsigned int)hdc);
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    //GetDCEx(NULL, (HANDLE)0x1234, 4);
+    //trace("hwnd_classdc-HDC3 %x\n", (unsigned int)hdc);
 
     ok(GetRgnBox(hrgn, &rect) == ERROR, "region must no longer be valid\n");
     SetRectEmpty(&rect);
@@ -1128,12 +1128,12 @@ test_dc_visrgn(void)
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
 
     old_hdc = hdc;
-    GetDCEx(NULL, (HANDLE)0x1234, 3);
-    GetDCEx(NULL, (HANDLE)0x1234, 1);
+    //GetDCEx(NULL, (HANDLE)0x1234, 3);
+    //GetDCEx(NULL, (HANDLE)0x1234, 1);
     hdc = GetDCEx(hwnd_classdc2, 0, DCX_USESTYLE);    
-    GetDCEx(NULL, (HANDLE)0x1234, 0);
-    GetDCEx(NULL, (HANDLE)0x1234, 4);
-    trace("hwnd_classdc2-HDC4 %x\n", (unsigned int)hdc);
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    //GetDCEx(NULL, (HANDLE)0x1234, 4);
+    //trace("hwnd_classdc2-HDC4 %x\n", (unsigned int)hdc);
 
     ok(old_hdc == hdc, "did not get the same hdc %p/%p\n", old_hdc, hdc);
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
@@ -1145,12 +1145,12 @@ test_dc_visrgn(void)
     ReleaseDC(hwnd_classdc2, hdc);
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
 
-    GetDCEx(NULL, (HANDLE)0x1234, 3);
-    GetDCEx(NULL, (HANDLE)0x1234, 1);
+    //GetDCEx(NULL, (HANDLE)0x1234, 3);
+    //GetDCEx(NULL, (HANDLE)0x1234, 1);
     hdc = GetDCEx(hwnd_classdc2, 0, DCX_EXCLUDERGN | DCX_USESTYLE);    
-    GetDCEx(NULL, (HANDLE)0x1234, 0);
-    GetDCEx(NULL, (HANDLE)0x1234, 4);
-    trace("hwnd_classdc2-HDC5 %x\n", (unsigned int)hdc);
+    //GetDCEx(NULL, (HANDLE)0x1234, 0);
+    //GetDCEx(NULL, (HANDLE)0x1234, 4);
+    //trace("hwnd_classdc2-HDC5 %x\n", (unsigned int)hdc);
 
     ok(GetRgnBox(hrgn2, &rect) != ERROR, "region2 must still be valid\n");
     ok(!(rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30),
@@ -1220,10 +1220,10 @@ test_begin_paint(void)
     RedrawWindow(hwnd_owndc, NULL, 0, RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE);
     SetRect(&rect, 10, 10, 20, 20);
     RedrawWindow(hwnd_owndc, &rect, 0, RDW_INVALIDATE | RDW_ERASE);
-    //GetDCEx(NULL, (HANDLE)0x1234, 1);
+    // GetDCEx(NULL, (HANDLE)0x1234, 1);
     HDC tempDC = GetDC(hwnd_owndc);
-    //GetDCEx(NULL, (HANDLE)0x1234, 0);
-    ok(tempDC == hdc, "got different hdc\n");    
+    // GetDCEx(NULL, (HANDLE)0x1234, 0);
+    ok(tempDC == hdc, "got different hdc\n");
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
     ok(!(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),
@@ -1250,13 +1250,13 @@ test_begin_paint(void)
 
     old_hdc = hdc;
 
-    GetDCEx(NULL, (HANDLE)0x1234, 1);
-    GetDCEx(NULL, (HANDLE)0x1234, 3);
+    // GetDCEx(NULL, (HANDLE)0x1234, 1);
+    // GetDCEx(NULL, (HANDLE)0x1234, 3);
     hdc = GetDC(hwnd_classdc2);
-    GetDCEx(NULL, (HANDLE)0x1234, 4);
-    GetDCEx(NULL, (HANDLE)0x1234, 0);
-    trace("hwnd_classdc-HDC2 %x\n", (unsigned int)hdc);
-    //GetDCEx(NULL, (HANDLE)0x1234, 2);
+    // GetDCEx(NULL, (HANDLE)0x1234, 4);
+    // GetDCEx(NULL, (HANDLE)0x1234, 0);
+    // trace("hwnd_classdc-HDC2 %x\n", (unsigned int)hdc);
+    // GetDCEx(NULL, (HANDLE)0x1234, 2);
 
     ok(old_hdc == hdc, "did not get the same hdc %p/%p\n", old_hdc, hdc);
     SetRectEmpty(&rect);
@@ -1264,7 +1264,7 @@ test_begin_paint(void)
 
     printf("rect: %ld %ld %ld %ld\n", rect.left, rect.top, rect.right, rect.bottom);
 
-    ok(!(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),//problem
+    ok(!(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20), // problem
        "clip box should have been reset %s\n", wine_dbgstr_rect(&rect));
     ReleaseDC(hwnd_classdc2, hdc);
     EndPaint(hwnd_classdc, &ps);
@@ -1272,12 +1272,50 @@ test_begin_paint(void)
     /* parent DC */
     RedrawWindow(hwnd_parent, NULL, 0, RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE);
     RedrawWindow(hwnd_parentdc, NULL, 0, RDW_INVALIDATE);
+
+    GetClientRect(hwnd_parentdc, &rect);
+    GetClientRect(hwnd_parent, &parent_rect);
+    ok(FALSE, "rect %ld, %ld, %ld, %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+    ok(FALSE, "parent_rect %ld, %ld, %ld, %ld\n", parent_rect.left, parent_rect.top, parent_rect.right,
+       parent_rect.bottom);
+
     hdc = BeginPaint(hwnd_parentdc, &ps);
+    ok(FALSE, "rectA %ld, %ld, %ld, %ld\n", rect.left, rect.top, rect.right, rect.bottom);
     GetClipBox(hdc, &rect);
+
+    //PWND pwnd = HMValidateHandle(hwnd_parentdc, TYPE_WINDOW);
+
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 7);
+    GetDCEx(hwnd_parent, (HANDLE)0x1234, 7);
+
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 5);//test
+    //GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 6); // test
+
+    /*
+    if (!(Flags & DCX_WINDOW))
+    {
+        Dce->hrgnClip =
+            NtGdiCreateRectRgn(Wnd->rcClient.left, Wnd->rcClient.top, Wnd->rcClient.right, Wnd->rcClient.bottom);
+    }
+    else
+    {
+        Dce->hrgnClip =
+            NtGdiCreateRectRgn(Wnd->rcWindow.left, Wnd->rcWindow.top, Wnd->rcWindow.right, Wnd->rcWindow.bottom);
+        */
+
+    ok(FALSE, "rectB %ld, %ld, %ld, %ld\n", rect.left, rect.top, rect.right, rect.bottom);
     cr = SetPixel(hdc, 10, 10, RGB(255, 0, 0));
     ok(cr != -1, "error drawing outside of window client area\n");
     EndPaint(hwnd_parentdc, &ps);
     GetClientRect(hwnd_parent, &parent_rect);
+
+    RECT rect2;
+    GetClientRect(hwnd_parentdc, &rect2);
+    GetClientRect(hwnd_parent, &parent_rect);
+    ok(FALSE, "rect %ld, %ld, %ld, %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+    ok(FALSE, "rect2 %ld, %ld, %ld, %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ok(FALSE, "parent_rect %ld, %ld, %ld, %ld\n", parent_rect.left, parent_rect.top, parent_rect.right, parent_rect.bottom);
+       
 
     ok(rect.left == parent_rect.left, "rect.left = %ld, expected %ld\n", rect.left, parent_rect.left);
     ok(rect.top == parent_rect.top, "rect.top = %ld, expected %ld\n", rect.top, parent_rect.top);

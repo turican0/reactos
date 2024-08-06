@@ -566,6 +566,8 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
    ULONG DcxFlags;
    PWND DesktopWindow;
 
+   xxxxxxxxxxxxxxxx
+
    if (Flags & DCX_PARENTCLIP)
    {
       PWND Parent;
@@ -792,6 +794,74 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
            SINGLE_BDCX_MYFLAG = TRUE;
        if (Flags == 4)
            SINGLE_BDCX_MYFLAG = FALSE;
+       if (Flags == 5)
+       {
+           if (Wnd->pcls->pdce)
+               hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
+           KeEnterCriticalRegion();
+           ListEntry = LEDce.Flink;
+           while (ListEntry != &LEDce)
+           {
+               Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+               ListEntry = ListEntry->Flink;
+               if (!(Dce->DCXFlags & DCX_CACHE))
+               {
+                   if (StructDceCompareLastPwndx(Dce, Wnd, 2))
+                   {
+                       break;
+                   }
+                   else if (Dce->hDC == hDC)
+                   {
+
+                       break;
+                   }
+               }
+               Dce = NULL;
+           }
+           KeLeaveCriticalRegion();
+
+           if (Dce!=NULL)
+           Dce->hrgnClip =
+               NtGdiCreateRectRgn(Wnd->rcClient.left, Wnd->rcClient.top, Wnd->rcClient.right, Wnd->rcClient.bottom);
+       }
+       if (Flags == 6)
+       {
+           if (Wnd->pcls->pdce)
+               hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
+           KeEnterCriticalRegion();
+           ListEntry = LEDce.Flink;
+           while (ListEntry != &LEDce)
+           {
+               Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+               ListEntry = ListEntry->Flink;
+               if (!(Dce->DCXFlags & DCX_CACHE))
+               {
+                   if (StructDceCompareLastPwndx(Dce, Wnd, 2))
+                   {
+                       break;
+                   }
+                   else if (Dce->hDC == hDC)
+                   {
+
+                       break;
+                   }
+               }
+               Dce = NULL;
+           }
+           KeLeaveCriticalRegion();
+
+           if (Dce != NULL)
+           Dce->hrgnClip =
+               NtGdiCreateRectRgn(Wnd->rcWindow.left, Wnd->rcWindow.top, Wnd->rcWindow.right, Wnd->rcWindow.bottom);
+       }
+       if (Flags == 7)
+       {
+           ERR("rcWindow %ld, %ld, %ld, %ld\n", Wnd->rcWindow.left, Wnd->rcWindow.top, Wnd->rcWindow.right,
+              Wnd->rcWindow.bottom);
+           ERR("rcClient %ld, %ld, %ld, %ld\n", Wnd->rcClient.left, Wnd->rcClient.top, Wnd->rcClient.right,
+               Wnd->rcClient.bottom);
+       }
+
        return NULL;
    }
    /*
@@ -873,6 +943,8 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    }
 
    Parent = (Wnd ? Wnd->spwndParent : NULL);
+
+   xxxxxxxxxxxxx
 
    if (NULL == Wnd || !(Wnd->style & WS_CHILD) || NULL == Parent)
    {
