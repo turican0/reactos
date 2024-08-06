@@ -371,8 +371,8 @@ StructDceCompareLastPwndx(PDCE pDce, PWND pwnd, int index)
         return TRUE;
     return FALSE;
 #else
-    if (index == 2)
-        return StructDceExistPwnd(pDce, pwnd);
+    /*if (index == 2)
+        return StructDceExistPwnd(pDce, pwnd);*/
     return StructDceCompareLastPwnd(pDce, pwnd, index);
 #endif
 };
