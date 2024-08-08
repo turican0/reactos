@@ -914,6 +914,34 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
            SINGLE_BDCX_MYFLAG2 = TRUE;
            ERR("SINGLE_BDCX_MYFLAG2-ON\n");
        }
+       if (Flags == 9)
+       {
+           if (Wnd->pcls->pdce)
+               hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
+           KeEnterCriticalRegion();
+           ListEntry = LEDce.Flink;
+           while (ListEntry != &LEDce)
+           {
+               Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+               ListEntry = ListEntry->Flink;
+               if (!(Dce->DCXFlags & DCX_CACHE))
+               {
+                   if (StructDceCompareLastPwndx(Dce, Wnd, 2))
+                   {
+                       break;
+                   }
+                   else if (Dce->hDC == hDC)
+                   {
+
+                       break;
+                   }
+               }
+               Dce = NULL;
+           }
+           KeLeaveCriticalRegion();
+           if (Dce != NULL)
+               DceUpdateVisRgn(Dce, Wnd, Dce->DCXFlags);
+       }
        return NULL;
    }
 

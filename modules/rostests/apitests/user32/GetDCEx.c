@@ -1417,6 +1417,7 @@ test_scroll_window(void)
     GetDCEx(hwnd_owndc, (HANDLE)0x1234, 0);
 
     EndPaint(hwnd_owndc, &ps);//zmena
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 9);//!!!!!!!!!!! test it
     
     GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 8);
     GetDCEx(hwnd_parentdc, (HANDLE)hdc, 0);
