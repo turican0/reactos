@@ -631,7 +631,7 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
    }
 
 noparent:
-   if (Flags & DCX_INTERSECTRGN)
+   if ((Flags & DCX_INTERSECTRGN) && !(Flags & DCX_PARENTCLIP))
    {
       PREGION RgnClip = NULL;
 
