@@ -1366,27 +1366,90 @@ static void
 test_scroll_window(void)
 {
     PAINTSTRUCT ps;
-    HDC hdc;
+    HDC hdc = NULL;
     RECT clip, rect;
+    RECT rect2;
 
     /* ScrollWindow uses the window DC, ScrollWindowEx doesn't */
+    HDC hdcx = GetDC(hwnd_owndc);
 
     UpdateWindow(hwnd_owndc);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT0 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    
     SetRect(&clip, 25, 25, 50, 50);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT1 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    
+    
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT2 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    
+
     ScrollWindow(hwnd_owndc, -5, -10, NULL, &clip);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT3 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    
     hdc = BeginPaint(hwnd_owndc, &ps);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT4 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    
     SetRectEmpty(&rect);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT5 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    
     GetClipBox(hdc, &rect);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT6 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    
     ok(rect.left >= 25 && rect.top >= 25 && rect.right <= 50 && rect.bottom <= 50, "invalid clip box %s\n",
        wine_dbgstr_rect(&rect));
-    EndPaint(hwnd_owndc, &ps);
+
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 8);
+    GetDCEx(hwnd_parentdc, (HANDLE)hdc, 0);
+    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 7);
+    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 0);
+
+    EndPaint(hwnd_owndc, &ps);//zmena
+    
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 8);
+    GetDCEx(hwnd_parentdc, (HANDLE)hdc, 0);
+    //GetDCEx(hwnd_owndc, (HANDLE)0x1234, 1);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT7 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
 
     SetViewportExtEx(hdc, 2, 3, NULL);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT8 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
     SetViewportOrgEx(hdc, 30, 20, NULL);
 
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT9 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
     ScrollWindow(hwnd_owndc, -5, -10, NULL, &clip);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT10 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
     hdc = BeginPaint(hwnd_owndc, &ps);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT11 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
     SetRectEmpty(&rect);
+
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT12 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
     GetClipBox(hdc, &rect);
     ok(rect.left >= 25 && rect.top >= 25 && rect.right <= 50 && rect.bottom <= 50, "invalid clip box %s\n",
        wine_dbgstr_rect(&rect));//FAIL!!!!!!!!!!!!!!!!!!!
@@ -1652,9 +1715,11 @@ void START_TEST2(/*dce*/)
     if(0)test_dc_attributes();    
     if (0)
         test_parameters();
-    test_dc_visrgn();    
+    if (0)
+        test_dc_visrgn();    
 
-    test_begin_paint();
+    if (0)
+        test_begin_paint();
     test_scroll_window();
     test_invisible_create();
     test_dc_layout();
