@@ -1279,9 +1279,20 @@ test_begin_paint(void)
     ok(FALSE, "parent_rect %ld, %ld, %ld, %ld\n", parent_rect.left, parent_rect.top, parent_rect.right,
        parent_rect.bottom);
 
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 1);
     hdc = BeginPaint(hwnd_parentdc, &ps);
-    ok(FALSE, "rectA %ld, %ld, %ld, %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 0);
+    ok(FALSE, "rectA %ld, %ld, %ld, %ld\n", rect.left, rect.top, rect.right, rect.bottom);    
+
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 8);
+    GetDCEx(hwnd_parentdc, (HANDLE)hdc, 0);
+
     GetClipBox(hdc, &rect);
+
+    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 8);
+    GetDCEx(hwnd_parentdc, (HANDLE)hdc, 0);
+    //GdiSelectVisRgn(Dce->hDC, RgnVisible);
+    //IntSelectClipRgn(_In_ PDC dc,_In_ PREGION prgn,_In_ int fnMode)
 
     //PWND pwnd = HMValidateHandle(hwnd_parentdc, TYPE_WINDOW);
 
@@ -1321,6 +1332,29 @@ test_begin_paint(void)
     ok(rect.top == parent_rect.top, "rect.top = %ld, expected %ld\n", rect.top, parent_rect.top);
     todo_wine ok(rect.right == parent_rect.right, "rect.right = %ld, expected %ld\n", rect.right, parent_rect.right);//FAIL!!!!!!!!!!!!!!!!!!!
     todo_wine ok(rect.bottom == parent_rect.bottom, "rect.bottom = %ld, expected %ld\n", rect.bottom, parent_rect.bottom);//FAIL!!!!!!!!!!!!!!!!!!!
+
+
+    hdc = BeginPaint(hwnd_parentdc, &ps);
+    GetClipBox(hdc, &rect);
+    cr = SetPixel(hdc, 10, 10, RGB(255, 0, 0));
+    EndPaint(hwnd_parentdc, &ps);
+    GetClientRect(hwnd_parentdc, &rect2);
+    GetClientRect(hwnd_parent, &parent_rect);
+    ok(FALSE, "rect %ld %ld %ld %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+    ok(FALSE, "rect2 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ok(FALSE, "parent_rect %ld %ld %ld %ld\n", parent_rect.left, parent_rect.top, parent_rect.right, parent_rect.bottom);
+
+    hdc = BeginPaint(hwnd_parentdc, &ps);
+    GetClipBox(hdc, &rect);
+    cr = SetPixel(hdc, 10, 10, RGB(255, 0, 0));
+    EndPaint(hwnd_parentdc, &ps);
+    GetClientRect(hwnd_parentdc, &rect2);
+    GetClientRect(hwnd_parent, &parent_rect);
+    ok(FALSE, "rect %ld %ld %ld %ld\n", rect.left, rect.top, rect.right, rect.bottom);
+    ok(FALSE, "rect2 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ok(FALSE, "parent_rect %ld %ld %ld %ld\n", parent_rect.left, parent_rect.top, parent_rect.right, parent_rect.bottom);
+
+
 
     hdc = GetDC(hwnd_parent);
     todo_wine ok(GetPixel(hdc, 10, 10) == cr, "error drawing outside of window client area\n");//FAIL!!!!!!!!!!!!!!!!!!!

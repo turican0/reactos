@@ -20,6 +20,8 @@ static INT DCECount = 0; // Count of DCE in system.
 BOOL BDCX_MYFLAG = FALSE;
 BOOL SINGLE_BDCX_MYFLAG = FALSE;
 
+BOOL SINGLE_BDCX_MYFLAG2 = FALSE;
+
 //#define OLDCODE_WINDC
 
 #define DCX_CACHECOMPAREMASK (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | \
@@ -570,6 +572,7 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
       {
           PWND Parent = (Window ? Window->spwndParent : NULL);
           ERR("DceUpdateVisRgn  Parent %p\n", (Parent ? UserHMGetHandle(Parent) : NULL));
+          ERR("(Flags & DCX_PARENTCLIP) %d\n", (Flags & DCX_PARENTCLIP));
       }
 
    if (Flags & DCX_PARENTCLIP)
@@ -593,6 +596,15 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
          DcxFlags = Flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW);
       }
       RgnVisible = DceGetVisRgn(Parent, DcxFlags, UserHMGetHandle(Window), Flags);
+      if (BDCX_MYFLAG)
+      {
+          ERR("DceUpdateVisRgn1 %x %x %x %x\n", Parent, DcxFlags, UserHMGetHandle(Window), Flags);
+
+          if (RgnVisible)
+              ERR("DceUpdateVisRgn2 %d %d %d %d\n", RgnVisible->rdh.rcBound.left, RgnVisible->rdh.rcBound.top,
+                  RgnVisible->rdh.rcBound.right, RgnVisible->rdh.rcBound.bottom);
+      }
+      //goto after_noparent;
    }
    else if (Window == NULL)
    {
@@ -609,6 +621,13 @@ DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
    else
    {
       RgnVisible = DceGetVisRgn(Window, Flags, 0, 0);
+   }
+
+   if (BDCX_MYFLAG)
+   {
+       if (RgnVisible)
+           ERR("DceUpdateVisRgn3 %d %d %d %d\n", RgnVisible->rdh.rcBound.left, RgnVisible->rdh.rcBound.top,
+               RgnVisible->rdh.rcBound.right, RgnVisible->rdh.rcBound.bottom);
    }
 
 noparent:
@@ -640,8 +659,33 @@ noparent:
        REGION_UnlockRgn(RgnClip);
    }
 
+ //after_noparent:
+
    Dce->DCXFlags &= ~DCX_DCEDIRTY;
    GdiSelectVisRgn(Dce->hDC, RgnVisible);
+   if (BDCX_MYFLAG)
+   {
+       if (RgnVisible)
+           ERR("DceUpdateVisRgn4 %d %d %d %d\n", RgnVisible->rdh.rcBound.left, RgnVisible->rdh.rcBound.top,
+               RgnVisible->rdh.rcBound.right, RgnVisible->rdh.rcBound.bottom);
+
+       SINGLE_BDCX_MYFLAG2 = FALSE;
+       PDC pdc = DC_LockDc(Dce->hDC);
+       ERR("GdiSelectVisRgn PDC: %p\n", pdc->prgnRao);
+       RECT prc;
+
+       if (pdc->prgnRao)
+       {
+           REGION_GetRgnBox(pdc->prgnRao, &prc);
+           ERR("GdiSelectVisRgn prgnRao: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+       }
+       if (pdc->prgnVis)
+       {
+           REGION_GetRgnBox(pdc->prgnVis, &prc);
+           ERR("GdiSelectVisRgn prgnVis: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+       }
+       DC_UnlockDc(pdc);
+   }
    /* Tell GDI driver */
    if (Window)
        IntEngWindowChanged(Window, WOC_RGN_CLIENT);
@@ -865,9 +909,35 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
            ERR("rcClient %ld, %ld, %ld, %ld\n", Wnd->rcClient.left, Wnd->rcClient.top, Wnd->rcClient.right,
                Wnd->rcClient.bottom);
        }
-
+       if (Flags == 8)
+       {
+           SINGLE_BDCX_MYFLAG2 = TRUE;
+           ERR("SINGLE_BDCX_MYFLAG2-ON\n");
+       }
        return NULL;
    }
+
+   if (SINGLE_BDCX_MYFLAG2 && (Flags != 8))
+   {
+       ERR("SINGLE_BDCX_MYFLAG2-OFF\n");
+       SINGLE_BDCX_MYFLAG2 = FALSE;
+       PDC pdc = DC_LockDc((HDC)ClipRegion);
+       ERR("test PDC: %p\n", pdc->prgnRao);
+       RECT prc;
+
+       if (pdc->prgnRao)
+       {
+           REGION_GetRgnBox(pdc->prgnRao, &prc);
+           ERR("test prgnRao: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+       }
+       if (pdc->prgnVis)
+       {
+           REGION_GetRgnBox(pdc->prgnVis, &prc);
+           ERR("test prgnVis: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+       }
+       DC_UnlockDc(pdc);
+   }
+
    /*
    BDCX_MYFLAG = FALSE;
    if (Flags & DCX_MYFLAG)
@@ -885,6 +955,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    {
       Flags &= ~DCX_USESTYLE;
       Flags |= DCX_CACHE;
+   }
+
+   if (BDCX_MYFLAG)
+   {
+       if (Wnd)
+        ERR("Flags1 %d \n", Flags, DcxFlags, Wnd->style);
    }
 
    if (Flags & DCX_PARENTCLIP) Flags |= DCX_CACHE;
@@ -938,6 +1014,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       }
    }
 
+   if (BDCX_MYFLAG)
+   {
+       if (Wnd)
+           ERR("Flags2 %d \n", Flags, DcxFlags, Wnd->style);
+   }
+
    if (Flags & DCX_WINDOW) Flags &= ~DCX_CLIPCHILDREN;
 
    if (Flags & DCX_NOCLIPCHILDREN)
@@ -952,12 +1034,20 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    {
        ERR("UserGetDCEx Parent %p\n", (Parent ? UserHMGetHandle(Parent) : NULL));
        ERR("UserGetDCEx ClipRegion HRGN_WINDOW %d %d\n", ClipRegion, HRGN_WINDOW);
+       if (Wnd)
+       ERR("Flags3 %d \n", Flags, DcxFlags, Wnd->style);
    }
 
    if (NULL == Wnd || !(Wnd->style & WS_CHILD) || NULL == Parent)
    {
       Flags &= ~DCX_PARENTCLIP;
       Flags |= DCX_CLIPSIBLINGS;
+   }
+
+   if (BDCX_MYFLAG)
+   {
+       if (Wnd)
+       ERR("Flags4 %d \n", Flags, DcxFlags, Wnd->style);
    }
 
    /* It seems parent clip is ignored when clipping siblings or children */
@@ -974,6 +1064,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
             Flags |= DCX_CLIPSIBLINGS;
          }
       }
+   }
+
+   if (BDCX_MYFLAG)
+   {
+       if (Wnd)
+       ERR("Flags5 %d \n", Flags, DcxFlags, Wnd->style);
    }
 
    // Window nz, check to see if we still own this or it is just cheap wine tonight.
@@ -1241,6 +1337,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 
    if (BDCX_MYFLAG)
        StructDceDrawState(Dce,7);
+
+   if (BDCX_MYFLAG)
+   {
+       if (Wnd)
+       ERR("Flags6 %d \n", Flags, DcxFlags, Wnd->style);
+   }
 
    return(Dce->hDC);
 }
