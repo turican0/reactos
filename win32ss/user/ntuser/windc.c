@@ -560,6 +560,24 @@ DceDeleteClipRgn(DCE* Dce)
    IntGdiSetHookFlags(Dce->hDC, DCHF_INVALIDATEVISRGN);
 }
 
+void
+PrintVisRgn(DCE* Dce)
+{
+    PDC pdc = DC_LockDc(Dce->hDC);
+    RECT prc;
+    if (pdc->prgnRao)
+    {
+        REGION_GetRgnBox(pdc->prgnRao, &prc);
+        ERR("GdiSelectVisRgn prgnRao: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+    }
+    if (pdc->prgnVis)
+    {
+        REGION_GetRgnBox(pdc->prgnVis, &prc);
+        ERR("GdiSelectVisRgn prgnVis: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+    }
+    DC_UnlockDc(pdc);
+}
+
 VOID
 FASTCALL
 DceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
@@ -1165,6 +1183,34 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
            ERR("GetDCE 9 test RECT %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
            
        }
+       if (Flags == 11)
+       {
+           if (Wnd->pcls->pdce)
+               hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
+           KeEnterCriticalRegion();
+           ListEntry = LEDce.Flink;
+           while (ListEntry != &LEDce)
+           {
+               Dce = CONTAINING_RECORD(ListEntry, DCE, List);
+               ListEntry = ListEntry->Flink;
+               if (!(Dce->DCXFlags & DCX_CACHE))
+               {
+                   if (StructDceCompareLastPwndx(Dce, Wnd, 2))
+                   {
+                       break;
+                   }
+                   else if (Dce->hDC == hDC)
+                   {
+
+                       break;
+                   }
+               }
+               Dce = NULL;
+           }
+           KeLeaveCriticalRegion();
+
+           MyDrawPRGNStatus(Dce);
+       }
        return NULL;
    }
 
@@ -1200,7 +1246,10 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
    }*/
 
    if (BDCX_MYFLAG)
-       ERR("UserGetDCEx %p\n", Wnd);
+   {
+       ERR("UserGetDCEx PWND %p\n", Wnd);
+       ERR("UserGetDCEx HWND %p\n", (Wnd ? UserHMGetHandle(Wnd) : NULL));
+   }
 
    if (NULL == Wnd)
    {
@@ -1551,6 +1600,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 
    if (bUpdateVisRgn) DceUpdateVisRgn(Dce, Wnd, Flags);
 
+   if (BDCX_MYFLAG)
+   {
+       ERR("GetDCE PrintVis1\n");
+       PrintVisRgn(Dce);
+   }
+
    if (SINGLE_BDCX_MYFLAG)
        PrintRect(hDC, 11);
 
@@ -1562,6 +1617,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       Dce->ptiOwner = GetW32ThreadInfo(); // Set the temp owning
    }
 
+   if (BDCX_MYFLAG)
+   {
+       ERR("GetDCE PrintVis2\n");
+       PrintVisRgn(Dce);
+   }
+
    if (SINGLE_BDCX_MYFLAG)
        PrintRect(hDC, 12);
 
@@ -1570,6 +1631,12 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
        !(Flags & DCX_KEEPLAYOUT) )
    {
       NtGdiSetLayout(Dce->hDC, -1, LAYOUT_RTL);
+   }
+
+   if (BDCX_MYFLAG)
+   {
+       ERR("GetDCE PrintVis3\n");
+       PrintVisRgn(Dce);
    }
 
    if (SINGLE_BDCX_MYFLAG)
@@ -1583,11 +1650,17 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
       Dce->ppiOwner = ppi;
    }
 
+   if (BDCX_MYFLAG)
+   {
+       ERR("GetDCE PrintVis4\n");
+       PrintVisRgn(Dce);
+   }
+
    if (SINGLE_BDCX_MYFLAG)
        PrintRect(hDC, 14);
 
-   if (BDCX_MYFLAG)
-       StructDceDrawState(Dce,7);
+   /* if (BDCX_MYFLAG)
+       StructDceDrawState(Dce,7);*/
 
    if (BDCX_MYFLAG)
    {

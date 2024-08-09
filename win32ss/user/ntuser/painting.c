@@ -9,6 +9,8 @@
 #include <win32k.h>
 DBG_DEFAULT_CHANNEL(UserPainting);
 
+BOOL PAINT_DEBUG_MODE = FALSE;
+
 BOOL UserExtTextOutW(HDC hdc, INT x, INT y, UINT flags, PRECTL lprc,
                      LPCWSTR lpString, UINT count);
 
@@ -1620,6 +1622,18 @@ NtUserBeginPaint(HWND hWnd, PAINTSTRUCT* UnsafePs)
    USER_REFERENCE_ENTRY Ref;
    HDC Ret = NULL;
 
+   if (hWnd == (HWND)0x1234)
+   {
+       if (UnsafePs == (PAINTSTRUCT *)0)
+       {
+           PAINT_DEBUG_MODE = FALSE;
+       }
+       if (UnsafePs == (PAINTSTRUCT *)1)
+       {
+           PAINT_DEBUG_MODE = TRUE;
+       }
+   }
+
    TRACE("Enter NtUserBeginPaint\n");
    UserEnterExclusive();
 
@@ -1628,9 +1642,27 @@ NtUserBeginPaint(HWND hWnd, PAINTSTRUCT* UnsafePs)
       goto Cleanup; // Return NULL
    }
 
+   if (PAINT_DEBUG_MODE)
+   {
+       ERR("NtUserBeginPaint state1\n");
+       UserGetDCEx(Window, (HANDLE)0x1234, 11);
+   }
+
    UserRefObjectCo(Window, &Ref);
 
+   if (PAINT_DEBUG_MODE)
+   {
+       ERR("NtUserBeginPaint state2\n");
+       UserGetDCEx(Window, (HANDLE)0x1234, 11);
+   }
+
    hDC = IntBeginPaint(Window, &Ps);
+
+   if (PAINT_DEBUG_MODE)
+   {
+       ERR("NtUserBeginPaint state3\n");
+       UserGetDCEx(Window, (HANDLE)0x1234, 11);
+   }
 
    Status = MmCopyToCaller(UnsafePs, &Ps, sizeof(PAINTSTRUCT));
    if (! NT_SUCCESS(Status))
@@ -1639,10 +1671,22 @@ NtUserBeginPaint(HWND hWnd, PAINTSTRUCT* UnsafePs)
       goto Cleanup; // Return NULL
    }
 
+   if (PAINT_DEBUG_MODE)
+   {
+       ERR("NtUserBeginPaint state4\n");
+       UserGetDCEx(Window, (HANDLE)0x1234, 11);
+   }
+
    Ret = hDC;
 
 Cleanup:
    if (Window) UserDerefObjectCo(Window);
+
+   if (PAINT_DEBUG_MODE)
+   {
+       ERR("NtUserBeginPaint state5\n");
+       UserGetDCEx(Window, (HANDLE)0x1234, 11);
+   }
 
    TRACE("Leave NtUserBeginPaint, ret=%p\n", Ret);
    UserLeave();

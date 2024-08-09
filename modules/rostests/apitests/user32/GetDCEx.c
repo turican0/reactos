@@ -1444,7 +1444,12 @@ test_scroll_window(void)
     GetClipBox(hdcx, &rect2);
     ok(FALSE, "test RECT10 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
 
-    hdc = BeginPaint(hwnd_owndc, &ps);
+    ok(FALSE, "test RECT10-HWND %x\n", (unsigned int)hwnd_owndc);
+    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 1);
+    BeginPaint((HWND)0x1234, (PAINTSTRUCT *)1);
+    hdc = BeginPaint(hwnd_owndc, &ps);//here problem
+    BeginPaint((HWND)0x1234, (PAINTSTRUCT *)0);
+    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 0);
 
     GetClipBox(hdcx, &rect2);
     ok(FALSE, "test RECT11 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
