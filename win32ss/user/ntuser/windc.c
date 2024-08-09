@@ -711,6 +711,14 @@ DceReleaseDCHwnd(DCE *dce, HWND hwnd, BOOL EndPaint)
    /* Restore previous visible region */
    if (EndPaint)
    {
+       PDC pdc = DC_LockDc(dce->hDC);
+       if (pdc->prgnRao)
+       {
+           REGION_Delete(pdc->prgnRao);
+           pdc->prgnRao = NULL;
+       }
+       DC_UnlockDc(pdc);
+
        DceUpdateVisRgn(dce, StructDceGetPwndx(dce, 1), dce->DCXFlags);
    }
 
