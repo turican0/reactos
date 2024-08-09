@@ -818,6 +818,210 @@ PrintRect(HDC hDC, int index)
     DC_UnlockDc(dc);
 };
 
+void
+MyDrawPRGNStatus(DCE *Dce)
+{
+    PDC pdc = DC_LockDc(Dce->hDC);
+    ERR("MyGdiSelectVisRgn PDC: %p\n", pdc->prgnRao);
+    RECT prc;
+
+    if (pdc->prgnRao)
+    {
+        REGION_GetRgnBox(pdc->prgnRao, &prc);
+        ERR("MyGdiSelectVisRgn prgnRao: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+    }
+    if (pdc->prgnVis)
+    {
+        REGION_GetRgnBox(pdc->prgnVis, &prc);
+        ERR("MyGdiSelectVisRgn prgnVis: %d %d %d %d\n", prc.left, prc.top, prc.right, prc.bottom);
+    }
+    DC_UnlockDc(pdc);
+}
+
+INT MyGdiGetClipBox(HDC hdc, LPRECT prc)
+{
+    PDC pdc;
+    INT iComplexity;
+    ERR("MyGdiGetClipBox1\n");
+    pdc = DC_LockDc(hdc);
+    ERR("MyGdiGetClipBox2\n");
+    if (!pdc)
+    {
+        return ERROR;
+    }
+    ERR("MyGdiGetClipBox3\n");
+    if (pdc->fs & DC_DIRTY_RAO)
+        CLIPPING_UpdateGCRegion(pdc);
+    ERR("MyGdiGetClipBox4\n");
+    if (pdc->prgnRao)
+    {
+        iComplexity = REGION_GetRgnBox(pdc->prgnRao, prc);
+        ERR("MyGdiGetClipBox5\n");
+    }
+    else
+    {
+        iComplexity = REGION_GetRgnBox(pdc->prgnVis, prc);
+        ERR("MyGdiGetClipBox6\n");
+    }
+    DC_UnlockDc(pdc);
+    IntDPtoLP(pdc, (LPPOINT)prc, 2);
+    return iComplexity;
+}
+
+void MyDceUpdateVisRgn(DCE *Dce, PWND Window, ULONG Flags)
+{
+    PREGION RgnVisible = NULL;
+    ULONG DcxFlags;
+    PWND DesktopWindow;
+
+    PDC pdc = DC_LockDc(Dce->hDC);
+    if (pdc->prgnRao)
+    {
+        REGION_Delete(pdc->prgnRao);
+        pdc->prgnRao = NULL;
+    }
+    //CLIPPING_UpdateGCRegion(pdc);
+    pdc->prgnRao->rdh.rcBound;
+
+    DC_UnlockDc(pdc);
+
+    RECT rect2;
+    MyGdiGetClipBox(Dce->hDC, &rect2);
+    ERR("test MyDceUpdateVisRgn %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
+    ERR("Status1\n");
+    MyDrawPRGNStatus(Dce);
+
+    //if (BDCX_MYFLAG)
+    {
+        PWND Parent = (Window ? Window->spwndParent : NULL);
+        ERR("MYDceUpdateVisRgn  Parent %p\n", (Parent ? UserHMGetHandle(Parent) : NULL));
+        ERR("(Flags & DCX_PARENTCLIP) %d\n", (Flags & DCX_PARENTCLIP));
+    }
+
+    if (Flags & DCX_PARENTCLIP)
+    {
+        ERR("MYDceUpdateVisRgn-(Flags & DCX_PARENTCLIP)\n");
+        PWND Parent;
+
+        Parent = Window->spwndParent;
+        if (!Parent)
+        {
+            RgnVisible = NULL;
+            goto noparent;
+        }
+
+        if (Parent->style & WS_CLIPSIBLINGS)
+        {
+            DcxFlags = DCX_CLIPSIBLINGS | (Flags & ~(DCX_CLIPCHILDREN | DCX_WINDOW));
+        }
+        else
+        {
+            DcxFlags = Flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW);
+        }
+        RgnVisible = DceGetVisRgn(Parent, DcxFlags, UserHMGetHandle(Window), Flags);
+        //if (BDCX_MYFLAG)
+        {
+            ERR("DceUpdateVisRgn1 %x %x %x %x\n", Parent, DcxFlags, UserHMGetHandle(Window), Flags);
+
+            if (RgnVisible)
+                ERR("DceUpdateVisRgn2 %d %d %d %d\n", RgnVisible->rdh.rcBound.left, RgnVisible->rdh.rcBound.top,
+                    RgnVisible->rdh.rcBound.right, RgnVisible->rdh.rcBound.bottom);
+        }
+        // goto after_noparent;
+    }
+    else if (Window == NULL)
+    {
+        ERR("MYDceUpdateVisRgn-(Window == NULL)\n");
+        DesktopWindow = UserGetWindowObject(IntGetDesktopWindow());
+        if (NULL != DesktopWindow)
+        {
+            RgnVisible = IntSysCreateRectpRgnIndirect(&DesktopWindow->rcWindow);
+        }
+        else
+        {
+            RgnVisible = NULL;
+        }
+    }
+    else
+    {
+        ERR("MYDceUpdateVisRgn-DceGetVisRgn\n");
+        RgnVisible = DceGetVisRgn(Window, Flags, 0, 0);
+    }
+
+    ERR("Status2\n");
+    MyDrawPRGNStatus(Dce);
+
+    //if (BDCX_MYFLAG)
+    {
+        if (RgnVisible)
+            ERR("MyDceUpdateVisRgn3 %d %d %d %d\n", RgnVisible->rdh.rcBound.left, RgnVisible->rdh.rcBound.top,
+                RgnVisible->rdh.rcBound.right, RgnVisible->rdh.rcBound.bottom);
+    }
+
+noparent:
+    if ((Flags & DCX_INTERSECTRGN) && !(Flags & DCX_PARENTCLIP))
+    {
+        PREGION RgnClip = NULL;
+
+        if (Dce->hrgnClip != NULL)
+            RgnClip = REGION_LockRgn(Dce->hrgnClip);
+
+        if (RgnClip)
+        {
+            IntGdiCombineRgn(RgnVisible, RgnVisible, RgnClip, RGN_AND);
+            REGION_UnlockRgn(RgnClip);
+        }
+        else
+        {
+            if (RgnVisible != NULL)
+            {
+                REGION_Delete(RgnVisible);
+            }
+            RgnVisible = IntSysCreateRectpRgn(0, 0, 0, 0);
+        }
+    }
+    else if ((Flags & DCX_EXCLUDERGN) && Dce->hrgnClip != NULL)
+    {
+        PREGION RgnClip = REGION_LockRgn(Dce->hrgnClip);
+        IntGdiCombineRgn(RgnVisible, RgnVisible, RgnClip, RGN_DIFF);
+        REGION_UnlockRgn(RgnClip);
+    }
+
+    ERR("Status3\n");
+    MyDrawPRGNStatus(Dce);
+
+    Dce->DCXFlags &= ~DCX_DCEDIRTY;
+    GdiSelectVisRgn(Dce->hDC, RgnVisible);
+    //if (BDCX_MYFLAG)
+    {
+        if (RgnVisible)
+            ERR("MyDceUpdateVisRgn4 %d %d %d %d\n", RgnVisible->rdh.rcBound.left, RgnVisible->rdh.rcBound.top,
+                RgnVisible->rdh.rcBound.right, RgnVisible->rdh.rcBound.bottom);
+
+        ERR("Status4\n");
+        MyDrawPRGNStatus(Dce);
+    }
+    /* Tell GDI driver */
+    if (Window)
+        IntEngWindowChanged(Window, WOC_RGN_CLIENT);
+
+    if (RgnVisible != NULL)
+    {
+        REGION_Delete(RgnVisible);
+    }
+}
+
+void
+TestUpdateVis(PWND Wnd, DCE *Dce)
+{
+    ERR("TestUpdateVis\n");
+    if (Dce == NULL)
+        return;
+    ERR("TestUpdateVis - id Dce\n");
+    MyDceUpdateVisRgn(Dce, Wnd, Dce->DCXFlags);
+}
+
 HDC FASTCALL
 UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
 {
@@ -939,8 +1143,19 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
                Dce = NULL;
            }
            KeLeaveCriticalRegion();
-           if (Dce != NULL)
-               DceUpdateVisRgn(Dce, Wnd, Dce->DCXFlags);
+
+           ERR("GetDCE 9 test-HDC %x\n", Dce->hDC);
+           RECT rect2;
+
+           GdiGetClipBox(Dce->hDC, &rect2);
+           ERR("GetDCE 9 test RECT %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+           
+           TestUpdateVis(Wnd, Dce);
+
+           ERR("GetDCE 9 test-HDC %x\n", Dce->hDC);
+           GdiGetClipBox(Dce->hDC, &rect2);
+           ERR("GetDCE 9 test RECT %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+           
        }
        return NULL;
    }

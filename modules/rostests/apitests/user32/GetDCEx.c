@@ -1411,20 +1411,23 @@ test_scroll_window(void)
     ok(rect.left >= 25 && rect.top >= 25 && rect.right <= 50 && rect.bottom <= 50, "invalid clip box %s\n",
        wine_dbgstr_rect(&rect));
 
-    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 8);
-    GetDCEx(hwnd_parentdc, (HANDLE)hdc, 0);
+    /* GetDCEx(hwnd_owndc, (HANDLE)0x1234, 8);
+    GetDCEx(hwnd_owndc, (HANDLE)hdc, 0);
     GetDCEx(hwnd_owndc, (HANDLE)0x1234, 7);
-    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 0);
+    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 0);*/
 
     EndPaint(hwnd_owndc, &ps);//zmena
-    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 9);//!!!!!!!!!!! test it
+    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 9); //!!!!!!!!!!! test it
     
-    GetDCEx(hwnd_parentdc, (HANDLE)0x1234, 8);
-    GetDCEx(hwnd_parentdc, (HANDLE)hdc, 0);
+    //GetDCEx(hwnd_owndc, (HANDLE)0x1234, 8);
+    //GetDCEx(hwnd_owndc, (HANDLE)hdc, 0);
     //GetDCEx(hwnd_owndc, (HANDLE)0x1234, 1);
 
+    ok(FALSE, "test RECT7-HDC %x\n", (unsigned int)hdcx);
+    ok(FALSE, "test RECT7-HDC %x\n", (unsigned int)hdc);
     GetClipBox(hdcx, &rect2);
     ok(FALSE, "test RECT7 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    GetDCEx(hwnd_owndc, (HANDLE)0x1234, 9);
 
     SetViewportExtEx(hdc, 2, 3, NULL);
 
