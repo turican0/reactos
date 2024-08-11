@@ -1624,6 +1624,7 @@ NtUserBeginPaint(HWND hWnd, PAINTSTRUCT* UnsafePs)
 
    if (hWnd == (HWND)0x1234)
    {
+       ERR("NtUserBeginPaint SET %d\n", UnsafePs);
        if (UnsafePs == (PAINTSTRUCT *)0)
        {
            PAINT_DEBUG_MODE = FALSE;
@@ -1632,6 +1633,7 @@ NtUserBeginPaint(HWND hWnd, PAINTSTRUCT* UnsafePs)
        {
            PAINT_DEBUG_MODE = TRUE;
        }
+       return NULL;
    }
 
    TRACE("Enter NtUserBeginPaint\n");
@@ -1690,6 +1692,31 @@ Cleanup:
 
    TRACE("Leave NtUserBeginPaint, ret=%p\n", Ret);
    UserLeave();
+
+   if (PAINT_DEBUG_MODE)
+   {
+       ERR("NtUserBeginPaint state6\n");
+       UserGetDCEx(Window, (HANDLE)0x1234, 11);
+   }
+
+   /*
+   PDC pdc = DC_LockDc(Ret);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM11, 1.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM12, 0.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM21, 0.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM22, 1.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDx, 0.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDy, 0.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM11, 1.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM12, 0.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM21, 0.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM22, 1.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDx, 0.0);
+   FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDy, 0.0);
+   pdc->pdcattr->flXform &= ~PAGE_XLATE_CHANGED;
+   DC_UnlockDc(pdc);
+   */
+
    return Ret;
 }
 

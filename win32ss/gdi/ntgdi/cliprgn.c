@@ -402,6 +402,26 @@ GdiGetClipBox(
     return iComplexity;
 }
 
+/*
+INT
+FASTCALL
+REGION_GetRgnBox(
+    PREGION Rgn,
+    PRECTL pRect)
+{
+    DWORD ret;
+
+    if (Rgn != NULL)
+    {
+        *pRect = Rgn->rdh.rcBound;
+        ret = REGION_Complexity(Rgn);
+
+        return ret;
+    }
+    return 0; // If invalid region return zero
+}
+*/
+
 _Success_(return!=ERROR)
 INT
 APIENTRY
@@ -409,6 +429,201 @@ NtGdiGetAppClipBox(
     _In_ HDC hdc,
     _Out_ LPRECT prc)
 {
+    if (prc->left == 5000)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM11, 1.0); // eM11 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM12, 0.0); // eM12 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM21, 0.0); // eM21 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM22, 1.0); // eM22 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDx, 0.0);  // eDx = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDy, 0.0);  // eDy = 0.0
+
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM11, 1.0); // eM11 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM12, 0.0); // eM12 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM21, 0.0); // eM21 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM22, 1.0); // eM22 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDx, 0.0);  // eDx = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDy, 0.0);  // eDy = 0.0
+        pdc->pdcattr->flXform &= ~PAGE_XLATE_CHANGED;
+        DC_UnlockDc(pdc);
+        return 0;
+    }
+    if (prc->left == 5001)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        prc->right = (int)pdc->prgnRao;
+        DC_UnlockDc(pdc);
+        return 0;
+    }
+    if (prc->left == 5002)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        prc->right = (int)pdc->prgnVis;
+        DC_UnlockDc(pdc);
+        return 0;
+    }
+    if (prc->left == 5003)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        prc->right = pdc->prgnRao->rdh.rcBound.left;
+        DC_UnlockDc(pdc);
+        return 0;
+    }
+    if (prc->left == 5004)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        prc->right = pdc->pdcattr->flXform;
+        DC_UnlockDc(pdc);
+        return 0;
+    }
+
+    if (prc->left == 5008)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        prc->left = FLOATOBJ_GetLong(&pdc->pdcattr->mxDeviceToWorld.efDx);
+        prc->top = FLOATOBJ_GetLong(&pdc->pdcattr->mxDeviceToWorld.efDy);
+        prc->right = FLOATOBJ_GetLong(&pdc->pdcattr->mxWorldToDevice.efDx);
+        prc->bottom = FLOATOBJ_GetLong(&pdc->pdcattr->mxWorldToDevice.efDy);
+
+        DC_UnlockDc(pdc);
+        return 0;
+    }
+
+    if (prc->left == 5005)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        if (!pdc)
+        {
+            return ERROR;
+        }
+        if (pdc->fs & DC_DIRTY_RAO)
+            CLIPPING_UpdateGCRegion(pdc);
+        if (pdc->prgnRao)
+        {
+            REGION_GetRgnBox(pdc->prgnRao, prc);
+        }
+        else
+        {
+            ASSERT(pdc->prgnVis);
+            REGION_GetRgnBox(pdc->prgnVis, prc);
+        }
+        DC_UnlockDc(pdc);
+        //IntDPtoLP(pdc, (LPPOINT)prc, 2);
+
+        //XFORM xform = {1, 0, 0, 1, 0, 0}; // Jednotková matice
+
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM11, 1.0);  // eM11 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM12, 0.0);  // eM12 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM21, 0.0);  // eM21 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM22, 1.0);  // eM22 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDx, 0.0);   // eDx = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDy, 0.0);   // eDy = 0.0
+
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM11, 1.0); // eM11 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM12, 0.0); // eM12 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM21, 0.0); // eM21 = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM22, 1.0); // eM22 = 1.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDx, 0.0);  // eDx = 0.0
+        FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDy, 0.0);  // eDy = 0.0
+
+        pdc->pdcattr->flXform &= ~PAGE_XLATE_CHANGED;
+
+        //DC_vUpdateDeviceToWorld(pdc);
+        //DC_vUpdateDeviceToWorld(PDC pdc)
+        {
+            XFORMOBJ xoWorldToDevice, xoDeviceToWorld;
+            PMATRIX pmxWorldToDevice;
+
+            /* Get the world-to-device translation */
+
+            //DC_pmxWorldToDevice(PDC pdc)
+            {
+                /* Check if world or page xform was changed */
+                if (pdc->pdcattr->flXform & (PAGE_XLATE_CHANGED | PAGE_EXTENTS_CHANGED | WORLD_XFORM_CHANGED))
+                {
+                    /* Update the world-to-device xform */
+                    //DC_vUpdateWorldToDevice(pdc);
+                }
+
+                pmxWorldToDevice = &pdc->pdcattr->mxWorldToDevice;
+            }
+
+            //pmxWorldToDevice = DC_pmxWorldToDevice(pdc);
+            XFORMOBJ_vInit(&xoWorldToDevice, pmxWorldToDevice);
+
+            /* Create inverse of world-to-device transformation */
+            XFORMOBJ_vInit(&xoDeviceToWorld, &pdc->pdcattr->mxDeviceToWorld);
+            if (XFORMOBJ_iInverse(&xoDeviceToWorld, &xoWorldToDevice) == DDI_ERROR)
+            {
+                //MX_Set0(&pdc->pdcattr->mxDeviceToWorld);
+                //return;
+            }
+
+            /* Reset the flag */
+            //pdc->pdcattr->flXform &= ~DEVICE_TO_WORLD_INVALID;
+        }
+        //INTERNAL_DPTOLP(pdc, (LPPOINT)prc, 2);
+        //INTERNAL_APPLY_MATRIX(&pdc->pdcattr->mxDeviceToWorld, prc, 2);
+        PMATRIX matrix = &pdc->pdcattr->mxDeviceToWorld;
+        //FLOATOBJ_SetLong(&matrix->efDx, 0.0);
+        //FLOATOBJ_SetLong(&matrix->efDy, 0.0);
+        LPPOINT points = (LPPOINT)prc;
+        UINT count=2;
+        while (count--)
+        {
+            FLOATOBJ x, y;
+            FLOATOBJ tmp;
+
+            // x = x * matrix->efM11 + y * matrix->efM21 + matrix->efDx;
+            FLOATOBJ_SetLong(&x, points[count].x);
+            FLOATOBJ_Mul(&x, &matrix->efM11);
+            tmp = matrix->efM21;
+            FLOATOBJ_MulLong(&tmp, points[count].y);
+            FLOATOBJ_Add(&x, &tmp);
+            FLOATOBJ_Add(&x, &matrix->efDx);            
+
+            // y = x * matrix->efM12 + y * matrix->efM22 + matrix->efDy;
+            FLOATOBJ_SetLong(&y, points[count].y);
+            FLOATOBJ_Mul(&y, &matrix->efM22);
+            tmp = matrix->efM12;
+            FLOATOBJ_MulLong(&tmp, points[count].x);
+            FLOATOBJ_Add(&y, &tmp);
+            /* FLOATOBJ_Add(&y, &matrix->efDy);
+            */
+
+            if (!FLOATOBJ_bConvertToLong(&x, &points[count].x))
+                return 0;
+            if (!FLOATOBJ_bConvertToLong(&y, &points[count].y))
+                return 0;
+        }
+        
+        return 0;
+    }
+
+    if (prc->left == 5006)
+    {
+        PDC pdc = DC_LockDc(hdc);
+        if (!pdc)
+        {
+            return ERROR;
+        }
+        if (pdc->fs & DC_DIRTY_RAO)
+            CLIPPING_UpdateGCRegion(pdc);
+        if (pdc->prgnRao)
+        {
+            REGION_GetRgnBox(pdc->prgnRao, prc);
+        }
+        else
+        {
+            ASSERT(pdc->prgnVis);
+            REGION_GetRgnBox(pdc->prgnVis, prc);
+        }
+        DC_UnlockDc(pdc);
+        IntDPtoLP(pdc, (LPPOINT)prc, 2);
+        return 0;
+    }
+
     RECT rect;
     INT iComplexity;
 
@@ -419,8 +634,18 @@ NtGdiGetAppClipBox(
     {
         _SEH2_TRY
         {
-            ProbeForWrite(prc, sizeof(RECT), 1);
-            *prc = rect;
+            if (prc->left == 5007)
+            {
+                prc->left = rect.left;
+                prc->top = rect.top;
+                prc->right = rect.right;
+                prc->bottom = rect.bottom;
+            }
+            else
+            {
+                ProbeForWrite(prc, sizeof(RECT), 1);
+                *prc = rect;
+            }
         }
         _SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER)
         {

@@ -1451,6 +1451,63 @@ test_scroll_window(void)
     BeginPaint((HWND)0x1234, (PAINTSTRUCT *)0);
     GetDCEx(hwnd_owndc, (HANDLE)0x1234, 0);
 
+    ok(FALSE, "test RECT10-hdcx %x\n", (unsigned int)hdcx);
+
+    /*
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM11, 1.0); // eM11 = 1.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM12, 0.0); // eM12 = 0.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM21, 0.0); // eM21 = 0.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM22, 1.0); // eM22 = 1.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDx, 0.0);  // eDx = 0.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDy, 0.0);  // eDy = 0.0
+
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM11, 1.0); // eM11 = 1.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM12, 0.0); // eM12 = 0.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM21, 0.0); // eM21 = 0.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM22, 1.0); // eM22 = 1.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDx, 0.0);  // eDx = 0.0
+    FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDy, 0.0);  // eDy = 0.0
+    */
+
+    /*
+    rect2.left = 5000;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "testfs %ld\n", rect2.right);
+    */
+
+
+    /* rect2.left = 5001;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "testfs1 %ld\n", rect2.right);
+    rect2.left = 5002;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "testfs2 %ld\n", rect2.right);
+    rect2.left = 5003;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "testfs3 %ld\n", rect2.right);
+    rect2.left = 5004;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "testfs4 %ld\n", rect2.right);*/
+
+    rect2.left = 5008;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT11-5008 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
+    /*
+    rect2.left = 5005;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT11-5005 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
+    rect2.left = 5006;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT11-5006 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+
+    rect2.left = 5007;
+    GetClipBox(hdcx, &rect2);
+    ok(FALSE, "test RECT11-5007 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    */
+
+    rect2.left = 0;
     GetClipBox(hdcx, &rect2);
     ok(FALSE, "test RECT11 %ld %ld %ld %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
 

@@ -1185,8 +1185,15 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
        }
        if (Flags == 11)
        {
+           ERR("LINE1\n");
+           if (Wnd == NULL)
+               return NULL;
+           if (Wnd->pcls == NULL)
+               return NULL;
            if (Wnd->pcls->pdce)
                hDC = ((PDCE)Wnd->pcls->pdce)->hDC;
+           ERR("Wnd: %x\n", Wnd);
+           ERR("HWND: %x\n", (Wnd ? UserHMGetHandle(Wnd) : NULL));
            KeEnterCriticalRegion();
            ListEntry = LEDce.Flink;
            while (ListEntry != &LEDce)
@@ -1208,8 +1215,22 @@ UserGetDCEx(PWND Wnd OPTIONAL, HANDLE ClipRegion, ULONG Flags)
                Dce = NULL;
            }
            KeLeaveCriticalRegion();
-
+           if (Dce == NULL)
+           {
+               ERR("DCE is NULL\n");
+               return NULL;
+           }
+           //return NULL;
+           ERR("LINE10 HDC: %x\n", Dce->hDC);
            MyDrawPRGNStatus(Dce);
+           RECT rect2;
+           //GetClientRect(UserHMGetHandle(Wnd), &rect2);
+           rect2 = Wnd->rcClient;
+           rect2.left += -Wnd->rcClient.left;
+           rect2.top += -Wnd->rcClient.top;
+           rect2.right += -Wnd->rcClient.left;
+           rect2.bottom += -Wnd->rcClient.top;
+           ERR("LINE11 %ld, %ld, %ld, %ld\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
        }
        return NULL;
    }
