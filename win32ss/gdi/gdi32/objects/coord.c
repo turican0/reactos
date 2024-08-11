@@ -470,6 +470,18 @@ SetViewportExtEx(
 {
     PDC_ATTR pdcattr;
 
+    if (nXExtent == 5000)
+    {
+        pdcattr = GdiGetDcAttr(hdc);
+        if (pdcattr == NULL)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        lpSize->cx = pdcattr->flXform;
+        return FALSE;
+    }
+
     HANDLE_METADC(BOOL, SetViewportExtEx, FALSE, hdc, nXExtent, nYExtent);
 
     /* Get the DC attribute */

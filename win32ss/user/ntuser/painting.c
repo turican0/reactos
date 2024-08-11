@@ -1699,7 +1699,7 @@ Cleanup:
        UserGetDCEx(Window, (HANDLE)0x1234, 11);
    }
 
-   
+   /*
    PDC pdc = DC_LockDc(Ret);
    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM11, 1.0);
    FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM12, 0.0);
@@ -1715,7 +1715,7 @@ Cleanup:
    FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDy, 0.0);
    pdc->pdcattr->flXform &= ~PAGE_XLATE_CHANGED;
    DC_UnlockDc(pdc);
-   
+   */
 
    return Ret;
 }
