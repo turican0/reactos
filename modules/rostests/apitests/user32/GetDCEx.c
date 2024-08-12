@@ -1451,10 +1451,10 @@ test_scroll_window(void)
     SIZE testSIZE;
 
     SetViewportExtEx(hdc, 5000, 1, &testSIZE);
-    ok(FALSE, "pre1 %ld\n", testSIZE.cx);
+    //ok(FALSE, "pre1 %ld %ld\n", testSIZE.cx, testSIZE.cy);
     hdc = BeginPaint(hwnd_owndc, &ps);//here problem
     SetViewportExtEx(hdc, 5000, 1, &testSIZE);
-    ok(FALSE, "post1 %ld\n", testSIZE.cx);
+    //ok(FALSE, "post1 %ld %ld\n", testSIZE.cx, testSIZE.cy);
     BeginPaint((HWND)0x1234, (PAINTSTRUCT *)0);
     GetDCEx(hwnd_owndc, (HANDLE)0x1234, 0);
 
@@ -1530,10 +1530,10 @@ test_scroll_window(void)
 
     ScrollWindowEx(hwnd_owndc, -5, -10, NULL, &clip, 0, NULL, SW_INVALIDATE | SW_ERASE);
     SetViewportExtEx(hdc, 5000, 1, &testSIZE);
-    ok(FALSE, "pre2 %ld\n", testSIZE.cx);
+    ok(FALSE, "pre2 %ld %ld\n", testSIZE.cx, testSIZE.cy);
     hdc = BeginPaint(hwnd_owndc, &ps);
     SetViewportExtEx(hdc, 5000, 1, &testSIZE);
-    ok(FALSE, "post2 %ld\n", testSIZE.cx);
+    ok(FALSE, "post2 %ld %ld\n", testSIZE.cx, testSIZE.cy);
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
     ok(rect.left >= -5 && rect.top >= 5 && rect.right <= 20 && rect.bottom <= 30, "invalid clip box %s\n",
@@ -1545,10 +1545,10 @@ test_scroll_window(void)
 
     ScrollWindowEx(hwnd_owndc, -5, -10, NULL, &clip, 0, NULL, SW_INVALIDATE | SW_ERASE);
     SetViewportExtEx(hdc, 5000, 1, &testSIZE);
-    ok(FALSE, "pre3 %ld\n", testSIZE.cx);
+    ok(FALSE, "pre3 %ld %ld\n", testSIZE.cx, testSIZE.cy);
     hdc = BeginPaint(hwnd_owndc, &ps);
     SetViewportExtEx(hdc, 5000, 1, &testSIZE);
-    ok(FALSE, "post3 %ld\n", testSIZE.cx);
+    ok(FALSE, "post3 %ld %ld\n", testSIZE.cx, testSIZE.cy);
     SetRectEmpty(&rect);
     GetClipBox(hdc, &rect);
     ok(rect.left >= 25 && rect.top >= 25 && rect.right <= 50 && rect.bottom <= 50, "invalid clip box %s\n",

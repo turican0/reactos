@@ -925,6 +925,8 @@ co_UserRedrawWindow(
 
    if (Flags & (RDW_INVALIDATE | RDW_VALIDATE)) // Both are OKAY!
    {
+       //may be here
+
       /* We can't hold lock on GDI objects while doing roundtrips to user mode,
        * so use a copy instead */
       if (UpdateRgn)
@@ -1488,6 +1490,13 @@ IntBeginPaint(PWND Window, PPAINTSTRUCT Ps)
       return NULL;
    }
 
+   BOOL IS_WORLD_XFORM_CHANGED = FALSE;
+   PDC pdc = DC_LockDc(Ps->hdc);
+   if (pdc->pdcattr->flXform & WORLD_XFORM_CHANGED)
+       IS_WORLD_XFORM_CHANGED = TRUE;
+   DC_UnlockDc(pdc);
+
+
    // If set, always clear flags out due to the conditions later on for sending the message.
    if (Window->state & WNDS_SENDERASEBACKGROUND)
    {
@@ -1531,6 +1540,25 @@ IntBeginPaint(PWND Window, PPAINTSTRUCT Ps)
    }
 
    IntSendChildNCPaint(Window);
+
+   if (IS_WORLD_XFORM_CHANGED)
+   {
+       PDC pdc = DC_LockDc(Ps->hdc);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM11, 1.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM12, 0.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM21, 0.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efM22, 1.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDx, 0.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxDeviceToWorld.efDy, 0.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM11, 1.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM12, 0.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM21, 0.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efM22, 1.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDx, 0.0);
+       FLOATOBJ_SetLong(&pdc->pdcattr->mxWorldToDevice.efDy, 0.0);
+       pdc->pdcattr->flXform &= ~PAGE_XLATE_CHANGED;
+       DC_UnlockDc(pdc);
+   }
 
    return Ps->hdc;
 }
@@ -1646,7 +1674,7 @@ NtUserBeginPaint(HWND hWnd, PAINTSTRUCT* UnsafePs)
 
    if (PAINT_DEBUG_MODE)
    {
-       ERR("NtUserBeginPaint state1\n");
+       ERR("NtUserBeginPaint state1 %d\n", Window->style);
        UserGetDCEx(Window, (HANDLE)0x1234, 11);
    }
 

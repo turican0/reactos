@@ -479,6 +479,7 @@ SetViewportExtEx(
             return FALSE;
         }
         lpSize->cx = pdcattr->flXform;
+        lpSize->cy = pdcattr->ptlViewportOrg.x;
         return FALSE;
     }
 
