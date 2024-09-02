@@ -253,8 +253,7 @@ void TestRedrawWindow(STRUCT_TestRedrawWindow* ptestRW)
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = GetModuleHandle(NULL);
     wc.lpszClassName = ptestRW->testName;
-    if(RegisterClassW(&wc) == 0)
-        return;
+    RegisterClassW(&wc);
     RECT rectWin = { 0, 0, 800, 600 };
     style = WS_OVERLAPPEDWINDOW;
     AdjustWindowRectEx(&rectWin, style, FALSE, 0);
@@ -275,8 +274,7 @@ void TestRedrawWindow(STRUCT_TestRedrawWindow* ptestRW)
         wcChild.lpfnWndProc = ChildWindowProc;
         wcChild.hInstance = GetModuleHandle(NULL);
         wcChild.lpszClassName = CHILD_CLASS_NAME;
-        if(RegisterClassW(&wcChild) == 0)
-            return;
+        RegisterClassW(&wcChild);
 
         hChildWnd = CreateWindowExW(
             0,
@@ -287,7 +285,10 @@ void TestRedrawWindow(STRUCT_TestRedrawWindow* ptestRW)
             hwnd,
             NULL,
             GetModuleHandle(NULL),
-            NULL);
+            NULL
+        );
+        if (hChildWnd == NULL)
+            return;
     }
 
     HDC hdc = GetDC(hwnd);
