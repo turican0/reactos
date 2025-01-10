@@ -24,6 +24,8 @@ static INT DCECount = 0; // Count of DCE in system.
 
 /* FUNCTIONS *****************************************************************/
 
+#define DCX_MYFLAG 0x00200000
+
 CODE_SEG("INIT")
 NTSTATUS
 NTAPI
